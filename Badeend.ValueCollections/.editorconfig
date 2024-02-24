@@ -1,0 +1,9 @@
+[*.cs]
+
+dotnet_diagnostic.CA1000.severity = none # Do not declare static members on generic types
+dotnet_diagnostic.CA1002.severity = none # Do not expose generic lists
+dotnet_diagnostic.CA1062.severity = none # Validate arguments of public methods
+dotnet_diagnostic.CA1510.severity = none # Use ArgumentNullException throw helper
+dotnet_diagnostic.CA1511.severity = none # Use ArgumentException throw helper
+dotnet_diagnostic.CA1512.severity = none # Use ArgumentOutOfRangeException throw helper
+dotnet_diagnostic.CA1805.severity = none # Do not initialize unnecessarily
