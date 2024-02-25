@@ -31,6 +31,11 @@ public static class ValueSliceExtensions
 	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueSlice{T}"/>.
 	/// </summary>
+	/// <remarks>
+	/// If you know the input List will not be used anymore, you might be able
+	/// to take advantage of <c>ValueCollectionsMarshal.AsValueSlice</c> and
+	/// prevent unnecessary copying.
+	/// </remarks>
 	public static ValueSlice<T> ToValueSlice<T>(this List<T> items) => new(items.ToArray());
 
 	/// <summary>

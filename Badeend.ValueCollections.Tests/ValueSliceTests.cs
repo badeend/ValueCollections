@@ -168,4 +168,23 @@ public class ValueSliceTests
 
         Assert.True(hashCodes.Count() == hashCodes.Distinct().Count());
     }
+
+    [Fact]
+    public void MarshalAsValueSlice()
+    {
+        List<int> list = [1, 2, 3, 4];
+        list.RemoveAt(3);
+
+        var slice = ValueCollectionsMarshal.AsValueSlice(list);
+
+        Assert.True(slice.Length == 3);
+        Assert.True(slice[0] == 1);
+        Assert.True(slice[1] == 2);
+        Assert.True(slice[2] == 3);
+
+        // Don't ever do this:
+        list[2] = 42;
+
+        Assert.True(slice[2] == 42);
+    }
 }
