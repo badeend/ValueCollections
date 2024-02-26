@@ -90,32 +90,13 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal ValueSlice(T[]? items)
+		: this(items, 0, items?.Length ?? 0)
 	{
-		var itemsLength = items?.Length ?? 0;
-
-		if (itemsLength == 0)
-		{
-			this.items = null;
-			this.offset = 0;
-			this.length = 0;
-		}
-		else
-		{
-			this.items = items;
-			this.offset = 0;
-			this.length = itemsLength;
-		}
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal ValueSlice(T[]? items, int offset, int length)
 	{
-		var itemsLength = items?.Length ?? 0;
-		if (offset < 0 || offset + length > itemsLength)
-		{
-			throw new ArgumentOutOfRangeException(nameof(offset));
-		}
-
 		if (length == 0)
 		{
 			this.items = null;
