@@ -39,7 +39,7 @@ public static class ValueSlice
 ///
 /// Additionally, ValueSlice has "value semantics". This means that two slices
 /// are considered equal only when their contents are equal. Due to technical
-/// reasons, the type parameter <paramref name="T"/> is currently not restricted
+/// reasons, the type parameter <typeparamref name="T"/> is currently not restricted
 /// to implement <see cref="IEquatable{T}"/>, but it is highly encouraged to
 /// only use ValueSlices on types that implement it nonetheless.
 ///
@@ -358,11 +358,23 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	public override bool Equals(object? obj) => obj is ValueSlice<T> slice && this.SequenceEqual(slice);
 #pragma warning restore CS0809 // Obsolete member overrides non-obsolete member
 
+	/// <summary>
+	/// Check for equality.
+	/// </summary>
 	public static bool operator ==(ValueSlice<T> left, ValueSlice<T> right) => left.SequenceEqual(right);
 
+	/// <summary>
+	/// Check for equality.
+	/// </summary>
 	public static bool operator ==(ValueSlice<T>? left, ValueSlice<T>? right) => SequenceEqualNullable(left, right);
 
+	/// <summary>
+	/// Check for inequality.
+	/// </summary>
 	public static bool operator !=(ValueSlice<T> left, ValueSlice<T> right) => !left.SequenceEqual(right);
 
+	/// <summary>
+	/// Check for inequality.
+	/// </summary>
 	public static bool operator !=(ValueSlice<T>? left, ValueSlice<T>? right) => !SequenceEqualNullable(left, right);
 }
