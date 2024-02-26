@@ -1,0 +1,40 @@
+{
+  "metadata": [
+    {
+      "src": [
+        {
+          "src": ".",
+          "files": [
+            "Badeend.ValueCollections/Badeend.ValueCollections.csproj"
+          ]
+        }
+      ],
+      "dest": "docs/api"
+    }
+  ],
+  "build": {
+    "content": [
+      {
+        "files": [
+          "README.md",
+          "docs/api/*.yml"
+        ],
+        "exclude": [
+          "docs/rendered/**"
+        ]
+      }
+    ],
+    "output": "docs/rendered",
+    "template": [
+      "default",
+      "modern"
+    ],
+    "globalMetadata": {
+      "_appName": "ValueCollections",
+      "_appTitle": "ValueCollections",
+      "_enableSearch": false,
+      "_disableNavbar": true,
+      "pdf": false
+    }
+  }
+}
