@@ -71,6 +71,24 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	private readonly int length;
 
 	/// <summary>
+	/// The backing array.
+	/// </summary>
+	internal T[]? Array
+	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		get => this.items;
+	}
+
+	/// <summary>
+	/// Offset into the backing array.
+	/// </summary>
+	internal int Offset
+	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		get => this.offset;
+	}
+
+	/// <summary>
 	/// Length of the slice.
 	/// </summary>
 	public int Length

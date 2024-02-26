@@ -17,6 +17,7 @@ dotnet_diagnostic.CA1805.severity = none # Do not initialize unnecessarily
 
 dotnet_diagnostic.SA1201.severity = none # ElementsMustAppearInTheCorrectOrder
 dotnet_diagnostic.SA1202.severity = none # ElementsMustBeOrderedByAccess
+dotnet_diagnostic.SA1402.severity = none # FileMayOnlyContainASingleType
 dotnet_diagnostic.SA1611.severity = none # ElementParametersMustBeDocumented
 dotnet_diagnostic.SA1615.severity = none # ElementReturnValueMustBeDocumented
 dotnet_diagnostic.SA1618.severity = none # GenericTypeParametersMustBeDocumented
