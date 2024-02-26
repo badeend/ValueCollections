@@ -264,15 +264,6 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	public struct Enumerator
 	{
 		private readonly T[]? items;
-
-		/// <summary>
-		/// The first index of the slice.
-		/// </summary>
-		private readonly int start;
-
-		/// <summary>
-		/// The index just beyond the slice's range.
-		/// </summary>
 		private readonly int end;
 		private int current;
 
@@ -280,9 +271,8 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 		internal Enumerator(ValueSlice<T> slice)
 		{
 			this.items = slice.items;
-			this.start = slice.offset;
-			this.end = this.start + slice.length;
-			this.current = this.start - 1;
+			this.end = slice.offset + slice.length;
+			this.current = slice.offset - 1;
 		}
 
 		/// <summary>
@@ -291,15 +281,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 		public readonly ref readonly T Current
 		{
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			get
-			{
-				if (this.current < this.start || this.current >= this.end)
-				{
-					throw new InvalidOperationException("Incorrect enumerator usage.");
-				}
-
-				return ref this.items![this.current];
-			}
+			get => ref this.items![this.current];
 		}
 
 		/// <summary>

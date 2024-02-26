@@ -115,8 +115,6 @@ public class ValueSliceTests
         ValueSlice<int> a = [1, 2, 3];
         var e = a.GetEnumerator();
 
-        Assert.ThrowsAny<Exception>(() => e.Current);
-
         Assert.True(e.MoveNext() == true);
         Assert.True(e.Current == 1);
         Assert.True(e.Current == 1);
@@ -130,9 +128,6 @@ public class ValueSliceTests
         Assert.True(e.Current == 3);
 
         Assert.True(e.MoveNext() == false);
-
-        Assert.ThrowsAny<Exception>(() => e.Current);
-
 
         ValueSlice<int> b = [];
         Assert.True(b.GetEnumerator().MoveNext() == false);
