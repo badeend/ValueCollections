@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 namespace Badeend.ValueCollections;
 
 /// <summary>
-/// A set of initialization methods for <see cref="ValueSlice{T}"/>.
+/// Initialization methods for <see cref="ValueSlice{T}"/>.
 /// </summary>
 public static class ValueSlice
 {
@@ -25,7 +25,7 @@ public static class ValueSlice
 }
 
 /// <summary>
-/// An immutable span with value semantics.
+/// An immutable, thread-safe span with value semantics.
 ///
 /// This type is very similar to <see cref="ReadOnlySpan{T}"/> and
 /// <see cref="ReadOnlyMemory{T}"/> in that this too is just a view
