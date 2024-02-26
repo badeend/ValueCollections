@@ -21,7 +21,7 @@ public static class ValueList
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueList{T}"/>.
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueList<T> Create<T>(this ReadOnlySpan<T> items) => ValueList<T>.FromArray(items.ToArray());
+	public static ValueList<T> Create<T>(ReadOnlySpan<T> items) => ValueList<T>.FromArray(items.ToArray());
 }
 
 /// <summary>

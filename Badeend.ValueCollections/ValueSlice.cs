@@ -21,7 +21,7 @@ public static class ValueSlice
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueSlice{T}"/>.
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueSlice<T> Create<T>(this ReadOnlySpan<T> items) => new(items.ToArray());
+	public static ValueSlice<T> Create<T>(ReadOnlySpan<T> items) => new(items.ToArray());
 }
 
 /// <summary>
