@@ -175,6 +175,27 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	/// </summary>
 	public T[] ToArray() => this.AsValueSlice().ToArray();
 
+	/// <summary>
+	/// Return the index of the first occurrence of <paramref name="item"/> in
+	/// the list, or <c>-1</c> if not found.
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public int IndexOf(T item) => this.AsValueSlice().IndexOf(item);
+
+	/// <summary>
+	/// Return the index of the last occurrence of <paramref name="item"/> in
+	/// the list, or <c>-1</c> if not found.
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public int LastIndexOf(T item) => this.AsValueSlice().LastIndexOf(item);
+
+	/// <summary>
+	/// Returns <see langword="true"/> when the list contains the specified
+	/// <paramref name="item"/>.
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public bool Contains(T item) => this.AsValueSlice().Contains(item);
+
 	/// <inheritdoc/>
 	bool ICollection<T>.Contains(T item) => this.AsValueSlice().Contains(item);
 
