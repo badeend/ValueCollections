@@ -275,6 +275,11 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IImmutableList<T>
 	}
 
 	/// <summary>
+	/// Convert list to slice.
+	/// </summary>
+	public static implicit operator ValueSlice<T>(ValueList<T> list) => list.AsValueSlice();
+
+	/// <summary>
 	/// Returns an enumerator for this <see cref="ValueList{T}"/>.
 	///
 	/// Typically, you don't need to manually call this method, but instead use

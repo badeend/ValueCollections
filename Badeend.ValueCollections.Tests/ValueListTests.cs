@@ -9,6 +9,13 @@ public class ValueListTests
     }
 
     [Fact]
+    public void ImplicitSlice()
+    {
+        ValueList<int> a = [1, 2, 3];
+        ValueSlice<int> b = a;
+    }
+
+    [Fact]
     public void ValueSemantics()
     {
         ValueList<int> a = [1, 2, 3];
