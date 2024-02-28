@@ -368,12 +368,14 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 		int hashCode = typeof(T).GetHashCode();
 		hashCode = (hashCode * -1521134295) + this.length;
 
-		if (this.length > 0)
+		// Include first item
+		if (this.length >= 1)
 		{
 			hashCode = (hashCode * -1521134295) + (this[0]?.GetHashCode() ?? 0);
 		}
 
-		if (this.length > 1)
+		// Include last item
+		if (this.length >= 2)
 		{
 			hashCode = (hashCode * -1521134295) + (this[this.length - 1]?.GetHashCode() ?? 0);
 		}
