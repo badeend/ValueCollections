@@ -1,5 +1,5 @@
 using System.Collections;
-using System.Diagnostics;
+using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 
 namespace Badeend.ValueCollections;
@@ -174,6 +174,11 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	/// Copy the contents of the list into a new array.
 	/// </summary>
 	public T[] ToArray() => this.AsValueSlice().ToArray();
+
+	/// <summary>
+	/// Copy the list into a new <see cref="ImmutableArray{T}"/>.
+	/// </summary>
+	public ImmutableArray<T> ToImmutableArray() => this.AsValueSlice().ToImmutableArray();
 
 	/// <summary>
 	/// Return the index of the first occurrence of <paramref name="item"/> in

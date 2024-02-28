@@ -1,5 +1,7 @@
 using System.Collections;
+using System.Collections.Immutable;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -222,6 +224,33 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 		}
 
 		return ValueList<T>.FromArray(this.ToArray());
+	}
+
+	/// <summary>
+	/// Copy the slice into a new <see cref="ImmutableArray{T}"/>.
+	/// </summary>
+	public ImmutableArray<T> ToImmutableArray()
+	{
+		if (this.items is null)
+		{
+			return ImmutableArray<T>.Empty;
+		}
+		else if (this.length == this.items.Length)
+		{
+			Debug.Assert(this.offset == 0);
+
+			return AsImmutableArrayUnsafe(this.items);
+		}
+		else
+		{
+			return ImmutableArray.Create(this.items, this.offset, this.length);
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static ImmutableArray<T> AsImmutableArrayUnsafe(T[] items)
+	{
+		return Unsafe.As<T[], ImmutableArray<T>>(ref items);
 	}
 
 	/// <summary>

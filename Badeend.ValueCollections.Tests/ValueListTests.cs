@@ -111,6 +111,22 @@ public class ValueListTests
         Assert.True(hashCodes.Count() == hashCodes.Distinct().Count());
     }
 
+    /// <summary>
+    /// FYI, this is not something we publicly promise, but we test for it anyways.
+    /// </summary>
+    [Fact]
+    public void ImmutableArrayRoundtrip()
+    {
+        int[] unsafeItems = [1, 2, 3, 4];
+
+        var list = ValueCollectionsMarshal.AsValueList(unsafeItems)
+            .ToImmutableArray()
+            .AsValueList();
+
+        unsafeItems[1] = 42;
+        Assert.True(list[1] == 42);
+    }
+
     [Fact]
     public void MarshalAsValueList()
     {
