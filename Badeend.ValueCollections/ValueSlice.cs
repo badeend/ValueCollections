@@ -239,18 +239,12 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 		{
 			Debug.Assert(this.offset == 0);
 
-			return AsImmutableArrayUnsafe(this.items);
+			return UnsafeHelpers.AsImmutableArray(this.items);
 		}
 		else
 		{
 			return ImmutableArray.Create(this.items, this.offset, this.length);
 		}
-	}
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static ImmutableArray<T> AsImmutableArrayUnsafe(T[] items)
-	{
-		return Unsafe.As<T[], ImmutableArray<T>>(ref items);
 	}
 
 	/// <summary>
