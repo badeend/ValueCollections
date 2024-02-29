@@ -45,12 +45,17 @@ internal static class UnsafeHelpers
 #pragma warning disable CS0649 // Field 'field' is never assigned to, and will always have its default value 'value'
 #pragma warning disable CA1812 // Avoid uninstantiated internal classes
 #pragma warning disable CA1852 // Seal internal types
+#pragma warning disable CS0414 // Private field is assigned but its value is never used
 	private class ListLayout<T>
 	{
 		internal T[] _items = null!;
 		internal int _size;
 		internal int _version;
+#if !NETCOREAPP3_0_OR_GREATER
+		private object _syncRoot = null!;
+#endif
 	}
+#pragma warning restore CS0414 // Private field is assigned but its value is never used
 #pragma warning restore CA1852 // Seal internal types
 #pragma warning restore CA1812 // Avoid uninstantiated internal classes
 #pragma warning restore CS0649 // Field 'field' is never assigned to, and will always have its default value 'value'
