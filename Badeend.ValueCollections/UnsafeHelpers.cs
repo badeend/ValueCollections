@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Badeend.ValueCollections;
 
@@ -18,16 +19,137 @@ internal static class UnsafeHelpers
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static Span<T> AsSpan<T>(List<T> items)
+	{
+#if NET5_0_OR_GREATER
+		return CollectionsMarshal.AsSpan(items);
+#else
+		return GetBackingArray(items).AsSpan(0, items.Count);
+#endif
+	}
+
+	internal static List<T> AsList<T>(T[] items)
+	{
+		var list = new List<T>();
+		ref var listRef = ref Reflect(ref list);
+		listRef._items = items;
+		listRef._size = items.Length;
+		return list;
+	}
+
+	internal static void EnsureCapacity<T>(List<T> list, int capacity)
+	{
+#if NET6_0_OR_GREATER
+		list.EnsureCapacity(capacity);
+#else
+		if (list.Count < capacity)
+		{
+			list.Capacity = capacity;
+		}
+#endif
+	}
+
+	internal static void SetCount<T>(List<T> list, int count)
+	{
+#if NET8_0_OR_GREATER
+		CollectionsMarshal.SetCount(list, count);
+#else
+		if (count < 0)
+		{
+			throw new ArgumentOutOfRangeException(nameof(count));
+		}
+
+		if (count > list.Capacity)
+		{
+			EnsureCapacity(list, count);
+		}
+
+		var previousCount = list.Count;
+
+		ref var listRef = ref Reflect(ref list);
+		listRef._size = count;
+		listRef._version++;
+
+		if (count < previousCount && ShouldClearOldEntries<T>())
+		{
+			Array.Clear(listRef._items, count, previousCount - count);
+		}
+#endif
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static bool ShouldClearOldEntries<T>()
+	{
+#if NETCOREAPP2_0_OR_GREATER
+		return RuntimeHelpers.IsReferenceOrContainsReferences<T>();
+#else
+		return true;
+#endif
+	}
+
+	internal static void InsertRange<T>(List<T> list, int index, ReadOnlySpan<T> source)
+	{
+#if NET8_0_OR_GREATER
+		CollectionExtensions.InsertRange(list, index, source);
+#else
+		if (index < 0 || index > list.Count)
+		{
+			throw new ArgumentOutOfRangeException(nameof(index));
+		}
+
+		if (source.Length == 0)
+		{
+			return;
+		}
+
+		var previousCount = list.Count;
+		SetCount(list, list.Count + source.Length);
+		var array = GetBackingArray(list);
+
+		// If the insertion point in the middle of the list, shift the existing content over:
+		if (index < previousCount)
+		{
+			Array.Copy(array, index, array, index + source.Length, previousCount - index);
+		}
+
+		source.CopyTo(array.AsSpan(index));
+#endif
+	}
+
+	internal static void AddRange<T>(List<T> list, ReadOnlySpan<T> source)
+	{
+#if NET8_0_OR_GREATER
+		CollectionExtensions.AddRange(list, source);
+#else
+		if (source.Length == 0)
+		{
+			return;
+		}
+
+		var previousCount = list.Count;
+		SetCount(list, previousCount + source.Length);
+		var array = GetBackingArray(list);
+		source.CopyTo(array.AsSpan(previousCount));
+#endif
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static T[] GetBackingArray<T>(List<T> items)
+	{
+		return Reflect(ref items)._items;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static ref ListLayout<T> Reflect<T>(ref List<T> items)
 	{
 		// Here be dragons...
 
 		// TODO: use UnsafeAccessor when that becomes available for generic types:
 		// https://github.com/dotnet/runtime/issues/89439
 
-		// Get the backing array by reinterpreting the List<T> reference as a
+		// Get the private fields by reinterpreting the List<T> reference as a
 		// reference to our own ListLayout<T> with identical memory layout.
-		return Unsafe.As<List<T>, ListLayout<T>>(ref items)._items;
+		return ref Unsafe.As<List<T>, ListLayout<T>>(ref items);
 	}
 
 	/// <summary>

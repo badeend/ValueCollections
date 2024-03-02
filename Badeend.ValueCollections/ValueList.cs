@@ -21,13 +21,37 @@ public static class ValueList
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueList{T}"/>.
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueList<T> Create<T>(ReadOnlySpan<T> items) => ValueList<T>.FromArray(items.ToArray());
+	public static ValueList<T> Create<T>(ReadOnlySpan<T> items) => ValueList<T>.FromArrayUnsafe(items.ToArray());
+
+	/// <summary>
+	/// Create a new empty <see cref="ValueListBuilder{T}"/>. This builder can
+	/// then be used to efficiently construct an immutable <see cref="ValueList{T}"/>.
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ValueListBuilder<T> Builder<T>() => new ValueListBuilder<T>();
+
+	/// <summary>
+	/// Create a new <see cref="ValueListBuilder{T}"/> with the provided
+	/// <paramref name="items"/> as its initial content.
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ValueListBuilder<T> Builder<T>(ReadOnlySpan<T> items)
+	{
+		var builder = new ValueListBuilder<T>();
+		builder.AddRange(items);
+		return builder;
+	}
 }
 
 /// <summary>
 /// An immutable, thread-safe list with value semantics.
 ///
-/// ValueLists have "value semantics". This means that two lists
+/// Constructing new instances can be done using
+/// <see cref="ValueList.Builder{T}()"/> or <see cref="ValueList{T}.ToBuilder()"/>.
+/// For creating ValueLists, <see cref="ValueListBuilder{T}"/> is generally more
+/// efficient than <see cref="List{T}"/>.
+///
+/// ValueLists have "structural equality". This means that two lists
 /// are considered equal only when their contents are equal. Due to technical
 /// reasons, the type parameter <typeparamref name="T"/> is currently not restricted
 /// to implement <see cref="IEquatable{T}"/>, but it is highly encouraged to
@@ -63,6 +87,15 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IImmutableList<T>
 	/// </summary>
 	private readonly T[] items;
 	private readonly int count;
+
+	/// <summary>
+	/// Length of the list.
+	/// </summary>
+	internal int Capacity
+	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		get => this.items.Length;
+	}
 
 	/// <summary>
 	/// Length of the list.
@@ -118,9 +151,9 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IImmutableList<T>
 		this.count = count;
 	}
 
-	internal static ValueList<T> FromArray(T[] items) => FromArray(items, items.Length);
+	internal static ValueList<T> FromArrayUnsafe(T[] items) => FromArrayUnsafe(items, items.Length);
 
-	internal static ValueList<T> FromArray(T[] items, int count)
+	internal static ValueList<T> FromArrayUnsafe(T[] items, int count)
 	{
 		if (count == 0)
 		{
@@ -189,6 +222,16 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IImmutableList<T>
 	/// Copy the list into a new <see cref="ImmutableArray{T}"/>.
 	/// </summary>
 	public ImmutableArray<T> ToImmutableArray() => this.AsValueSlice().ToImmutableArray();
+
+	/// <summary>
+	/// Create a new <see cref="ValueListBuilder{T}"/> with this list as its
+	/// initial content. This builder can then be used to efficiently construct
+	/// an immutable <see cref="ValueList{T}"/>.
+	///
+	/// This is an <c>O(1)</c> operation and performs only a small fixed-size
+	/// memory allocation. This does not perform a bulk copy of the contents.
+	/// </summary>
+	public ValueListBuilder<T> ToBuilder() => ValueListBuilder<T>.FromValueList(this);
 
 	/// <summary>
 	/// Return the index of the first occurrence of <paramref name="item"/> in
@@ -274,10 +317,12 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IImmutableList<T>
 		return left?.AsValueSlice() == right?.AsValueSlice();
 	}
 
+#pragma warning disable CA2225 // Operator overloads have named alternates
 	/// <summary>
 	/// Convert list to slice.
 	/// </summary>
 	public static implicit operator ValueSlice<T>(ValueList<T> list) => list.AsValueSlice();
+#pragma warning restore CA2225 // Operator overloads have named alternates
 
 	/// <summary>
 	/// Returns an enumerator for this <see cref="ValueList{T}"/>.

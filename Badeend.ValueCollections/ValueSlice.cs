@@ -37,10 +37,10 @@ public static class ValueSlice
 /// <see cref="ValueSlice{T}.Slice(int, int)"/> is very cheap as it reuses the
 /// same allocation and only adjusts the internal offset+length fields.
 ///
-/// Unlike ReadOnlySpan/Memory, the data is not just read-only but it is also
+/// Unlike ReadOnlySpan&amp;Memory, the data is not just read-only but it is also
 /// guaranteed to be immutable.
 ///
-/// Additionally, ValueSlice has "value semantics". This means that two slices
+/// Additionally, ValueSlice has "structural equality". This means that two slices
 /// are considered equal only when their contents are equal. Due to technical
 /// reasons, the type parameter <typeparamref name="T"/> is currently not restricted
 /// to implement <see cref="IEquatable{T}"/>, but it is highly encouraged to
@@ -220,10 +220,10 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 		{
 			// TODO: check that the length meets a minimum threshold of the total
 			// capacity, to prevent unnecessarily keeping large arrays alive.
-			return ValueList<T>.FromArray(this.items!, this.length);
+			return ValueList<T>.FromArrayUnsafe(this.items!, this.length);
 		}
 
-		return ValueList<T>.FromArray(this.ToArray());
+		return ValueList<T>.FromArrayUnsafe(this.ToArray());
 	}
 
 	/// <summary>

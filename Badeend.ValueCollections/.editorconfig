@@ -7,6 +7,8 @@ indent_style = tab
 indent_size = 4
 tab_width = 4
 
+dotnet_diagnostic.CS8509.severity = error # The switch expression does not handle all possible values of its input type (it is not exhaustive).
+
 dotnet_diagnostic.CA1000.severity = none # Do not declare static members on generic types
 dotnet_diagnostic.CA1002.severity = none # Do not expose generic lists
 dotnet_diagnostic.CA1062.severity = none # Validate arguments of public methods
@@ -24,3 +26,4 @@ dotnet_diagnostic.SA1615.severity = none # ElementReturnValueMustBeDocumented
 dotnet_diagnostic.SA1618.severity = none # GenericTypeParametersMustBeDocumented
 dotnet_diagnostic.SA1623.severity = none # PropertySummaryDocumentationMustMatchAccessors
 dotnet_diagnostic.SA1633.severity = none # FileMustHaveHeader
+dotnet_diagnostic.SA1642.severity = none # ConstructorSummaryDocumentationMustBeginWithStandardText
