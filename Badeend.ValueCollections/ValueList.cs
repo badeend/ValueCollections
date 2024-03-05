@@ -212,6 +212,21 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	public T[] ToArray() => this.AsValueSlice().ToArray();
 
 	/// <summary>
+	/// Copy the contents of the list into an existing <see cref="Span{T}"/>.
+	/// </summary>
+	/// <exception cref="ArgumentException">
+	///   <paramref name="destination"/> is shorter than the source slice.
+	/// </exception>
+	public void CopyTo(Span<T> destination) => this.AsValueSlice().CopyTo(destination);
+
+	/// <summary>
+	/// Attempt to copy the contents of the list into an existing
+	/// <see cref="Span{T}"/>. If the <paramref name="destination"/> is too short,
+	/// no items are copied and the method returns <see langword="false"/>.
+	/// </summary>
+	public bool TryCopyTo(Span<T> destination) => this.AsValueSlice().TryCopyTo(destination);
+
+	/// <summary>
 	/// Copy the list into a new <see cref="ImmutableArray{T}"/>.
 	/// </summary>
 	public ImmutableArray<T> ToImmutableArray() => this.AsValueSlice().ToImmutableArray();
