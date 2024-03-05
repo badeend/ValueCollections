@@ -78,9 +78,12 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	private readonly T[] items;
 	private readonly int count;
 
-	/// <summary>
-	/// Length of the list.
-	/// </summary>
+	internal T[] Items
+	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		get => this.items;
+	}
+
 	internal int Capacity
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

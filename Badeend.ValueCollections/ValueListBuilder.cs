@@ -51,6 +51,8 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	/// </summary>
 	private IReadOnlyList<T> items;
 
+	private int version;
+
 	/// <summary>
 	/// Create a <see cref="ValueList{T}"/> based on the current contents of the
 	/// builder.
@@ -77,6 +79,8 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 
 	private List<T> Mutate()
 	{
+		this.version++;
+
 		if (this.items is List<T> list)
 		{
 			return list;
@@ -438,10 +442,76 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	void IList<T>.RemoveAt(int index) => this.RemoveAt(index);
 
 	/// <inheritdoc/>
-	IEnumerator<T> IEnumerable<T>.GetEnumerator() => this.Read().GetEnumerator();
+	IEnumerator<T> IEnumerable<T>.GetEnumerator()
+	{
+		if (this.Count == 0)
+		{
+			return EnumeratorLike.Empty<T>();
+		}
+		else
+		{
+			return EnumeratorLike.AsIEnumerator<T, Enumerator>(new Enumerator(this));
+		}
+	}
 
 	/// <inheritdoc/>
-	IEnumerator IEnumerable.GetEnumerator() => this.Read().GetEnumerator();
+	IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<T>)this).GetEnumerator();
 
 	private static InvalidOperationException UnreachableException() => new("Unreachable");
+
+	/// <summary>
+	/// Returns an enumerator for this <see cref="ValueListBuilder{T}"/>.
+	///
+	/// Typically, you don't need to manually call this method, but instead use
+	/// the built-in <c>foreach</c> syntax.
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public Enumerator GetEnumerator() => new Enumerator(this);
+
+	/// <summary>
+	/// Enumerator for <see cref="ValueListBuilder{T}"/>.
+	/// </summary>
+#pragma warning disable CA1034 // Nested types should not be visible
+#pragma warning disable CA1815 // Override equals and operator equals on value types
+	public struct Enumerator : IEnumeratorLike<T>
+	{
+		private readonly ValueListBuilder<T> builder;
+		private readonly T[] items;
+		private readonly int version;
+		private int current;
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal Enumerator(ValueListBuilder<T> builder)
+		{
+			this.builder = builder;
+			this.items = builder.items switch
+			{
+				List<T> items => UnsafeHelpers.GetBackingArray(items),
+				ValueList<T> items => items.Items,
+				_ => throw UnreachableException(),
+			};
+			this.version = builder.version;
+			this.current = -1;
+		}
+
+		/// <inheritdoc/>
+		public readonly T Current
+		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			get => this.items![this.current];
+		}
+
+		/// <inheritdoc/>
+		public bool MoveNext()
+		{
+			if (this.version != this.builder.version)
+			{
+				throw new InvalidOperationException("Collection was modified during enumeration.");
+			}
+
+			return ++this.current < this.builder.Count;
+		}
+	}
+#pragma warning restore CA1815 // Override equals and operator equals on value types
+#pragma warning restore CA1034 // Nested types should not be visible
 }
