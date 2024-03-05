@@ -300,7 +300,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 			return -1;
 		}
 
-		return Array.LastIndexOf(this.items, item, this.offset, this.length);
+		return Array.LastIndexOf(this.items, item, this.offset + this.length - 1, this.length);
 	}
 
 	/// <summary>

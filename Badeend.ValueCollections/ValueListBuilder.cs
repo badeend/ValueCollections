@@ -358,28 +358,6 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	};
 
 	/// <summary>
-	/// Return the index of the first occurrence of <paramref name="item"/> in
-	/// the list, or <c>-1</c> if not found.
-	/// </summary>
-	public int IndexOf(T item, int index) => this.items switch
-	{
-		List<T> items => items.IndexOf(item, index),
-		ValueList<T> items => items.Slice(index).IndexOf(item),
-		_ => throw UnreachableException(),
-	};
-
-	/// <summary>
-	/// Return the index of the first occurrence of <paramref name="item"/> in
-	/// the list, or <c>-1</c> if not found.
-	/// </summary>
-	public int IndexOf(T item, int index, int count) => this.items switch
-	{
-		List<T> items => items.IndexOf(item, index, count),
-		ValueList<T> items => items.Slice(index, count).IndexOf(item),
-		_ => throw UnreachableException(),
-	};
-
-	/// <summary>
 	/// Return the index of the last occurrence of <paramref name="item"/> in
 	/// the list, or <c>-1</c> if not found.
 	/// </summary>
@@ -387,28 +365,6 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	{
 		List<T> items => items.LastIndexOf(item),
 		ValueList<T> items => items.LastIndexOf(item),
-		_ => throw UnreachableException(),
-	};
-
-	/// <summary>
-	/// Return the index of the last occurrence of <paramref name="item"/> in
-	/// the list, or <c>-1</c> if not found.
-	/// </summary>
-	public int LastIndexOf(T item, int index) => this.items switch
-	{
-		List<T> items => items.LastIndexOf(item, index),
-		ValueList<T> items => items.Slice(index).LastIndexOf(item),
-		_ => throw UnreachableException(),
-	};
-
-	/// <summary>
-	/// Return the index of the last occurrence of <paramref name="item"/> in
-	/// the list, or <c>-1</c> if not found.
-	/// </summary>
-	public int LastIndexOf(T item, int index, int count) => this.items switch
-	{
-		List<T> items => items.LastIndexOf(item, index, count),
-		ValueList<T> items => items.Slice(index, count).LastIndexOf(item),
 		_ => throw UnreachableException(),
 	};
 
