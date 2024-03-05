@@ -13,15 +13,15 @@ public static class ValueListBuilder
 	/// Add the <paramref name="items"/> to the end of the list.
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueListBuilder<T> AddRange<T>(this ValueListBuilder<T> builder, IEnumerable<T> items)
-		=> builder.AddRangeEnumerable(items);
+	public static ValueListBuilder<T> AddRange<T>(this ValueListBuilder<T> builder, ReadOnlySpan<T> items)
+		=> builder.AddRangeSpan(items);
 
 	/// <summary>
 	/// Insert the <paramref name="items"/> into the list at the specified <paramref name="index"/>.
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueListBuilder<T> InsertRange<T>(this ValueListBuilder<T> builder, int index, IEnumerable<T> items)
-		=> builder.InsertRangeEnumerable(index, items);
+	public static ValueListBuilder<T> InsertRange<T>(this ValueListBuilder<T> builder, int index, ReadOnlySpan<T> items)
+		=> builder.InsertRangeSpan(index, items);
 }
 
 /// <summary>
@@ -206,19 +206,57 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 		return this;
 	}
 
-	/// <summary>
-	/// Add the <paramref name="items"/> to the end of the list.
-	/// </summary>
-	public ValueListBuilder<T> AddRange(ReadOnlySpan<T> items)
+	// Accessible through an extension method.
+	internal ValueListBuilder<T> AddRangeSpan(ReadOnlySpan<T> items)
 	{
 		UnsafeHelpers.AddRange(this.Mutate(), items);
 		return this;
 	}
 
-	// Accessible through an extension method.
-	internal ValueListBuilder<T> AddRangeEnumerable(IEnumerable<T> items)
+	/// <summary>
+	/// Add the <paramref name="items"/> to the end of the list.
+	/// </summary>
+	public ValueListBuilder<T> AddRange(IEnumerable<T> items)
 	{
-		this.Mutate().AddRange(items);
+		if (items is ICollection<T> collection)
+		{
+			return this.AddRangeCollection(collection);
+		}
+
+		if (items is null)
+		{
+			throw new ArgumentNullException(nameof(items));
+		}
+
+		var list = this.Mutate();
+		foreach (var item in items)
+		{
+			list.Add(item);
+
+			// Something not immediately obvious from just the code itself is that
+			// nothing prevents consumers from calling this method with an `items`
+			// argument that is (indirectly) derived from `this`. e.g.
+			// ```builder.AddRange(builder.Where(_ => true))```
+			// Without precaution that could result in an infinite loop with
+			// infinite memory growth.
+			// We "protect" our consumers from this by invalidating the enumerator
+			// on each iteration such that an exception will be thrown.
+			this.version++;
+		}
+
+		return this;
+	}
+
+	private ValueListBuilder<T> AddRangeCollection(ICollection<T> items)
+	{
+		var list = this.Mutate();
+
+		if (checked(list.Count + items.Count) < list.Count)
+		{
+			throw new OverflowException();
+		}
+
+		list.AddRange(items);
 		return this;
 	}
 
@@ -231,19 +269,57 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 		return this;
 	}
 
-	/// <summary>
-	/// Insert the <paramref name="items"/> into the list at the specified <paramref name="index"/>.
-	/// </summary>
-	public ValueListBuilder<T> InsertRange(int index, ReadOnlySpan<T> items)
+	// Accessible through an extension method.
+	internal ValueListBuilder<T> InsertRangeSpan(int index, ReadOnlySpan<T> items)
 	{
 		UnsafeHelpers.InsertRange(this.Mutate(), index, items);
 		return this;
 	}
 
-	// Accessible through an extension method.
-	internal ValueListBuilder<T> InsertRangeEnumerable(int index, IEnumerable<T> items)
+	/// <summary>
+	/// Insert the <paramref name="items"/> into the list at the specified <paramref name="index"/>.
+	/// </summary>
+	public ValueListBuilder<T> InsertRange(int index, IEnumerable<T> items)
 	{
-		this.Mutate().InsertRange(index, items);
+		if (items is ICollection<T> collection)
+		{
+			return this.InsertRangeCollection(index, collection);
+		}
+
+		if (items is null)
+		{
+			throw new ArgumentNullException(nameof(items));
+		}
+
+		var list = this.Mutate();
+		foreach (var item in items)
+		{
+			list.Insert(index++, item);
+
+			// Something not immediately obvious from just the code itself is that
+			// nothing prevents consumers from calling this method with an `items`
+			// argument that is (indirectly) derived from `this`. e.g.
+			// ```builder.InsertRange(0, builder.Where(_ => true))```
+			// Without precaution that could result in an infinite loop with
+			// infinite memory growth.
+			// We "protect" our consumers from this by invalidating the enumerator
+			// on each iteration such that an exception will be thrown.
+			this.version++;
+		}
+
+		return this;
+	}
+
+	private ValueListBuilder<T> InsertRangeCollection(int index, ICollection<T> items)
+	{
+		var list = this.Mutate();
+
+		if (checked(list.Count + items.Count) < list.Count)
+		{
+			throw new OverflowException();
+		}
+
+		list.InsertRange(index, items);
 		return this;
 	}
 
