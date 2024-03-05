@@ -318,7 +318,17 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	public Enumerator GetEnumerator() => new Enumerator(this);
 
 	/// <inheritdoc/>
-	IEnumerator<T> IEnumerable<T>.GetEnumerator() => new EnumeratorObject(this);
+	IEnumerator<T> IEnumerable<T>.GetEnumerator()
+	{
+		if (this.Count == 0)
+		{
+			return EnumeratorLike.Empty<T>();
+		}
+		else
+		{
+			return EnumeratorLike.AsIEnumerator<T, Enumerator>(new Enumerator(this));
+		}
+	}
 
 	/// <inheritdoc/>
 	IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<T>)this).GetEnumerator();
@@ -328,7 +338,7 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	/// </summary>
 #pragma warning disable CA1034 // Nested types should not be visible
 #pragma warning disable CA1815 // Override equals and operator equals on value types
-	public struct Enumerator
+	public struct Enumerator : IRefEnumeratorLike<T>
 	{
 		private readonly T[] items;
 		private readonly int end;
@@ -342,46 +352,22 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 			this.current = -1;
 		}
 
-		/// <summary>
-		/// Gets the currently enumerated value.
-		/// </summary>
+		/// <inheritdoc/>
 		public readonly ref readonly T Current
 		{
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get => ref this.items![this.current];
 		}
 
-		/// <summary>
-		/// Advances to the next value to be enumerated.
-		/// </summary>
+		/// <inheritdoc/>
+		readonly T IEnumeratorLike<T>.Current => this.Current;
+
+		/// <inheritdoc/>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public bool MoveNext() => ++this.current < this.end;
 	}
 #pragma warning restore CA1815 // Override equals and operator equals on value types
 #pragma warning restore CA1034 // Nested types should not be visible
-
-	private sealed class EnumeratorObject : IEnumerator<T>
-	{
-		private Enumerator enumerator;
-
-		internal EnumeratorObject(ValueList<T> list)
-		{
-			this.enumerator = new(list);
-		}
-
-		public T Current => this.enumerator.Current;
-
-		object? IEnumerator.Current => this.enumerator.Current;
-
-		public bool MoveNext() => this.enumerator.MoveNext();
-
-		void IEnumerator.Reset() => throw new NotSupportedException();
-
-		void IDisposable.Dispose()
-		{
-			// Nothing to dispose.
-		}
-	}
 
 	/// <inheritdoc/>
 	void ICollection<T>.Add(T item) => throw CreateImmutableException();

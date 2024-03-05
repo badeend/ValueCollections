@@ -324,7 +324,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// </summary>
 #pragma warning disable CA1034 // Nested types should not be visible
 #pragma warning disable CA1815 // Override equals and operator equals on value types
-	public struct Enumerator
+	public struct Enumerator : IRefEnumeratorLike<T>
 	{
 		private readonly T[]? items;
 		private readonly int end;
@@ -338,18 +338,17 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 			this.current = slice.offset - 1;
 		}
 
-		/// <summary>
-		/// Gets the currently enumerated value.
-		/// </summary>
+		/// <inheritdoc/>
 		public readonly ref readonly T Current
 		{
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get => ref this.items![this.current];
 		}
 
-		/// <summary>
-		/// Advances to the next value to be enumerated.
-		/// </summary>
+		/// <inheritdoc/>
+		readonly T IEnumeratorLike<T>.Current => this.Current;
+
+		/// <inheritdoc/>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public bool MoveNext() => ++this.current < this.end;
 	}
