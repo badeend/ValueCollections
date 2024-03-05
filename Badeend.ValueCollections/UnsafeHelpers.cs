@@ -42,7 +42,12 @@ internal static class UnsafeHelpers
 #if NET6_0_OR_GREATER
 		list.EnsureCapacity(capacity);
 #else
-		if (list.Count < capacity)
+		if (capacity < 0)
+		{
+			throw new ArgumentOutOfRangeException(nameof(capacity));
+		}
+
+		if (list.Capacity < capacity)
 		{
 			list.Capacity = capacity;
 		}
@@ -103,7 +108,8 @@ internal static class UnsafeHelpers
 		}
 
 		var previousCount = list.Count;
-		SetCount(list, list.Count + source.Length);
+		var newCount = checked(list.Count + source.Length);
+		SetCount(list, newCount);
 		var array = GetBackingArray(list);
 
 		// If the insertion point in the middle of the list, shift the existing content over:
@@ -127,7 +133,8 @@ internal static class UnsafeHelpers
 		}
 
 		var previousCount = list.Count;
-		SetCount(list, previousCount + source.Length);
+		var newCount = checked(previousCount + source.Length);
+		SetCount(list, newCount);
 		var array = GetBackingArray(list);
 		source.CopyTo(array.AsSpan(previousCount));
 #endif

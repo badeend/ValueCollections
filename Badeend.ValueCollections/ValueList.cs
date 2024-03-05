@@ -116,7 +116,7 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		get
 		{
-			if (index >= this.count)
+			if (index < 0 || index >= this.count)
 			{
 				throw new ArgumentOutOfRangeException(nameof(index));
 			}
@@ -259,7 +259,15 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	int IList<T>.IndexOf(T item) => this.AsValueSlice().IndexOf(item);
 
 	/// <inheritdoc/>
-	void ICollection<T>.CopyTo(T[] array, int arrayIndex) => this.AsValueSlice().CopyTo(array.AsSpan().Slice(arrayIndex));
+	void ICollection<T>.CopyTo(T[] array, int arrayIndex)
+	{
+		if (array is null)
+		{
+			throw new ArgumentNullException(nameof(array));
+		}
+
+		this.AsValueSlice().CopyTo(array.AsSpan().Slice(arrayIndex));
+	}
 
 	/// <inheritdoc/>
 	public sealed override int GetHashCode() => this.AsValueSlice().GetHashCode();

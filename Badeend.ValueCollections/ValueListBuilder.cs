@@ -418,7 +418,15 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	void ICollection<T>.Clear() => this.Clear();
 
 	/// <inheritdoc/>
-	void ICollection<T>.CopyTo(T[] array, int arrayIndex) => this.CopyTo(array.AsSpan(arrayIndex));
+	void ICollection<T>.CopyTo(T[] array, int arrayIndex)
+	{
+		if (array is null)
+		{
+			throw new ArgumentNullException(nameof(array));
+		}
+
+		this.CopyTo(array.AsSpan(arrayIndex));
+	}
 
 	/// <inheritdoc/>
 	void IList<T>.Insert(int index, T item) => this.Insert(index, item);
