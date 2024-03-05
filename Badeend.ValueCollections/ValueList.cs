@@ -60,20 +60,10 @@ public static class ValueList
 /// Taking a subslice with <see cref="ValueList{T}.Slice(int)"/> and
 /// <see cref="ValueList{T}.Slice(int, int)"/> is very cheap as it reuses the
 /// same allocation.
-///
-/// ValueList is both "immutable" and a "list", therefore it implements
-/// <see cref="IImmutableList{T}"/>. However, it is not a
-/// <a href="https://en.wikipedia.org/wiki/Persistent_data_structure">persistent</a>
-/// data structure. To prevent silent performance traps, any attempt to use the
-/// "mutating" features of <c>IImmutableList</c> will throw an exception. If you
-/// need those features, you can use the
-/// <see cref="ImmutableList.ToImmutableList{TSource}(IEnumerable{TSource})"/>
-/// extension method to deliberately copy the contents over into a type that
-/// supports them.
 /// </summary>
 /// <typeparam name="T">The type of items in the list.</typeparam>
 [CollectionBuilder(typeof(ValueList), nameof(ValueList.Create))]
-public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IImmutableList<T>, IEquatable<ValueList<T>>
+public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueList<T>>
 {
 	/// <summary>
 	/// Get a new empty list.
@@ -240,34 +230,12 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IImmutableList<T>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int IndexOf(T item) => this.AsValueSlice().IndexOf(item);
 
-	/// <inheritdoc/>
-	int IImmutableList<T>.IndexOf(T item, int index, int count, IEqualityComparer<T>? equalityComparer)
-	{
-		if (equalityComparer is not null && equalityComparer != EqualityComparer<T>.Default)
-		{
-			throw new NotSupportedException("ValueList only supports the default EqualityComparer");
-		}
-
-		return this.Slice(index, count).IndexOf(item);
-	}
-
 	/// <summary>
 	/// Return the index of the last occurrence of <paramref name="item"/> in
 	/// the list, or <c>-1</c> if not found.
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int LastIndexOf(T item) => this.AsValueSlice().LastIndexOf(item);
-
-	/// <inheritdoc/>
-	int IImmutableList<T>.LastIndexOf(T item, int index, int count, IEqualityComparer<T>? equalityComparer)
-	{
-		if (equalityComparer is not null && equalityComparer != EqualityComparer<T>.Default)
-		{
-			throw new NotSupportedException("ValueList only supports the default EqualityComparer");
-		}
-
-		return this.Slice(index, count).LastIndexOf(item);
-	}
 
 	/// <summary>
 	/// Returns <see langword="true"/> when the list contains the specified
@@ -414,43 +382,5 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IImmutableList<T>
 	/// <inheritdoc/>
 	void IList<T>.RemoveAt(int index) => throw CreateImmutableException();
 
-	/// <inheritdoc/>
-	IImmutableList<T> IImmutableList<T>.Add(T value) => throw NotPersistentException();
-
-	/// <inheritdoc/>
-	IImmutableList<T> IImmutableList<T>.AddRange(IEnumerable<T> items) => throw NotPersistentException();
-
-	/// <inheritdoc/>
-	IImmutableList<T> IImmutableList<T>.Insert(int index, T element) => throw NotPersistentException();
-
-	/// <inheritdoc/>
-	IImmutableList<T> IImmutableList<T>.InsertRange(int index, IEnumerable<T> items) => throw NotPersistentException();
-
-	/// <inheritdoc/>
-	IImmutableList<T> IImmutableList<T>.Remove(T value, IEqualityComparer<T>? equalityComparer) => throw NotPersistentException();
-
-	/// <inheritdoc/>
-	IImmutableList<T> IImmutableList<T>.RemoveAll(Predicate<T> match) => throw NotPersistentException();
-
-	/// <inheritdoc/>
-	IImmutableList<T> IImmutableList<T>.RemoveRange(IEnumerable<T> items, IEqualityComparer<T>? equalityComparer) => throw NotPersistentException();
-
-	/// <inheritdoc/>
-	IImmutableList<T> IImmutableList<T>.RemoveRange(int index, int count) => throw NotPersistentException();
-
-	/// <inheritdoc/>
-	IImmutableList<T> IImmutableList<T>.RemoveAt(int index) => throw NotPersistentException();
-
-	/// <inheritdoc/>
-	IImmutableList<T> IImmutableList<T>.SetItem(int index, T value) => throw NotPersistentException();
-
-	/// <inheritdoc/>
-	IImmutableList<T> IImmutableList<T>.Replace(T oldValue, T newValue, IEqualityComparer<T>? equalityComparer) => throw NotPersistentException();
-
-	/// <inheritdoc/>
-	IImmutableList<T> IImmutableList<T>.Clear() => throw NotPersistentException();
-
 	private static NotSupportedException CreateImmutableException() => new NotSupportedException("Collection is immutable");
-
-	private static NotSupportedException NotPersistentException() => new NotSupportedException("Collection is immutable, but not persistent");
 }

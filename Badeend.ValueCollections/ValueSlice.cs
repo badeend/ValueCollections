@@ -426,23 +426,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// </summary>
 	public IReadOnlyList<T> AsReadOnlyList() => new Reader(this);
 
-	/// <summary>
-	/// Create a new <see cref="IImmutableList{T}"/> view over the slice.
-	///
-	/// While ValueSlice is an <i>immutable</i> collection, it is not a
-	/// <i>persistent</i> data structure. Any attempt to use the "mutating"
-	/// features of <c>IImmutableList</c> will throw an exception. If you
-	/// need those features, you can use the
-	/// <see cref="ImmutableList.ToImmutableList{TSource}(IEnumerable{TSource})"/>
-	/// extension method to deliberately copy the contents over into a type that
-	/// supports them.
-	///
-	/// This method allocates a new fixed-size IImmutableList instance. The items
-	/// are not copied.
-	/// </summary>
-	public IImmutableList<T> AsImmutableList() => new Reader(this);
-
-	private sealed class Reader : IEnumerable<T>, IReadOnlyList<T>, IImmutableList<T>
+	private sealed class Reader : IEnumerable<T>, IReadOnlyList<T>
 	{
 		private readonly ValueSlice<T> slice;
 
@@ -464,52 +448,6 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 		}
 
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-
-		public int IndexOf(T item, int index, int count, IEqualityComparer<T>? equalityComparer)
-		{
-			if (equalityComparer is not null && equalityComparer != EqualityComparer<T>.Default)
-			{
-				throw new NotSupportedException("ValueSlice only supports the default EqualityComparer");
-			}
-
-			return this.slice.Slice(index, count).IndexOf(item);
-		}
-
-		public int LastIndexOf(T item, int index, int count, IEqualityComparer<T>? equalityComparer)
-		{
-			if (equalityComparer is not null && equalityComparer != EqualityComparer<T>.Default)
-			{
-				throw new NotSupportedException("ValueSlice only supports the default EqualityComparer");
-			}
-
-			return this.slice.Slice(index, count).LastIndexOf(item);
-		}
-
-		public IImmutableList<T> Add(T value) => throw NotPersistentException();
-
-		public IImmutableList<T> AddRange(IEnumerable<T> items) => throw NotPersistentException();
-
-		public IImmutableList<T> Clear() => throw NotPersistentException();
-
-		public IImmutableList<T> Insert(int index, T element) => throw NotPersistentException();
-
-		public IImmutableList<T> InsertRange(int index, IEnumerable<T> items) => throw NotPersistentException();
-
-		public IImmutableList<T> Remove(T value, IEqualityComparer<T>? equalityComparer) => throw NotPersistentException();
-
-		public IImmutableList<T> RemoveAll(Predicate<T> match) => throw NotPersistentException();
-
-		public IImmutableList<T> RemoveAt(int index) => throw NotPersistentException();
-
-		public IImmutableList<T> RemoveRange(IEnumerable<T> items, IEqualityComparer<T>? equalityComparer) => throw NotPersistentException();
-
-		public IImmutableList<T> RemoveRange(int index, int count) => throw NotPersistentException();
-
-		public IImmutableList<T> Replace(T oldValue, T newValue, IEqualityComparer<T>? equalityComparer) => throw NotPersistentException();
-
-		public IImmutableList<T> SetItem(int index, T value) => throw NotPersistentException();
-
-		private static NotSupportedException NotPersistentException() => new NotSupportedException("Collection is immutable, but not persistent");
 	}
 
 	private static bool SequenceEqual(ValueSlice<T> left, ValueSlice<T> right)
