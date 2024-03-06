@@ -374,11 +374,35 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	}
 
 	/// <summary>
+	/// Remove the first element that matches the predicate.
+	/// </summary>
+	public ValueListBuilder<T> RemoveFirst(Predicate<T> match)
+	{
+		var list = this.Mutate();
+		var index = list.FindIndex(match);
+		if (index >= 0)
+		{
+			list.RemoveAt(index);
+		}
+
+		return this;
+	}
+
+	/// <summary>
 	/// Remove all occurrences of a specific object from the list.
 	/// </summary>
 	public ValueListBuilder<T> RemoveAll(T item)
 	{
 		this.Mutate().RemoveAll(x => EqualityComparer<T>.Default.Equals(x, item));
+		return this;
+	}
+
+	/// <summary>
+	/// Remove all elements that match the predicate.
+	/// </summary>
+	public ValueListBuilder<T> RemoveAll(Predicate<T> match)
+	{
+		this.Mutate().RemoveAll(match);
 		return this;
 	}
 
