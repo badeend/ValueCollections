@@ -14,11 +14,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void CopyTo_InvalidArgs_Throws()
         {
-            AssertExtensions.Throws<ArgumentNullException>("list", () => CollectionExtensions.CopyTo(null, Span<int>.Empty));
-            AssertExtensions.Throws<ArgumentNullException>("list", () => CollectionExtensions.CopyTo(null, new Span<int>(new int[1])));
-
             var list = new ValueListBuilder<int>() { 1, 2, 3 };
-            Assert.Throws<ArgumentException>(() => CollectionExtensions.CopyTo(list, (Span<int>)new int[2]));
+            Assert.Throws<ArgumentException>(() => list.CopyTo((Span<int>)new int[2]));
         }
 
         [Fact]

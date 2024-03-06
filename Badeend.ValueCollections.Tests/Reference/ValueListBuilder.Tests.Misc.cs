@@ -68,48 +68,6 @@ namespace Badeend.ValueCollections.Tests.Reference
                 }
             }
 
-            public void NonGenericIListBasicInsert(T[] items, T item, int index, int repeat)
-            {
-                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
-                IList _ilist = list;
-
-                for (int i = 0; i < repeat; i++)
-                {
-                    _ilist.Insert(index, item);
-                }
-
-                Assert.True(list.Contains(item)); //"Expected it to be true."
-                Assert.Equal(list.Count, items.Length + repeat); //"Expected them to be equal."
-
-                for (int i = 0; i < index; i++)
-                {
-                    Assert.Equal(list[i], items[i]); //"Expected them to be equal."
-                }
-
-                for (int i = index; i < index + repeat; i++)
-                {
-                    Assert.Equal((object)list[i], item); //"Expected them to be equal."
-                }
-
-
-                for (int i = index + repeat; i < list.Count; i++)
-                {
-                    Assert.Equal(list[i], items[i - repeat]); //"Expected them to be equal."
-                }
-            }
-
-            public void NonGenericIListInsertValidations(T[] items)
-            {
-                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
-                IList _ilist = list;
-                int[] bad = new int[] { items.Length + 1, items.Length + 2, int.MaxValue, -1, -2, int.MinValue };
-                for (int i = 0; i < bad.Length; i++)
-                {
-                    Assert.Throws<ArgumentOutOfRangeException>(() => _ilist.Insert(bad[i], items[0])); //"ArgumentOutOfRangeException expected."
-                }
-
-                AssertExtensions.Throws<ArgumentException>("value", () => _ilist.Insert(0, new LinkedListNode<string>("blargh"))); //"ArgumentException expected."
-            }
 
             #endregion
 
@@ -196,228 +154,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public IEnumerable<T> ConstructTestList(T[] items)
             {
-                return items.ToList();
-            }
-
-            #endregion
-
-            #region GetRange
-
-            public void BasicGetRange(T[] items, int index, int count, bool useSlice)
-            {
-                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
-                ValueListBuilder<T> range = useSlice ? list.Slice(index, count) : list.GetRange(index, count);
-
-                //ensure range is good
-                for (int i = 0; i < count; i++)
-                {
-                    Assert.Equal(range[i], items[i + index]); //String.Format("Err_170178aqhbpa Expected item: {0} at: {1} actual: {2}", items[i + index], i, range[i])
-                }
-
-                //ensure no side effects
-                for (int i = 0; i < items.Length; i++)
-                {
-                    Assert.Equal(list[i], items[i]); //String.Format("Err_00125698ahpap Expected item: {0} at: {1} actual: {2}", items[i], i, list[i])
-                }
-            }
-
-            public void BasicSliceSyntax(T[] items, int index, int count)
-            {
-                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
-                ValueListBuilder<T> range = list[index..(index + count)];
-
-                //ensure range is good
-                for (int i = 0; i < count; i++)
-                {
-                    Assert.Equal(range[i], items[i + index]); //String.Format("Err_170178aqhbpa Expected item: {0} at: {1} actual: {2}", items[i + index], i, range[i])
-                }
-
-                //ensure no side effects
-                for (int i = 0; i < items.Length; i++)
-                {
-                    Assert.Equal(list[i], items[i]); //String.Format("Err_00125698ahpap Expected item: {0} at: {1} actual: {2}", items[i], i, list[i])
-                }
-            }
-
-            public void EnsureRangeIsReference(T[] items, T item, int index, int count, bool useSlice)
-            {
-                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
-                ValueListBuilder<T> range = useSlice ? list[index..(index + count)] : list.GetRange(index, count);
-                T tempItem = list[index];
-                range[0] = item;
-                Assert.Equal(list[index], tempItem); //String.Format("Err_707811hapba Expected item: {0} at: {1} actual: {2}", tempItem, index, list[index])
-            }
-
-            public void EnsureThrowsAfterModification(T[] items, T item, int index, int count, bool useSlice)
-            {
-                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
-                ValueListBuilder<T> range = useSlice ? list[index..(index + count)] : list.GetRange(index, count);
-                T tempItem = list[index];
-                list[index] = item;
-
-                Assert.Equal(range[0], tempItem); //String.Format("Err_1221589ajpa Expected item: {0} at: {1} actual: {2}", tempItem, 0, range[0])
-            }
-
-            public void GetRangeValidations(T[] items, bool useSlice)
-            {
-                //
-                //Always send items.Length is even
-                //
-                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
-                int[] bad = new int[] {  /**/items.Length,1,
-                    /**/
-                                    items.Length+1,0,
-                    /**/
-                                    items.Length+1,1,
-                    /**/
-                                    items.Length,2,
-                    /**/
-                                    items.Length/2,items.Length/2+1,
-                    /**/
-                                    items.Length-1,2,
-                    /**/
-                                    items.Length-2,3,
-                    /**/
-                                    1,items.Length,
-                    /**/
-                                    0,items.Length+1,
-                    /**/
-                                    1,items.Length+1,
-                    /**/
-                                    2,items.Length,
-                    /**/
-                                    items.Length/2+1,items.Length/2,
-                    /**/
-                                    2,items.Length-1,
-                    /**/
-                                    3,items.Length-2
-                                };
-
-                for (int i = 0; i < bad.Length; i++)
-                {
-                    AssertExtensions.Throws<ArgumentException>(null, () =>
-                    {
-                        int index = bad[i];
-                        int count = bad[++i];
-                        return useSlice ? list.Slice(index, count) : list.GetRange(index, count);
-                    }); //"ArgumentException expected."
-                }
-
-                bad = new int[] {
-                    /**/
-                                    -1,-1,
-                    /**/
-                                    -1,0,
-                    /**/
-                                    -1,1,
-                    /**/
-                                    -1,2,
-                    /**/
-                                    0,-1,
-                    /**/
-                                    1,-1,
-                    /**/
-                                    2,-1
-                                };
-
-                for (int i = 0; i < bad.Length; i++)
-                {
-                    Assert.Throws<ArgumentOutOfRangeException>(() =>
-                    {
-                        int index = bad[i];
-                        int count = bad[++i];
-                        return useSlice ? list.Slice(index, count) : list.GetRange(index, count);
-                    }); //"ArgumentOutOfRangeException expected."
-                }
-            }
-
-            #endregion
-
-            #region Exists(Pred<T>)
-
-            public void Exists_Verify(T[] items)
-            {
-                Exists_VerifyVanilla(items);
-                Exists_VerifyDuplicates(items);
-            }
-
-            public void Exists_VerifyExceptions(T[] items)
-            {
-                ValueListBuilder<T> list = new ValueListBuilder<T>();
-                Predicate<T> predicate = (T item) => { return true; };
-
-                for (int i = 0; i < items.Length; ++i)
-                    list.Add(items[i]);
-
-                //[] Verify Null match
-                Assert.Throws<ArgumentNullException>(() => list.Exists(null)); //"Err_858ahia Expected null match to throw ArgumentNullException"
-            }
-
-            private void Exists_VerifyVanilla(T[] items)
-            {
-                T expectedItem = default(T);
-                ValueListBuilder<T> list = new ValueListBuilder<T>();
-                Predicate<T> expectedItemDelegate = (T item) => { return expectedItem == null ? item == null : expectedItem.Equals(item); };
-                bool typeNullable = default(T) == null;
-
-                for (int i = 0; i < items.Length; ++i)
-                    list.Add(items[i]);
-
-                //[] Verify Exists returns the correct index
-                for (int i = 0; i < items.Length; ++i)
-                {
-                    expectedItem = items[i];
-
-                    Assert.True(list.Exists(expectedItemDelegate),
-                        "Err_282308ahid Verifying Nullable returned FAILED\n");
-                }
-
-                //[] Verify Exists returns true if the match returns true on every item
-                Assert.True((0 < items.Length) == list.Exists((T item) => { return true; }),
-                        "Err_548ahid Verify Exists returns 0 if the match returns true on every item FAILED\n");
-
-                //[] Verify Exists returns false if the match returns false on every item
-                Assert.True(!list.Exists((T item) => { return false; }),
-                        "Err_30848ahidi Verify Exists returns -1 if the match returns false on every item FAILED\n");
-
-                //[] Verify with default(T)
-                list.Add(default(T));
-                Assert.True(list.Exists((T item) => { return item == null ? default(T) == null : item.Equals(default(T)); }),
-                        "Err_541848ajodi Verify with default(T) FAILED\n");
-                list.RemoveAt(list.Count - 1);
-            }
-
-            private void Exists_VerifyDuplicates(T[] items)
-            {
-                T expectedItem = default(T);
-                ValueListBuilder<T> list = new ValueListBuilder<T>();
-                Predicate<T> expectedItemDelegate = (T item) => { return expectedItem == null ? item == null : expectedItem.Equals(item); };
-
-                if (0 < items.Length)
-                {
-                    for (int i = 0; i < items.Length; ++i)
-                        list.Add(items[i]);
-
-                    for (int i = 0; i < items.Length && i < 2; ++i)
-                        list.Add(items[i]);
-
-                    //[] Verify first item is duplicated
-                    expectedItem = items[0];
-                    Assert.True(list.Exists(expectedItemDelegate),
-                            "Err_2879072qaiadf  Verify first item is duplicated FAILED\n");
-                }
-
-                if (1 < items.Length)
-                {
-                    //[] Verify second item is duplicated
-                    expectedItem = items[1];
-                    Assert.True(list.Exists(expectedItemDelegate),
-                            "Err_4588ajdia Verify second item is duplicated FAILED\n");
-
-                    //[] Verify with match that matches more then one item
-                    Assert.True(list.Exists((T item) => { return item != null && (item.Equals(items[0]) || item.Equals(items[1])); }),
-                            "Err_4489ajodoi Verify with match that matches more then one item FAILED\n");
-                }
+                return items.ToValueListBuilder();
             }
 
             #endregion
@@ -449,7 +186,7 @@ namespace Badeend.ValueCollections.Tests.Reference
                 ValueListBuilder<T> list = new ValueListBuilder<T>(items);
                 for (int i = 0; i < items.Length; i++)
                 {
-                    list.Remove(items[i]);
+                    list.RemoveFirst(items[i]);
                     Assert.False(list.Contains(items[i])); //"Should not contain item"
                 }
             }
@@ -460,7 +197,7 @@ namespace Badeend.ValueCollections.Tests.Reference
                 for (int i = 0; i < items.Length; i++)
                 {
                     list.Add(items[i]);
-                    list.Remove(items[i]);
+                    list.RemoveFirst(items[i]);
                     list.Add(items[i]);
                     Assert.True(list.Contains(items[i])); //"Should contain item."
                 }
@@ -478,7 +215,7 @@ namespace Badeend.ValueCollections.Tests.Reference
                 for (int i = 0; i < times + 1; i++)
                 {
                     Assert.True(list.Contains(items[items.Length / 2])); //"Should contain item."
-                    list.Remove(items[items.Length / 2]);
+                    list.RemoveFirst(items[items.Length / 2]);
                 }
                 Assert.False(list.Contains(items[items.Length / 2])); //"Should not contain item"
             }
@@ -492,92 +229,6 @@ namespace Badeend.ValueCollections.Tests.Reference
                 ValueListBuilder<T> list = new ValueListBuilder<T>(items);
                 list.Add(value);
                 Assert.True(list.Contains(value)); //"Should contain item."
-            }
-
-            public void NonGenericIListBasicContains(T[] items)
-            {
-                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
-                IList _ilist = list;
-
-                for (int i = 0; i < items.Length; i++)
-                {
-                    Assert.True(_ilist.Contains(items[i])); //"Should contain item."
-                }
-            }
-
-            public void NonGenericIListNonExistingValues(T[] itemsX, T[] itemsY)
-            {
-                ValueListBuilder<T> list = new ValueListBuilder<T>(itemsX);
-                IList _ilist = list;
-
-                for (int i = 0; i < itemsY.Length; i++)
-                {
-                    Assert.False(_ilist.Contains(itemsY[i])); //"Should not contain item"
-                }
-            }
-
-            public void NonGenericIListRemovedValues(T[] items)
-            {
-                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
-                IList _ilist = list;
-                for (int i = 0; i < items.Length; i++)
-                {
-                    list.Remove(items[i]);
-                    Assert.False(_ilist.Contains(items[i])); //"Should not contain item"
-                }
-            }
-
-            public void NonGenericIListAddRemoveValues(T[] items)
-            {
-                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
-                IList _ilist = list;
-                for (int i = 0; i < items.Length; i++)
-                {
-                    list.Add(items[i]);
-                    list.Remove(items[i]);
-                    list.Add(items[i]);
-                    Assert.True(_ilist.Contains(items[i])); //"Should contain item."
-                }
-            }
-
-            public void NonGenericIListMultipleValues(T[] items, int times)
-            {
-                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
-                IList _ilist = list;
-
-                for (int i = 0; i < times; i++)
-                {
-                    list.Add(items[items.Length / 2]);
-                }
-
-                for (int i = 0; i < times + 1; i++)
-                {
-                    Assert.True(_ilist.Contains(items[items.Length / 2])); //"Should contain item."
-                    list.Remove(items[items.Length / 2]);
-                }
-                Assert.False(_ilist.Contains(items[items.Length / 2])); //"Should not contain item"
-            }
-
-            public void NonGenericIListContainsNullWhenReference(T[] items, T value)
-            {
-                if ((object)value != null)
-                {
-                    throw new ArgumentException("invalid argument passed to testcase");
-                }
-
-                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
-                IList _ilist = list;
-                list.Add(value);
-                Assert.True(_ilist.Contains(value)); //"Should contain item."
-            }
-
-            public void NonGenericIListContainsTestParams()
-            {
-                ValueListBuilder<T> list = new ValueListBuilder<T>();
-                IList _ilist = list;
-
-                Assert.False(_ilist.Contains(new LinkedListNode<string>("rah")),
-                    "Err_68850ahiuedpz Expected Contains to return false with invalid type");
             }
 
             #endregion
@@ -616,81 +267,6 @@ namespace Badeend.ValueCollections.Tests.Reference
                     list.Clear();
                     Assert.Equal(0, list.Count); //"Should be equal to 0."
                 }
-            }
-
-            public void NonGenericIListClearEmptyList()
-            {
-                ValueListBuilder<T> list = new ValueListBuilder<T>();
-                IList _ilist = list;
-                Assert.Equal(0, list.Count); //"Should be equal to 0."
-                _ilist.Clear();
-                Assert.Equal(0, list.Count); //"Should be equal to 0."
-            }
-            public void NonGenericIListClearMultipleTimesEmptyList(int times)
-            {
-                ValueListBuilder<T> list = new ValueListBuilder<T>();
-                IList _ilist = list;
-                Assert.Equal(0, list.Count); //"Should be equal to 0."
-                for (int i = 0; i < times; i++)
-                {
-                    _ilist.Clear();
-                    Assert.Equal(0, list.Count); //"Should be equal to 0."
-                }
-            }
-            public void NonGenericIListClearNonEmptyList(T[] items)
-            {
-                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
-                IList _ilist = list;
-                _ilist.Clear();
-                Assert.Equal(0, list.Count); //"Should be equal to 0."
-            }
-
-            public void NonGenericIListClearMultipleTimesNonEmptyList(T[] items, int times)
-            {
-                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
-                IList _ilist = list;
-                for (int i = 0; i < times; i++)
-                {
-                    _ilist.Clear();
-                    Assert.Equal(0, list.Count); //"Should be equal to 0."
-                }
-            }
-
-            #endregion
-
-            #region TrueForAll
-
-            public void TrueForAll_VerifyVanilla(T[] items)
-            {
-                T expectedItem = default(T);
-                ValueListBuilder<T> list = new ValueListBuilder<T>();
-                Predicate<T> expectedItemDelegate = delegate (T item) { return expectedItem == null ? item != null : !expectedItem.Equals(item); };
-                bool typeNullable = default(T) == null;
-
-                for (int i = 0; i < items.Length; ++i)
-                    list.Add(items[i]);
-
-                //[] Verify TrueForAll looks at every item
-                for (int i = 0; i < items.Length; ++i)
-                {
-                    expectedItem = items[i];
-                    Assert.False(list.TrueForAll(expectedItemDelegate)); //"Err_282308ahid Verify TrueForAll looks at every item FAILED\n"
-                }
-
-                //[] Verify TrueForAll returns true if the match returns true on every item
-                Assert.True(list.TrueForAll(delegate (T item) { return true; }),
-                        "Err_548ahid Verify TrueForAll returns true if the match returns true on every item FAILED\n");
-
-                //[] Verify TrueForAll returns false if the match returns false on every item
-                Assert.True((0 == items.Length) == list.TrueForAll(delegate (T item) { return false; }),
-                        "Err_30848ahidi Verify TrueForAll returns " + (0 == items.Length) + " if the match returns false on every item FAILED\n");
-            }
-
-            public void TrueForAll_VerifyExceptions(T[] items)
-            {
-                var list = new ValueListBuilder<T>(items);
-                Assert.True(list.TrueForAll(item => true));
-                Assert.Throws<ArgumentNullException>(() => list.TrueForAll(null)); //"Err_858ahia Expected null match to throw ArgumentNullException"
             }
 
             #endregion
@@ -743,14 +319,6 @@ namespace Badeend.ValueCollections.Tests.Reference
             IntDriver.BasicInsert(intArr1, 50, 1, 8);
             IntDriver.BasicInsert(intArr1, 100, 50, 50);
 
-            IntDriver.NonGenericIListBasicInsert(new int[0], 1, 0, 3);
-            IntDriver.NonGenericIListBasicInsert(intArr1, 101, 50, 4);
-            IntDriver.NonGenericIListBasicInsert(intArr1, 100, 100, 5);
-            IntDriver.NonGenericIListBasicInsert(intArr1, 100, 99, 6);
-            IntDriver.NonGenericIListBasicInsert(intArr1, 50, 0, 7);
-            IntDriver.NonGenericIListBasicInsert(intArr1, 50, 1, 8);
-            IntDriver.NonGenericIListBasicInsert(intArr1, 100, 50, 50);
-
             Driver<string> StringDriver = new Driver<string>();
             string[] stringArr1 = new string[100];
             for (int i = 0; i < 100; i++)
@@ -768,15 +336,6 @@ namespace Badeend.ValueCollections.Tests.Reference
             StringDriver.BasicInsert(new string[] { null, null, null, "strobia", null }, null, 2, 3);
             StringDriver.BasicInsert(new string[] { null, null, null, null, null }, "strobia", 0, 5);
             StringDriver.BasicInsert(new string[] { null, null, null, null, null }, "strobia", 5, 1);
-            StringDriver.NonGenericIListBasicInsert(stringArr1, "strobia", 99, 2);
-            StringDriver.NonGenericIListBasicInsert(stringArr1, "strobia", 100, 3);
-            StringDriver.NonGenericIListBasicInsert(stringArr1, "strobia", 0, 4);
-            StringDriver.NonGenericIListBasicInsert(stringArr1, "strobia", 1, 5);
-            StringDriver.NonGenericIListBasicInsert(stringArr1, "strobia", 50, 51);
-            StringDriver.NonGenericIListBasicInsert(stringArr1, "strobia", 0, 100);
-            StringDriver.NonGenericIListBasicInsert(new string[] { null, null, null, "strobia", null }, null, 2, 3);
-            StringDriver.NonGenericIListBasicInsert(new string[] { null, null, null, null, null }, "strobia", 0, 5);
-            StringDriver.NonGenericIListBasicInsert(new string[] { null, null, null, null, null }, "strobia", 5, 1);
         }
 
         [Fact]
@@ -787,14 +346,12 @@ namespace Badeend.ValueCollections.Tests.Reference
             for (int i = 0; i < 100; i++)
                 intArr1[i] = i;
             IntDriver.InsertValidations(intArr1);
-            IntDriver.NonGenericIListInsertValidations(intArr1);
 
             Driver<string> StringDriver = new Driver<string>();
             string[] stringArr1 = new string[100];
             for (int i = 0; i < 100; i++)
                 stringArr1[i] = "SomeTestString" + i.ToString();
             StringDriver.InsertValidations(stringArr1);
-            StringDriver.NonGenericIListInsertValidations(stringArr1);
         }
 
         [Fact]
@@ -860,133 +417,6 @@ namespace Badeend.ValueCollections.Tests.Reference
             StringDriver.InsertRangeValidations(stringArr1, StringDriver.ConstructTestEnumerable);
         }
 
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
-        public static void GetRangeTests(bool useSlice)
-        {
-            Driver<int> IntDriver = new Driver<int>();
-            int[] intArr1 = new int[100];
-            for (int i = 0; i < 100; i++)
-                intArr1[i] = i;
-
-            IntDriver.BasicGetRange(intArr1, 50, 50, useSlice);
-            IntDriver.BasicGetRange(intArr1, 0, 50, useSlice);
-            IntDriver.BasicGetRange(intArr1, 50, 25, useSlice);
-            IntDriver.BasicGetRange(intArr1, 0, 25, useSlice);
-            IntDriver.BasicGetRange(intArr1, 75, 25, useSlice);
-            IntDriver.BasicGetRange(intArr1, 0, 100, useSlice);
-            IntDriver.BasicGetRange(intArr1, 0, 99, useSlice);
-            IntDriver.BasicGetRange(intArr1, 1, 1, useSlice);
-            IntDriver.BasicGetRange(intArr1, 99, 1, useSlice);
-            IntDriver.EnsureRangeIsReference(intArr1, 101, 0, 10, useSlice);
-            IntDriver.EnsureThrowsAfterModification(intArr1, 10, 10, 10, useSlice);
-
-            Driver<string> StringDriver = new Driver<string>();
-            string[] stringArr1 = new string[100];
-            for (int i = 0; i < 100; i++)
-                stringArr1[i] = "SomeTestString" + i.ToString();
-
-            StringDriver.BasicGetRange(stringArr1, 50, 50, useSlice);
-            StringDriver.BasicGetRange(stringArr1, 0, 50, useSlice);
-            StringDriver.BasicGetRange(stringArr1, 50, 25, useSlice);
-            StringDriver.BasicGetRange(stringArr1, 0, 25, useSlice);
-            StringDriver.BasicGetRange(stringArr1, 75, 25, useSlice);
-            StringDriver.BasicGetRange(stringArr1, 0, 100, useSlice);
-            StringDriver.BasicGetRange(stringArr1, 0, 99, useSlice);
-            StringDriver.BasicGetRange(stringArr1, 1, 1, useSlice);
-            StringDriver.BasicGetRange(stringArr1, 99, 1, useSlice);
-            StringDriver.EnsureRangeIsReference(stringArr1, "SometestString101", 0, 10, useSlice);
-            StringDriver.EnsureThrowsAfterModification(stringArr1, "str", 10, 10, useSlice);
-        }
-
-        [Fact]
-        public static void SlicingWorks()
-        {
-            Driver<int> IntDriver = new Driver<int>();
-            int[] intArr1 = new int[100];
-            for (int i = 0; i < 100; i++)
-                intArr1[i] = i;
-
-            IntDriver.BasicSliceSyntax(intArr1, 50, 50);
-            IntDriver.BasicSliceSyntax(intArr1, 0, 50);
-            IntDriver.BasicSliceSyntax(intArr1, 50, 25);
-            IntDriver.BasicSliceSyntax(intArr1, 0, 25);
-            IntDriver.BasicSliceSyntax(intArr1, 75, 25);
-            IntDriver.BasicSliceSyntax(intArr1, 0, 100);
-            IntDriver.BasicSliceSyntax(intArr1, 0, 99);
-            IntDriver.BasicSliceSyntax(intArr1, 1, 1);
-            IntDriver.BasicSliceSyntax(intArr1, 99, 1);
-        }
-
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
-        public static void GetRangeTests_Negative(bool useSlice)
-        {
-            Driver<int> IntDriver = new Driver<int>();
-            int[] intArr1 = new int[100];
-            for (int i = 0; i < 100; i++)
-                intArr1[i] = i;
-
-            Driver<string> StringDriver = new Driver<string>();
-            string[] stringArr1 = new string[100];
-            for (int i = 0; i < 100; i++)
-                stringArr1[i] = "SomeTestString" + i.ToString();
-
-            StringDriver.GetRangeValidations(stringArr1, useSlice);
-            IntDriver.GetRangeValidations(intArr1, useSlice);
-        }
-
-        [Fact]
-        public static void ExistsTests()
-        {
-            Driver<int> intDriver = new Driver<int>();
-            Driver<string> stringDriver = new Driver<string>();
-            int[] intArray;
-            string[] stringArray;
-            int arraySize = 16;
-
-            intArray = new int[arraySize];
-            stringArray = new string[arraySize];
-
-            for (int i = 0; i < arraySize; ++i)
-            {
-                intArray[i] = i + 1;
-                stringArray[i] = (i + 1).ToString();
-            }
-
-            intDriver.Exists_Verify(new int[0]);
-            intDriver.Exists_Verify(new int[] { 1 });
-            intDriver.Exists_Verify(intArray);
-
-            stringDriver.Exists_Verify(new string[0]);
-            stringDriver.Exists_Verify(new string[] { "1" });
-            stringDriver.Exists_Verify(stringArray);
-        }
-
-        [Fact]
-        public static void ExistsTests_Negative()
-        {
-            Driver<int> intDriver = new Driver<int>();
-            Driver<string> stringDriver = new Driver<string>();
-            int[] intArray;
-            string[] stringArray;
-            int arraySize = 16;
-
-            intArray = new int[arraySize];
-            stringArray = new string[arraySize];
-
-            for (int i = 0; i < arraySize; ++i)
-            {
-                intArray[i] = i + 1;
-                stringArray[i] = (i + 1).ToString();
-            }
-
-            intDriver.Exists_VerifyExceptions(intArray);
-            stringDriver.Exists_VerifyExceptions(stringArray);
-        }
-
         [Fact]
         public static void ContainsTests()
         {
@@ -1010,14 +440,6 @@ namespace Badeend.ValueCollections.Tests.Reference
             IntDriver.MultipleValues(intArr1, 3);
             IntDriver.MultipleValues(intArr1, 5);
             IntDriver.MultipleValues(intArr1, 17);
-            IntDriver.NonGenericIListBasicContains(intArr1);
-            IntDriver.NonGenericIListNonExistingValues(intArr1, intArr2);
-            IntDriver.NonGenericIListRemovedValues(intArr1);
-            IntDriver.NonGenericIListAddRemoveValues(intArr1);
-            IntDriver.NonGenericIListMultipleValues(intArr1, 3);
-            IntDriver.NonGenericIListMultipleValues(intArr1, 5);
-            IntDriver.NonGenericIListMultipleValues(intArr1, 17);
-            IntDriver.NonGenericIListContainsTestParams();
 
 
             Driver<string> StringDriver = new Driver<string>();
@@ -1040,15 +462,6 @@ namespace Badeend.ValueCollections.Tests.Reference
             StringDriver.MultipleValues(stringArr1, 5);
             StringDriver.MultipleValues(stringArr1, 17);
             StringDriver.ContainsNullWhenReference(stringArr1, null);
-            StringDriver.NonGenericIListBasicContains(stringArr1);
-            StringDriver.NonGenericIListNonExistingValues(stringArr1, stringArr2);
-            StringDriver.NonGenericIListRemovedValues(stringArr1);
-            StringDriver.NonGenericIListAddRemoveValues(stringArr1);
-            StringDriver.NonGenericIListMultipleValues(stringArr1, 3);
-            StringDriver.NonGenericIListMultipleValues(stringArr1, 5);
-            StringDriver.NonGenericIListMultipleValues(stringArr1, 17);
-            StringDriver.NonGenericIListContainsNullWhenReference(stringArr1, null);
-            StringDriver.NonGenericIListContainsTestParams();
         }
 
         [Fact]
@@ -1069,14 +482,6 @@ namespace Badeend.ValueCollections.Tests.Reference
             IntDriver.ClearMultipleTimesNonEmptyList(intArr, 2);
             IntDriver.ClearMultipleTimesNonEmptyList(intArr, 7);
             IntDriver.ClearMultipleTimesNonEmptyList(intArr, 31);
-            IntDriver.NonGenericIListClearEmptyList();
-            IntDriver.NonGenericIListClearMultipleTimesEmptyList(1);
-            IntDriver.NonGenericIListClearMultipleTimesEmptyList(10);
-            IntDriver.NonGenericIListClearMultipleTimesEmptyList(100);
-            IntDriver.NonGenericIListClearNonEmptyList(intArr);
-            IntDriver.NonGenericIListClearMultipleTimesNonEmptyList(intArr, 2);
-            IntDriver.NonGenericIListClearMultipleTimesNonEmptyList(intArr, 7);
-            IntDriver.NonGenericIListClearMultipleTimesNonEmptyList(intArr, 31);
 
             Driver<string> StringDriver = new Driver<string>();
             string[] stringArr = new string[10];
@@ -1093,82 +498,6 @@ namespace Badeend.ValueCollections.Tests.Reference
             StringDriver.ClearMultipleTimesNonEmptyList(stringArr, 2);
             StringDriver.ClearMultipleTimesNonEmptyList(stringArr, 7);
             StringDriver.ClearMultipleTimesNonEmptyList(stringArr, 31);
-            StringDriver.NonGenericIListClearEmptyList();
-            StringDriver.NonGenericIListClearMultipleTimesEmptyList(1);
-            StringDriver.NonGenericIListClearMultipleTimesEmptyList(10);
-            StringDriver.NonGenericIListClearMultipleTimesEmptyList(100);
-            StringDriver.NonGenericIListClearNonEmptyList(stringArr);
-            StringDriver.NonGenericIListClearMultipleTimesNonEmptyList(stringArr, 2);
-            StringDriver.NonGenericIListClearMultipleTimesNonEmptyList(stringArr, 7);
-            StringDriver.NonGenericIListClearMultipleTimesNonEmptyList(stringArr, 31);
-        }
-
-        [Fact]
-        public static void TrueForAllTests()
-        {
-            Driver<int> intDriver = new Driver<int>();
-            Driver<string> stringDriver = new Driver<string>();
-            int[] intArray;
-            string[] stringArray;
-            int arraySize = 16;
-
-            intArray = new int[arraySize];
-            stringArray = new string[arraySize];
-
-            for (int i = 0; i < arraySize; ++i)
-            {
-                intArray[i] = i + 1;
-                stringArray[i] = (i + 1).ToString();
-            }
-
-            intDriver.TrueForAll_VerifyVanilla(new int[0]);
-            intDriver.TrueForAll_VerifyVanilla(new int[] { 1 });
-            intDriver.TrueForAll_VerifyVanilla(intArray);
-
-            stringDriver.TrueForAll_VerifyVanilla(new string[0]);
-            stringDriver.TrueForAll_VerifyVanilla(new string[] { "1" });
-            stringDriver.TrueForAll_VerifyVanilla(stringArray);
-        }
-
-        [Fact]
-        public static void TrueForAllTests_Negative()
-        {
-            Driver<int> intDriver = new Driver<int>();
-            Driver<string> stringDriver = new Driver<string>();
-            int[] intArray;
-            string[] stringArray;
-            int arraySize = 16;
-
-            intArray = new int[arraySize];
-            stringArray = new string[arraySize];
-
-            for (int i = 0; i < arraySize; ++i)
-            {
-                intArray[i] = i + 1;
-                stringArray[i] = (i + 1).ToString();
-            }
-            intDriver.TrueForAll_VerifyExceptions(intArray);
-            stringDriver.TrueForAll_VerifyExceptions(stringArray);
-        }
-
-        [Fact]
-        public static void TrueForAll_ListSizeCanBeChanged()
-        {
-            ValueListBuilder<int> list = new ValueListBuilder<int>() { 1, 2, 3 };
-            ValueListBuilder<int> expectedList = new ValueListBuilder<int> { 1, 2, 3, 2, 3, 4, 3, 4, 4 };
-
-            bool result = list.TrueForAll(i =>
-            {
-                if (i < 4)
-                {
-                    list.Add(i + 1);
-                }
-
-                return true;
-            });
-
-            Assert.True(result);
-            Assert.Equal(expectedList, list);
         }
     }
 }

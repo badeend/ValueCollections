@@ -52,7 +52,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             _ = numberOfMatchingElements;
             IEnumerable<T> enumerable = CreateEnumerable(enumerableType, null, enumerableLength, 0, numberOfDuplicateElements);
             ValueListBuilder<T> list = new ValueListBuilder<T>(enumerable);
-            ValueListBuilder<T> expected = enumerable.ToList();
+            ValueListBuilder<T> expected = enumerable.ToValueListBuilder();
 
             Assert.Equal(enumerableLength, list.Count); //"Number of items in list do not match the number of items given."
 

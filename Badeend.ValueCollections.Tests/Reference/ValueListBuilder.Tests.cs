@@ -12,9 +12,12 @@ namespace Badeend.ValueCollections.Tests.Reference
     public abstract partial class ValueListBuilder_Tests<T> : IList_Generic_Tests<T>
     {
         #region IList<T> Helper Methods
+        protected override bool ResetImplemented => false;
         protected override bool Enumerator_Empty_UsesSingletonInstance => true;
+        protected override bool Enumerator_Current_UndefinedOperation_Throws => true;
         protected override bool Enumerator_Empty_Current_UndefinedOperation_Throws => true;
         protected override bool Enumerator_Empty_ModifiedDuringEnumeration_ThrowsInvalidOperationException => false;
+        protected override bool Enumerator_ModifiedDuringEnumeration_ThrowsInvalidOperationException => true;
 
         protected override IList<T> GenericIListFactory()
         {
@@ -54,14 +57,5 @@ namespace Badeend.ValueCollections.Tests.Reference
         }
 
         #endregion
-
-        [Theory]
-        [MemberData(nameof(ValidCollectionSizes))]
-        public void CopyTo_ArgumentValidity(int count)
-        {
-            ValueListBuilder<T> list = GenericListFactory(count);
-            AssertExtensions.Throws<ArgumentException>(null, () => list.CopyTo(0, new T[0], 0, count + 1));
-            AssertExtensions.Throws<ArgumentException>(null, () => list.CopyTo(count, new T[0], 0, 1));
-        }
     }
 }

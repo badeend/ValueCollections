@@ -16,8 +16,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void EnsureCapacity_RequestingLargerCapacity_DoesNotInvalidateEnumeration(int count)
         {
             ValueListBuilder<T> list = GenericListFactory(count);
-            IEnumerator<T> copiedListEnumerator = new ValueListBuilder<T>(list).GetEnumerator();
-            IEnumerator<T> enumerator = list.GetEnumerator();
+            var copiedListEnumerator = new ValueListBuilder<T>(list).GetEnumerator();
+            var enumerator = list.GetEnumerator();
             var capacity = list.Capacity;
 
             list.EnsureCapacity(capacity + 1);
@@ -29,7 +29,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void EnsureCapacity_NotInitialized_RequestedZero_ReturnsZero()
         {
             var list = new ValueListBuilder<T>();
-            Assert.Equal(0, list.EnsureCapacity(0));
+            list.EnsureCapacity(0);
             Assert.Equal(0, list.Capacity);
         }
 
@@ -42,13 +42,14 @@ namespace Badeend.ValueCollections.Tests.Reference
 
         public static IEnumerable<object[]> EnsureCapacity_LargeCapacity_Throws_MemberData()
         {
+#if NET6_0_OR_GREATER
             yield return new object[] { 5, Array.MaxLength + 1 };
+#endif
             yield return new object[] { 1, int.MaxValue };
         }
 
         [Theory]
         [MemberData(nameof(EnsureCapacity_LargeCapacity_Throws_MemberData))]
-        [ActiveIssue("https://github.com/dotnet/runtime/issues/51411", TestRuntimes.Mono)]
         public void EnsureCapacity_LargeCapacity_Throws(int count, int requestCapacity)
         {
             ValueListBuilder<T> list = GenericListFactory(count);
@@ -63,7 +64,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             for (int requestCapacity = 0; requestCapacity <= currentCapacity; requestCapacity++)
             {
-                Assert.Equal(currentCapacity, list.EnsureCapacity(requestCapacity));
+                list.EnsureCapacity(requestCapacity);
                 Assert.Equal(currentCapacity, list.Capacity);
             }
         }
@@ -77,7 +78,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             for (int requestCapacity = 0; requestCapacity <= count; requestCapacity++)
             {
-                Assert.Equal(currentCapacity, list.EnsureCapacity(requestCapacity));
+                list.EnsureCapacity(requestCapacity);
                 Assert.Equal(currentCapacity, list.Capacity);
             }
         }
@@ -92,8 +93,8 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             int currentCapacity = list.Capacity;
             int requestCapacity = currentCapacity + 1;
-            int newCapacity = list.EnsureCapacity(requestCapacity);
-            Assert.InRange(newCapacity, requestCapacity, int.MaxValue);
+            list.EnsureCapacity(requestCapacity);
+            Assert.InRange(list.Capacity, requestCapacity, int.MaxValue);
         }
 
         [Theory]

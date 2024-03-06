@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Xunit;
@@ -19,7 +20,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void AddRange(EnumerableType enumerableType, int listLength, int enumerableLength, int numberOfMatchingElements, int numberOfDuplicateElements)
         {
             ValueListBuilder<T> list = GenericListFactory(listLength);
-            ValueListBuilder<T> listBeforeAdd = list.ToList();
+            ValueListBuilder<T> listBeforeAdd = list.ToValueListBuilder();
             IEnumerable<T> enumerable = CreateEnumerable(enumerableType, list, enumerableLength, numberOfMatchingElements, numberOfDuplicateElements);
             list.AddRange(enumerable);
 
@@ -41,7 +42,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void AddRange_Span(EnumerableType enumerableType, int listLength, int enumerableLength, int numberOfMatchingElements, int numberOfDuplicateElements)
         {
             ValueListBuilder<T> list = GenericListFactory(listLength);
-            ValueListBuilder<T> listBeforeAdd = list.ToList();
+            ValueListBuilder<T> listBeforeAdd = list.ToValueListBuilder();
             Span<T> span = CreateEnumerable(enumerableType, list, enumerableLength, numberOfMatchingElements, numberOfDuplicateElements).ToArray();
             list.AddRange(span);
 
@@ -61,8 +62,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void AddRange_NullList_ThrowsArgumentNullException()
         {
-            AssertExtensions.Throws<ArgumentNullException>("list", () => CollectionExtensions.AddRange<int>(null, default));
-            AssertExtensions.Throws<ArgumentNullException>("list", () => CollectionExtensions.AddRange<int>(null, new int[1]));
+            AssertExtensions.Throws<ArgumentNullException>("builder", () => ValueListBuilder.AddRange<int>(null, default));
+            AssertExtensions.Throws<ArgumentNullException>("builder", () => ValueListBuilder.AddRange<int>(null, new int[1]));
         }
 
         [Theory]
@@ -70,7 +71,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void AddRange_NullEnumerable_ThrowsArgumentNullException(int count)
         {
             ValueListBuilder<T> list = GenericListFactory(count);
-            ValueListBuilder<T> listBeforeAdd = list.ToList();
+            ValueListBuilder<T> listBeforeAdd = list.ToValueListBuilder();
             Assert.Throws<ArgumentNullException>(() => list.AddRange(null));
             Assert.Equal(listBeforeAdd, list);
         }

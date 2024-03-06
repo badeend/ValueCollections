@@ -19,9 +19,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void RemoveAll_AllElements(int count)
         {
             ValueListBuilder<T> list = GenericListFactory(count);
-            ValueListBuilder<T> beforeList = list.ToList();
-            int removedCount = list.RemoveAll((value) => { return true; });
-            Assert.Equal(count, removedCount);
+            ValueListBuilder<T> beforeList = list.ToValueListBuilder();
+            list.RemoveAll((value) => { return true; });
             Assert.Equal(0, list.Count);
         }
 
@@ -30,9 +29,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void RemoveAll_NoElements(int count)
         {
             ValueListBuilder<T> list = GenericListFactory(count);
-            ValueListBuilder<T> beforeList = list.ToList();
-            int removedCount = list.RemoveAll((value) => { return false; });
-            Assert.Equal(0, removedCount);
+            ValueListBuilder<T> beforeList = list.ToValueListBuilder();
+            list.RemoveAll((value) => { return false; });
             Assert.Equal(count, list.Count);
             VerifyList(list, beforeList);
         }
@@ -42,11 +40,11 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void RemoveAll_DefaultElements(int count)
         {
             ValueListBuilder<T> list = GenericListFactory(count);
-            ValueListBuilder<T> beforeList = list.ToList();
+            ValueListBuilder<T> beforeList = list.ToValueListBuilder();
             Predicate<T> EqualsDefaultElement = (value) => { return default(T) == null ? value == null : default(T).Equals(value); };
-            int expectedCount = beforeList.Count((value) => EqualsDefaultElement(value));
-            int removedCount = list.RemoveAll(EqualsDefaultElement);
-            Assert.Equal(expectedCount, removedCount);
+            int expectedCount = beforeList.Count - beforeList.Count((value) => EqualsDefaultElement(value));
+            list.RemoveAll(EqualsDefaultElement);
+            Assert.Equal(expectedCount, list.Count);
         }
 
         [Fact]
@@ -72,7 +70,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void Remove_Range(int listLength, int index, int count)
         {
             ValueListBuilder<T> list = GenericListFactory(listLength);
-            ValueListBuilder<T> beforeList = list.ToList();
+            ValueListBuilder<T> beforeList = list.ToValueListBuilder();
 
             list.RemoveRange(index, count);
             Assert.Equal(list.Count, listLength - count); //"Expected them to be the same."
