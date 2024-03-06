@@ -95,7 +95,17 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	private List<T> Mutate()
 	{
 		this.version++;
+		return this.GetOrCreateList();
+	}
 
+	private List<T> MutateForCapacityOnly()
+	{
+		// Don't update version.
+		return this.GetOrCreateList();
+	}
+
+	private List<T> GetOrCreateList()
+	{
 		if (this.items is List<T> list)
 		{
 			return list;
@@ -439,7 +449,7 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	/// </summary>
 	public ValueListBuilder<T> TrimExcess()
 	{
-		this.Mutate().TrimExcess();
+		this.MutateForCapacityOnly().TrimExcess();
 		return this;
 	}
 
@@ -450,7 +460,7 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	/// </summary>
 	public ValueListBuilder<T> EnsureCapacity(int capacity)
 	{
-		UnsafeHelpers.EnsureCapacity(this.Mutate(), capacity);
+		UnsafeHelpers.EnsureCapacity(this.MutateForCapacityOnly(), capacity);
 		return this;
 	}
 
