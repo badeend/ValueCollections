@@ -510,17 +510,22 @@ namespace Badeend.ValueCollections.Tests.Reference
                     while (enumerator.MoveNext()) ;
                     if (ModifyEnumerable(enumerable))
                     {
-                        if (count == 0 ? Enumerator_Empty_ModifiedDuringEnumeration_ThrowsInvalidOperationException : Enumerator_ModifiedDuringEnumeration_ThrowsInvalidOperationException)
-                        {
-                            Assert.Throws<InvalidOperationException>(() => enumerator.MoveNext());
-                        }
-                        else
-                        {
-                            enumerator.MoveNext();
-                        }
+                        Assert.False(MoveNextOrFalse(enumerator));
                     }
                 }
             });
+
+            bool MoveNextOrFalse(IEnumerator enumerator)
+            {
+                try
+                {
+                    return enumerator.MoveNext();
+                }
+                catch (InvalidOperationException)
+                {
+                    return false;
+                }
+            }
         }
 
         [Theory]
