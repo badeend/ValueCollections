@@ -56,8 +56,6 @@ namespace Badeend.ValueCollections.Tests.Reference
             }
         }
 
-        protected virtual Type ICollection_Generic_CopyTo_IndexLargerThanArrayCount_ThrowType => typeof(ArgumentException);
-
         #endregion
 
         #region IEnumerable<T> Helper Methods
@@ -502,7 +500,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         {
             ICollection<T> collection = GenericICollectionFactory(count);
             T[] array = new T[count];
-            Assert.Throws(ICollection_Generic_CopyTo_IndexLargerThanArrayCount_ThrowType, () => collection.CopyTo(array, count + 1));
+            Assert.ThrowsAny<ArgumentException>(() => collection.CopyTo(array, count + 1));
         }
 
         [Theory]
