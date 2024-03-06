@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace Badeend.ValueCollections;
 
@@ -159,5 +160,39 @@ public static class ValueCollectionExtensions
 		}
 
 		return ValueListBuilder<T>.FromListUnsafe(new List<T>(items));
+	}
+
+	/// <summary>
+	/// Add the <paramref name="items"/> to the end of the list.
+	/// </summary>
+	/// <remarks>
+	/// This overload is an extension method to avoid call site ambiguity.
+	/// </remarks>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ValueListBuilder<T> AddRange<T>(this ValueListBuilder<T> builder, ReadOnlySpan<T> items)
+	{
+		if (builder is null)
+		{
+			throw new ArgumentNullException(nameof(builder));
+		}
+
+		return builder.AddRangeSpan(items);
+	}
+
+	/// <summary>
+	/// Insert the <paramref name="items"/> into the list at the specified <paramref name="index"/>.
+	/// </summary>
+	/// <remarks>
+	/// This overload is an extension method to avoid call site ambiguity.
+	/// </remarks>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ValueListBuilder<T> InsertRange<T>(this ValueListBuilder<T> builder, int index, ReadOnlySpan<T> items)
+	{
+		if (builder is null)
+		{
+			throw new ArgumentNullException(nameof(builder));
+		}
+
+		return builder.InsertRangeSpan(index, items);
 	}
 }

@@ -5,40 +5,6 @@ using System.Runtime.CompilerServices;
 namespace Badeend.ValueCollections;
 
 /// <summary>
-/// These are extension methods only to remove call site ambiguity.
-/// </summary>
-public static class ValueListBuilder
-{
-	/// <summary>
-	/// Add the <paramref name="items"/> to the end of the list.
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueListBuilder<T> AddRange<T>(this ValueListBuilder<T> builder, ReadOnlySpan<T> items)
-	{
-		if (builder is null)
-		{
-			throw new ArgumentNullException(nameof(builder));
-		}
-
-		return builder.AddRangeSpan(items);
-	}
-
-	/// <summary>
-	/// Insert the <paramref name="items"/> into the list at the specified <paramref name="index"/>.
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueListBuilder<T> InsertRange<T>(this ValueListBuilder<T> builder, int index, ReadOnlySpan<T> items)
-	{
-		if (builder is null)
-		{
-			throw new ArgumentNullException(nameof(builder));
-		}
-
-		return builder.InsertRangeSpan(index, items);
-	}
-}
-
-/// <summary>
 /// A mutable list that can be used to efficiently construct new immutable lists.
 ///
 /// Most mutating methods on this class return `this`, allowing the caller to
@@ -240,6 +206,10 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	/// <summary>
 	/// Add the <paramref name="items"/> to the end of the list.
 	/// </summary>
+	/// <remarks>
+	/// <see cref="ValueCollectionExtensions.AddRange">More overloads</see> are
+	/// available as extension methods.
+	/// </remarks>
 	public ValueListBuilder<T> AddRange(IEnumerable<T> items)
 	{
 		if (items is ICollection<T> collection)
@@ -303,6 +273,10 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	/// <summary>
 	/// Insert the <paramref name="items"/> into the list at the specified <paramref name="index"/>.
 	/// </summary>
+	/// <remarks>
+	/// <see cref="ValueCollectionExtensions.InsertRange">More overloads</see> are
+	/// available as extension methods.
+	/// </remarks>
 	public ValueListBuilder<T> InsertRange(int index, IEnumerable<T> items)
 	{
 		if (items is ICollection<T> collection)
