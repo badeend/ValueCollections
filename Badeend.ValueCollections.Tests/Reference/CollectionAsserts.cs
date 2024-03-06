@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 
-namespace System.Collections.Tests
+namespace Badeend.ValueCollections.Tests.Reference
 {
     internal static class CollectionAsserts
     {

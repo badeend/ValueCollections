@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 
-namespace System.Collections.Tests
+namespace Badeend.ValueCollections.Tests.Reference
 {
     /// <summary>
     /// Provides a base set of nongeneric operations that are used by all other testing interfaces.

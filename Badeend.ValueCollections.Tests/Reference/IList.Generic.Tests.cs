@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 
-namespace System.Collections.Tests
+namespace Badeend.ValueCollections.Tests.Reference
 {
     /// <summary>
     /// Contains tests that ensure the correctness of any class that implements the generic

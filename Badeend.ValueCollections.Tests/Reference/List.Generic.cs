@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 
-namespace System.Collections.Tests
+namespace Badeend.ValueCollections.Tests.Reference
 {
     public class List_Generic_Tests_string : List_Generic_Tests<string>
     {

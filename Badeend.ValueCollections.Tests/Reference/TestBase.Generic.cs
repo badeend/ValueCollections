@@ -6,7 +6,7 @@ using System.Diagnostics;
 using System.Linq;
 using Xunit;
 
-namespace System.Collections.Tests
+namespace Badeend.ValueCollections.Tests.Reference
 {
     /// <summary>
     /// Provides a base set of generic operations that are used by all other generic testing interfaces.

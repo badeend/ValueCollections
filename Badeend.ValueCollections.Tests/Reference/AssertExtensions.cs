@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Sdk;
 
-namespace System
+namespace Badeend.ValueCollections.Tests.Reference
 {
     public static class AssertExtensions
     {

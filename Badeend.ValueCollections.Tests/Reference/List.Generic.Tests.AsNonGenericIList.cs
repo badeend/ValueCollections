@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 
-namespace System.Collections.Tests
+namespace Badeend.ValueCollections.Tests.Reference
 {
     /// <summary>
     /// Contains tests that ensure the correctness of the List class.
