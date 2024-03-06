@@ -450,6 +450,21 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	};
 
 	/// <summary>
+	/// Perform a binary search for <paramref name="item"/> within the list.
+	/// The list is assumed to already be sorted. This uses the
+	/// <see cref="Comparer{T}.Default">Default</see> comparer and throws if
+	/// <typeparamref name="T"/> is not comparable. If the item is found, its
+	/// index is returned. Otherwise a negative value is returned representing
+	/// the bitwise complement of the index where the item should be inserted.
+	/// </summary>
+	public int BinarySearch(T item) => this.items switch
+	{
+		List<T> items => items.BinarySearch(item),
+		ValueList<T> items => items.BinarySearch(item),
+		_ => throw UnreachableException(),
+	};
+
+	/// <summary>
 	/// Copy the contents of the list into a new array.
 	/// </summary>
 	public T[] ToArray() => this.items switch

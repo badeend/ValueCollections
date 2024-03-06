@@ -311,6 +311,25 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	public bool Contains(T item) => this.IndexOf(item) >= 0;
 
 	/// <summary>
+	/// Perform a binary search for <paramref name="item"/> within the slice.
+	/// The slice is assumed to already be sorted. This uses the
+	/// <see cref="Comparer{T}.Default">Default</see> comparer and throws if
+	/// <typeparamref name="T"/> is not comparable. If the item is found, its
+	/// index is returned. Otherwise a negative value is returned representing
+	/// the bitwise complement of the index where the item should be inserted.
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public int BinarySearch(T item)
+	{
+		if (this.items is null)
+		{
+			return -1;
+		}
+
+		return Array.BinarySearch(this.items, this.offset, this.length, item);
+	}
+
+	/// <summary>
 	/// Returns an enumerator for this <see cref="ValueSlice{T}"/>.
 	///
 	/// Typically, you don't need to manually call this method, but instead use

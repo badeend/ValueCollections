@@ -262,6 +262,17 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool Contains(T item) => this.AsValueSlice().Contains(item);
 
+	/// <summary>
+	/// Perform a binary search for <paramref name="item"/> within the list.
+	/// The list is assumed to already be sorted. This uses the
+	/// <see cref="Comparer{T}.Default">Default</see> comparer and throws if
+	/// <typeparamref name="T"/> is not comparable. If the item is found, its
+	/// index is returned. Otherwise a negative value is returned representing
+	/// the bitwise complement of the index where the item should be inserted.
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public int BinarySearch(T item) => this.AsValueSlice().BinarySearch(item);
+
 	/// <inheritdoc/>
 	bool ICollection<T>.Contains(T item) => this.AsValueSlice().Contains(item);
 
