@@ -12,9 +12,14 @@ namespace Badeend.ValueCollections.Tests.Reference
     public abstract partial class ValueList_Tests<T> : IList_Generic_Tests<T>
     {
         #region IList<T> Helper Methods
+        protected override bool IsReadOnly => true;
+        protected override bool AddRemoveClear_ThrowsNotSupported => true;
+        protected override bool ResetImplemented => false;
         protected override bool Enumerator_Empty_UsesSingletonInstance => true;
+        protected override bool Enumerator_Current_UndefinedOperation_Throws => true;
         protected override bool Enumerator_Empty_Current_UndefinedOperation_Throws => true;
         protected override bool Enumerator_Empty_ModifiedDuringEnumeration_ThrowsInvalidOperationException => false;
+        protected override bool Enumerator_ModifiedDuringEnumeration_ThrowsInvalidOperationException => true;
 
         protected override IList<T> GenericIListFactory()
         {
@@ -32,13 +37,13 @@ namespace Badeend.ValueCollections.Tests.Reference
 
         protected virtual ValueList<T> GenericListFactory()
         {
-            return new ValueList<T>();
+            return ValueList<T>.Empty;
         }
 
         protected virtual ValueList<T> GenericListFactory(int count)
         {
             IEnumerable<T> toCreateFrom = CreateEnumerable(EnumerableType.List, null, count, 0, 0);
-            return new ValueList<T>(toCreateFrom);
+            return toCreateFrom.ToValueList();
         }
 
         protected void VerifyList(ValueList<T> list, ValueList<T> expectedItems)
@@ -54,14 +59,5 @@ namespace Badeend.ValueCollections.Tests.Reference
         }
 
         #endregion
-
-        [Theory]
-        [MemberData(nameof(ValidCollectionSizes))]
-        public void CopyTo_ArgumentValidity(int count)
-        {
-            ValueList<T> list = GenericListFactory(count);
-            AssertExtensions.Throws<ArgumentException>(null, () => list.CopyTo(0, new T[0], 0, count + 1));
-            AssertExtensions.Throws<ArgumentException>(null, () => list.CopyTo(count, new T[0], 0, 1));
-        }
     }
 }

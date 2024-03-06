@@ -15,33 +15,9 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void Constructor_Default()
         {
-            ValueList<T> list = new ValueList<T>();
-            Assert.Equal(0, list.Capacity); //"Expected capacity of list to be the same as given."
+            ValueList<T> list = ValueList.Empty<T>();
             Assert.Equal(0, list.Count); //"Do not expect anything to be in the list."
-            Assert.False(((IList<T>)list).IsReadOnly); //"List should not be readonly"
-        }
-
-        [Theory]
-        [InlineData(0)]
-        [InlineData(10)]
-        [InlineData(15)]
-        [InlineData(16)]
-        [InlineData(17)]
-        [InlineData(100)]
-        public void Constructor_Capacity(int capacity)
-        {
-            ValueList<T> list = new ValueList<T>(capacity);
-            Assert.Equal(capacity, list.Capacity); //"Expected capacity of list to be the same as given."
-            Assert.Equal(0, list.Count); //"Do not expect anything to be in the list."
-            Assert.False(((IList<T>)list).IsReadOnly); //"List should not be readonly"
-        }
-
-        [Theory]
-        [InlineData(-1)]
-        [InlineData(int.MinValue)]
-        public void Constructor_NegativeCapacity_ThrowsArgumentOutOfRangeException(int capacity)
-        {
-            Assert.Throws<ArgumentOutOfRangeException>(() => new ValueList<T>(capacity));
+            Assert.True(((IList<T>)list).IsReadOnly); //"List should be readonly"
         }
 
         [Theory]
@@ -51,21 +27,15 @@ namespace Badeend.ValueCollections.Tests.Reference
             _ = listLength;
             _ = numberOfMatchingElements;
             IEnumerable<T> enumerable = CreateEnumerable(enumerableType, null, enumerableLength, 0, numberOfDuplicateElements);
-            ValueList<T> list = new ValueList<T>(enumerable);
-            ValueList<T> expected = enumerable.ToList();
+            ValueList<T> list = enumerable.ToValueList();
+            List<T> expected = enumerable.ToList();
 
             Assert.Equal(enumerableLength, list.Count); //"Number of items in list do not match the number of items given."
 
             for (int i = 0; i < enumerableLength; i++)
                 Assert.Equal(expected[i], list[i]); //"Expected object in item array to be the same as in the list"
 
-            Assert.False(((IList<T>)list).IsReadOnly); //"List should not be readonly"
-        }
-
-        [Fact]
-        public void Constructo_NullIEnumerable_ThrowsArgumentNullException()
-        {
-            Assert.Throws<ArgumentNullException>(() => { ValueList<T> _list = new ValueList<T>(null); }); //"Expected ArgumentnUllException for null items"
+            Assert.True(((IList<T>)list).IsReadOnly); //"List should be readonly"
         }
     }
 }

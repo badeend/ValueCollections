@@ -16,17 +16,17 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void BinarySearch_ForEveryItemWithoutDuplicates(int count)
         {
-            ValueList<T> list = GenericListFactory(count);
-            foreach (T item in list)
-                while (list.Count((value) => value.Equals(item)) > 1)
-                    list.Remove(item);
-            list.Sort();
-            ValueList<T> beforeList = list.ToList();
+            ValueListBuilder<T> builder = GenericListFactory(count).ToBuilder();
+            foreach (T item in builder)
+                while (builder.Count((value) => value.Equals(item)) > 1)
+                    builder.RemoveFirst(item);
+            builder.Sort();
+            T[] beforeList = builder.ToArray();
+            ValueList<T> list = builder.ToValueList();
 
             Assert.All(Enumerable.Range(0, list.Count), index =>
             {
                 Assert.Equal(index, list.BinarySearch(beforeList[index]));
-                Assert.Equal(index, list.BinarySearch(beforeList[index], GetIComparer()));
                 Assert.Equal(beforeList[index], list[index]);
             });
         }
@@ -37,31 +37,18 @@ namespace Badeend.ValueCollections.Tests.Reference
         {
             if (count > 0)
             {
-                ValueList<T> list = GenericListFactory(count);
-                list.Add(list[0]);
-                list.Sort();
-                ValueList<T> beforeList = list.ToList();
+                ValueListBuilder<T> builder = GenericListFactory(count).ToBuilder();
+                builder.Add(builder[0]);
+                builder.Sort();
+                T[] beforeList = builder.ToArray();
+                ValueList<T> list = builder.ToValueList();
 
                 Assert.All(Enumerable.Range(0, list.Count), index =>
                 {
                     Assert.True(list.BinarySearch(beforeList[index]) >= 0);
-                    Assert.True(list.BinarySearch(beforeList[index], GetIComparer()) >= 0);
                     Assert.Equal(beforeList[index], list[index]);
                 });
             }
-        }
-
-        [Theory]
-        [MemberData(nameof(ValidCollectionSizes))]
-        public void BinarySearch_Validations(int count)
-        {
-            ValueList<T> list = GenericListFactory(count);
-            list.Sort();
-            T element = CreateT(3215);
-            AssertExtensions.Throws<ArgumentException>(null, () => list.BinarySearch(0, count + 1, element, GetIComparer())); //"Finding items longer than array should throw ArgumentException"
-            Assert.Throws<ArgumentOutOfRangeException>(() => list.BinarySearch(-1, count, element, GetIComparer())); //"ArgumentOutOfRangeException should be thrown on negative index."
-            Assert.Throws<ArgumentOutOfRangeException>(() => list.BinarySearch(0, -1, element, GetIComparer())); //"ArgumentOutOfRangeException should be thrown on negative count."
-            AssertExtensions.Throws<ArgumentException>(null, () => list.BinarySearch(count + 1, count, element, GetIComparer())); //"ArgumentException should be thrown on index greater than length of array."
         }
     }
 }
