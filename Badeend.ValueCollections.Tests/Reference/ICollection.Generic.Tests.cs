@@ -334,7 +334,6 @@ namespace Badeend.ValueCollections.Tests.Reference
             }
         }
 
-        [ConditionalTheory(typeof(PlatformDetection), nameof(PlatformDetection.IsPreciseGcSupported))]
         [InlineData(false)]
         [InlineData(true)]
         public void ICollection_Generic_Remove_ReferenceRemovedFromCollection(bool useRemove)
