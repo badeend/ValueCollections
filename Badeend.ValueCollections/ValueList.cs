@@ -246,22 +246,14 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	/// the list, or <c>-1</c> if not found.
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public int IndexOf(T item) => Array.IndexOf(this.items, item, 0, this.count);
+	public int IndexOf(T item) => this.AsValueSlice().IndexOf(item);
 
 	/// <summary>
 	/// Return the index of the last occurrence of <paramref name="item"/> in
 	/// the list, or <c>-1</c> if not found.
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public int LastIndexOf(T item)
-	{
-		if (this.count == 0)
-		{
-			return -1;
-		}
-
-		return Array.LastIndexOf(this.items, item, this.count - 1, this.count);
-	}
+	public int LastIndexOf(T item) => this.AsValueSlice().LastIndexOf(item);
 
 	/// <summary>
 	/// Returns <see langword="true"/> when the list contains the specified
