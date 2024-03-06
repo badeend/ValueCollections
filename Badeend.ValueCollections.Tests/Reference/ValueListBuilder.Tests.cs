@@ -28,20 +28,20 @@ namespace Badeend.ValueCollections.Tests.Reference
 
         #endregion
 
-        #region List<T> Helper Methods
+        #region ValueListBuilder<T> Helper Methods
 
-        protected virtual List<T> GenericListFactory()
+        protected virtual ValueListBuilder<T> GenericListFactory()
         {
-            return new List<T>();
+            return new ValueListBuilder<T>();
         }
 
-        protected virtual List<T> GenericListFactory(int count)
+        protected virtual ValueListBuilder<T> GenericListFactory(int count)
         {
             IEnumerable<T> toCreateFrom = CreateEnumerable(EnumerableType.List, null, count, 0, 0);
-            return new List<T>(toCreateFrom);
+            return new ValueListBuilder<T>(toCreateFrom);
         }
 
-        protected void VerifyList(List<T> list, List<T> expectedItems)
+        protected void VerifyList(ValueListBuilder<T> list, ValueListBuilder<T> expectedItems)
         {
             Assert.Equal(expectedItems.Count, list.Count);
 
@@ -59,7 +59,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void CopyTo_ArgumentValidity(int count)
         {
-            List<T> list = GenericListFactory(count);
+            ValueListBuilder<T> list = GenericListFactory(count);
             AssertExtensions.Throws<ArgumentException>(null, () => list.CopyTo(0, new T[0], 0, count + 1));
             AssertExtensions.Throws<ArgumentException>(null, () => list.CopyTo(count, new T[0], 0, 1));
         }

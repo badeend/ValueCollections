@@ -12,7 +12,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void ConvertAll()
         {
-            var list = new List<int>(new int[] { 1, 2, 3});
+            var list = new ValueListBuilder<int>(new int[] { 1, 2, 3});
             var before = list.ToList();
             var after = list.ConvertAll((i) => { return 10 * i; });
 

@@ -16,8 +16,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void Reverse(int listLength)
         {
-            List<T> list = GenericListFactory(listLength);
-            List<T> listBefore = list.ToList();
+            ValueListBuilder<T> list = GenericListFactory(listLength);
+            ValueListBuilder<T> listBefore = list.ToList();
 
             list.Reverse();
 
@@ -39,8 +39,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(10, 8, 2)]
         public void Reverse_int_int(int listLength, int index, int count)
         {
-            List<T> list = GenericListFactory(listLength);
-            List<T> listBefore = list.ToList();
+            ValueListBuilder<T> list = GenericListFactory(listLength);
+            ValueListBuilder<T> listBefore = list.ToList();
 
             list.Reverse(index, count);
 
@@ -74,10 +74,10 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(10, 8, 2)]
         public void Reverse_RepeatedValues(int listLength, int index, int count)
         {
-            List<T> list = GenericListFactory(1);
+            ValueListBuilder<T> list = GenericListFactory(1);
             for (int i = 1; i < listLength; i++)
                 list.Add(list[0]);
-            List<T> listBefore = list.ToList();
+            ValueListBuilder<T> listBefore = list.ToList();
 
             list.Reverse(index, count);
 
@@ -105,7 +105,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         {
             if (listLength % 2 != 0)
                 listLength++;
-            List<T> list = GenericListFactory(listLength);
+            ValueListBuilder<T> list = GenericListFactory(listLength);
             Tuple<int, int>[] InvalidParameters = new Tuple<int, int>[]
             {
                 Tuple.Create(listLength     ,1             ),
@@ -137,7 +137,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         {
             if (listLength % 2 != 0)
                 listLength++;
-            List<T> list = GenericListFactory(listLength);
+            ValueListBuilder<T> list = GenericListFactory(listLength);
             Tuple<int, int>[] InvalidParameters = new Tuple<int, int>[]
             {
                 Tuple.Create(-1,-1),

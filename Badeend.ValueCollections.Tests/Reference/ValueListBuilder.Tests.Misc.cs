@@ -30,7 +30,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void BasicInsert(T[] items, T item, int index, int repeat)
             {
-                List<T> list = new List<T>(items);
+                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
 
                 for (int i = 0; i < repeat; i++)
                 {
@@ -60,7 +60,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void InsertValidations(T[] items)
             {
-                List<T> list = new List<T>(items);
+                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
                 int[] bad = new int[] { items.Length + 1, items.Length + 2, int.MaxValue, -1, -2, int.MinValue };
                 for (int i = 0; i < bad.Length; i++)
                 {
@@ -70,7 +70,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void NonGenericIListBasicInsert(T[] items, T item, int index, int repeat)
             {
-                List<T> list = new List<T>(items);
+                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
                 IList _ilist = list;
 
                 for (int i = 0; i < repeat; i++)
@@ -100,7 +100,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void NonGenericIListInsertValidations(T[] items)
             {
-                List<T> list = new List<T>(items);
+                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
                 IList _ilist = list;
                 int[] bad = new int[] { items.Length + 1, items.Length + 2, int.MaxValue, -1, -2, int.MinValue };
                 for (int i = 0; i < bad.Length; i++)
@@ -117,7 +117,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void InsertRangeIEnumerable(T[] itemsX, T[] itemsY, int index, int repeat, Func<T[], IEnumerable<T>> constructIEnumerable)
             {
-                List<T> list = new List<T>(constructIEnumerable(itemsX));
+                ValueListBuilder<T> list = new ValueListBuilder<T>(constructIEnumerable(itemsX));
 
                 for (int i = 0; i < repeat; i++)
                 {
@@ -146,7 +146,7 @@ namespace Badeend.ValueCollections.Tests.Reference
                 }
 
                 //InsertRange into itself
-                list = new List<T>(constructIEnumerable(itemsX));
+                list = new ValueListBuilder<T>(constructIEnumerable(itemsX));
                 list.InsertRange(index, list);
 
                 foreach (T item in itemsX)
@@ -173,7 +173,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void InsertRangeValidations(T[] items, Func<T[], IEnumerable<T>> constructIEnumerable)
             {
-                List<T> list = new List<T>(constructIEnumerable(items));
+                ValueListBuilder<T> list = new ValueListBuilder<T>(constructIEnumerable(items));
                 int[] bad = new int[] { items.Length + 1, items.Length + 2, int.MaxValue, -1, -2, int.MinValue };
                 for (int i = 0; i < bad.Length; i++)
                 {
@@ -205,8 +205,8 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void BasicGetRange(T[] items, int index, int count, bool useSlice)
             {
-                List<T> list = new List<T>(items);
-                List<T> range = useSlice ? list.Slice(index, count) : list.GetRange(index, count);
+                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
+                ValueListBuilder<T> range = useSlice ? list.Slice(index, count) : list.GetRange(index, count);
 
                 //ensure range is good
                 for (int i = 0; i < count; i++)
@@ -223,8 +223,8 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void BasicSliceSyntax(T[] items, int index, int count)
             {
-                List<T> list = new List<T>(items);
-                List<T> range = list[index..(index + count)];
+                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
+                ValueListBuilder<T> range = list[index..(index + count)];
 
                 //ensure range is good
                 for (int i = 0; i < count; i++)
@@ -241,8 +241,8 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void EnsureRangeIsReference(T[] items, T item, int index, int count, bool useSlice)
             {
-                List<T> list = new List<T>(items);
-                List<T> range = useSlice ? list[index..(index + count)] : list.GetRange(index, count);
+                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
+                ValueListBuilder<T> range = useSlice ? list[index..(index + count)] : list.GetRange(index, count);
                 T tempItem = list[index];
                 range[0] = item;
                 Assert.Equal(list[index], tempItem); //String.Format("Err_707811hapba Expected item: {0} at: {1} actual: {2}", tempItem, index, list[index])
@@ -250,8 +250,8 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void EnsureThrowsAfterModification(T[] items, T item, int index, int count, bool useSlice)
             {
-                List<T> list = new List<T>(items);
-                List<T> range = useSlice ? list[index..(index + count)] : list.GetRange(index, count);
+                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
+                ValueListBuilder<T> range = useSlice ? list[index..(index + count)] : list.GetRange(index, count);
                 T tempItem = list[index];
                 list[index] = item;
 
@@ -263,7 +263,7 @@ namespace Badeend.ValueCollections.Tests.Reference
                 //
                 //Always send items.Length is even
                 //
-                List<T> list = new List<T>(items);
+                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
                 int[] bad = new int[] {  /**/items.Length,1,
                     /**/
                                     items.Length+1,0,
@@ -343,7 +343,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void Exists_VerifyExceptions(T[] items)
             {
-                List<T> list = new List<T>();
+                ValueListBuilder<T> list = new ValueListBuilder<T>();
                 Predicate<T> predicate = (T item) => { return true; };
 
                 for (int i = 0; i < items.Length; ++i)
@@ -356,7 +356,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             private void Exists_VerifyVanilla(T[] items)
             {
                 T expectedItem = default(T);
-                List<T> list = new List<T>();
+                ValueListBuilder<T> list = new ValueListBuilder<T>();
                 Predicate<T> expectedItemDelegate = (T item) => { return expectedItem == null ? item == null : expectedItem.Equals(item); };
                 bool typeNullable = default(T) == null;
 
@@ -390,7 +390,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             private void Exists_VerifyDuplicates(T[] items)
             {
                 T expectedItem = default(T);
-                List<T> list = new List<T>();
+                ValueListBuilder<T> list = new ValueListBuilder<T>();
                 Predicate<T> expectedItemDelegate = (T item) => { return expectedItem == null ? item == null : expectedItem.Equals(item); };
 
                 if (0 < items.Length)
@@ -426,7 +426,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void BasicContains(T[] items)
             {
-                List<T> list = new List<T>(items);
+                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
 
                 for (int i = 0; i < items.Length; i++)
                 {
@@ -436,7 +436,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void NonExistingValues(T[] itemsX, T[] itemsY)
             {
-                List<T> list = new List<T>(itemsX);
+                ValueListBuilder<T> list = new ValueListBuilder<T>(itemsX);
 
                 for (int i = 0; i < itemsY.Length; i++)
                 {
@@ -446,7 +446,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void RemovedValues(T[] items)
             {
-                List<T> list = new List<T>(items);
+                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
                 for (int i = 0; i < items.Length; i++)
                 {
                     list.Remove(items[i]);
@@ -456,7 +456,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void AddRemoveValues(T[] items)
             {
-                List<T> list = new List<T>(items);
+                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
                 for (int i = 0; i < items.Length; i++)
                 {
                     list.Add(items[i]);
@@ -468,7 +468,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void MultipleValues(T[] items, int times)
             {
-                List<T> list = new List<T>(items);
+                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
 
                 for (int i = 0; i < times; i++)
                 {
@@ -489,14 +489,14 @@ namespace Badeend.ValueCollections.Tests.Reference
                     throw new ArgumentException("invalid argument passed to testcase");
                 }
 
-                List<T> list = new List<T>(items);
+                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
                 list.Add(value);
                 Assert.True(list.Contains(value)); //"Should contain item."
             }
 
             public void NonGenericIListBasicContains(T[] items)
             {
-                List<T> list = new List<T>(items);
+                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
                 IList _ilist = list;
 
                 for (int i = 0; i < items.Length; i++)
@@ -507,7 +507,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void NonGenericIListNonExistingValues(T[] itemsX, T[] itemsY)
             {
-                List<T> list = new List<T>(itemsX);
+                ValueListBuilder<T> list = new ValueListBuilder<T>(itemsX);
                 IList _ilist = list;
 
                 for (int i = 0; i < itemsY.Length; i++)
@@ -518,7 +518,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void NonGenericIListRemovedValues(T[] items)
             {
-                List<T> list = new List<T>(items);
+                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
                 IList _ilist = list;
                 for (int i = 0; i < items.Length; i++)
                 {
@@ -529,7 +529,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void NonGenericIListAddRemoveValues(T[] items)
             {
-                List<T> list = new List<T>(items);
+                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
                 IList _ilist = list;
                 for (int i = 0; i < items.Length; i++)
                 {
@@ -542,7 +542,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void NonGenericIListMultipleValues(T[] items, int times)
             {
-                List<T> list = new List<T>(items);
+                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
                 IList _ilist = list;
 
                 for (int i = 0; i < times; i++)
@@ -565,7 +565,7 @@ namespace Badeend.ValueCollections.Tests.Reference
                     throw new ArgumentException("invalid argument passed to testcase");
                 }
 
-                List<T> list = new List<T>(items);
+                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
                 IList _ilist = list;
                 list.Add(value);
                 Assert.True(_ilist.Contains(value)); //"Should contain item."
@@ -573,7 +573,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void NonGenericIListContainsTestParams()
             {
-                List<T> list = new List<T>();
+                ValueListBuilder<T> list = new ValueListBuilder<T>();
                 IList _ilist = list;
 
                 Assert.False(_ilist.Contains(new LinkedListNode<string>("rah")),
@@ -586,14 +586,14 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void ClearEmptyList()
             {
-                List<T> list = new List<T>();
+                ValueListBuilder<T> list = new ValueListBuilder<T>();
                 Assert.Equal(0, list.Count); //"Should be equal to 0"
                 list.Clear();
                 Assert.Equal(0, list.Count); //"Should be equal to 0."
             }
             public void ClearMultipleTimesEmptyList(int times)
             {
-                List<T> list = new List<T>();
+                ValueListBuilder<T> list = new ValueListBuilder<T>();
                 Assert.Equal(0, list.Count); //"Should be equal to 0."
                 for (int i = 0; i < times; i++)
                 {
@@ -603,14 +603,14 @@ namespace Badeend.ValueCollections.Tests.Reference
             }
             public void ClearNonEmptyList(T[] items)
             {
-                List<T> list = new List<T>(items);
+                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
                 list.Clear();
                 Assert.Equal(0, list.Count); //"Should be equal to 0."
             }
 
             public void ClearMultipleTimesNonEmptyList(T[] items, int times)
             {
-                List<T> list = new List<T>(items);
+                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
                 for (int i = 0; i < times; i++)
                 {
                     list.Clear();
@@ -620,7 +620,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void NonGenericIListClearEmptyList()
             {
-                List<T> list = new List<T>();
+                ValueListBuilder<T> list = new ValueListBuilder<T>();
                 IList _ilist = list;
                 Assert.Equal(0, list.Count); //"Should be equal to 0."
                 _ilist.Clear();
@@ -628,7 +628,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             }
             public void NonGenericIListClearMultipleTimesEmptyList(int times)
             {
-                List<T> list = new List<T>();
+                ValueListBuilder<T> list = new ValueListBuilder<T>();
                 IList _ilist = list;
                 Assert.Equal(0, list.Count); //"Should be equal to 0."
                 for (int i = 0; i < times; i++)
@@ -639,7 +639,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             }
             public void NonGenericIListClearNonEmptyList(T[] items)
             {
-                List<T> list = new List<T>(items);
+                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
                 IList _ilist = list;
                 _ilist.Clear();
                 Assert.Equal(0, list.Count); //"Should be equal to 0."
@@ -647,7 +647,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void NonGenericIListClearMultipleTimesNonEmptyList(T[] items, int times)
             {
-                List<T> list = new List<T>(items);
+                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
                 IList _ilist = list;
                 for (int i = 0; i < times; i++)
                 {
@@ -663,7 +663,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             public void TrueForAll_VerifyVanilla(T[] items)
             {
                 T expectedItem = default(T);
-                List<T> list = new List<T>();
+                ValueListBuilder<T> list = new ValueListBuilder<T>();
                 Predicate<T> expectedItemDelegate = delegate (T item) { return expectedItem == null ? item != null : !expectedItem.Equals(item); };
                 bool typeNullable = default(T) == null;
 
@@ -688,7 +688,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void TrueForAll_VerifyExceptions(T[] items)
             {
-                var list = new List<T>(items);
+                var list = new ValueListBuilder<T>(items);
                 Assert.True(list.TrueForAll(item => true));
                 Assert.Throws<ArgumentNullException>(() => list.TrueForAll(null)); //"Err_858ahia Expected null match to throw ArgumentNullException"
             }
@@ -699,7 +699,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void BasicToArray(T[] items)
             {
-                List<T> list = new List<T>(items);
+                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
 
                 T[] arr = list.ToArray();
 
@@ -711,7 +711,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void EnsureNotUnderlyingToArray(T[] items, T item)
             {
-                List<T> list = new List<T>(items);
+                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
                 T[] arr = list.ToArray();
                 list[0] = item;
                 if (((object)arr[0]) == null)
@@ -1154,8 +1154,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public static void TrueForAll_ListSizeCanBeChanged()
         {
-            List<int> list = new List<int>() { 1, 2, 3 };
-            List<int> expectedList = new List<int> { 1, 2, 3, 2, 3, 4, 3, 4, 4 };
+            ValueListBuilder<int> list = new ValueListBuilder<int>() { 1, 2, 3 };
+            ValueListBuilder<int> expectedList = new ValueListBuilder<int> { 1, 2, 3, 2, 3, 4, 3, 4, 4 };
 
             bool result = list.TrueForAll(i =>
             {

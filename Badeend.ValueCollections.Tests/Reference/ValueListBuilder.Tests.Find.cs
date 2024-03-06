@@ -20,8 +20,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void FindVerifyExceptions(int count)
         {
-            List<T> list = GenericListFactory(count);
-            List<T> beforeList = list.ToList();
+            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueListBuilder<T> beforeList = list.ToList();
 
             //[] Verify Null match Find
             Assert.Throws<ArgumentNullException>(() => list.Find(null)); //"Err_858ahia Expected null match to throw ArgumentNullException"
@@ -40,8 +40,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void FindLastIndexInt_VerifyExceptions(int count)
         {
-            List<T> list = GenericListFactory(count);
-            List<T> beforeList = list.ToList();
+            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueListBuilder<T> beforeList = list.ToList();
             Predicate<T> predicate = _alwaysTrueDelegate;
 
 
@@ -74,8 +74,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void FindIndexIntInt_VerifyExceptions(int count)
         {
-            List<T> list = GenericListFactory(count);
-            List<T> beforeList = list.ToList();
+            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueListBuilder<T> beforeList = list.ToList();
             Predicate<T> predicate = delegate (T item) { return true; };
 
 
@@ -132,8 +132,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void FindLastIndexIntInt_VerifyExceptions(int count)
         {
-            List<T> list = GenericListFactory(count);
-            List<T> beforeList = list.ToList();
+            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueListBuilder<T> beforeList = list.ToList();
             Predicate<T> predicate = _alwaysTrueDelegate;
 
             //[] Verify Null match
@@ -192,8 +192,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void FindIndexInt_VerifyExceptions(int count)
         {
-            List<T> list = GenericListFactory(count);
-            List<T> beforeList = list.ToList();
+            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueListBuilder<T> beforeList = list.ToList();
             Predicate<T> predicate = delegate (T item) { return true; };
 
             //[] Verify Null match
@@ -221,8 +221,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void Find_VerifyVanilla(int count)
         {
-            List<T> list = GenericListFactory(count);
-            List<T> beforeList = list.ToList();
+            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueListBuilder<T> beforeList = list.ToList();
             T expectedItem = default(T);
             T foundItem;
             Predicate<T> EqualsDelegate = (T item) => { return expectedItem == null ? item == null : expectedItem.Equals(item); };
@@ -256,8 +256,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void Find_VerifyDuplicates(int count)
         {
             T expectedItem = default(T);
-            List<T> list = GenericListFactory(count);
-            List<T> beforeList = list.ToList();
+            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueListBuilder<T> beforeList = list.ToList();
             T foundItem;
             Predicate<T> EqualsDelegate = (T item) => { return expectedItem == null ? item == null : expectedItem.Equals(item); };
 
@@ -290,9 +290,9 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void Find_ListSizeCanBeChanged()
         {
-            List<int> expectedList = new List<int>() { 1, 2, 3, 2, 3, 4, 3, 4, 4 };
+            ValueListBuilder<int> expectedList = new ValueListBuilder<int>() { 1, 2, 3, 2, 3, 4, 3, 4, 4 };
 
-            List<int> list = new List<int>() { 1, 2, 3 };
+            ValueListBuilder<int> list = new ValueListBuilder<int>() { 1, 2, 3 };
 
             int result = list.Find(i =>
             {
@@ -316,8 +316,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void FindLast_VerifyVanilla(int count)
         {
-            List<T> list = GenericListFactory(count);
-            List<T> beforeList = list.ToList();
+            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueListBuilder<T> beforeList = list.ToList();
             T expectedItem = default(T);
             T foundItem;
             Predicate<T> EqualsDelegate = (T item) => { return expectedItem == null ? item == null : expectedItem.Equals(item); };
@@ -355,8 +355,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void FindLast_VerifyDuplicates(int count)
         {
             T expectedItem = default(T);
-            List<T> list = GenericListFactory(count);
-            List<T> beforeList = list.ToList();
+            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueListBuilder<T> beforeList = list.ToList();
             T foundItem;
             Predicate<T> EqualsDelegate = (T item) => { return expectedItem == null ? item == null : expectedItem.Equals(item); };
 
@@ -394,8 +394,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void FindIndex_VerifyVanilla(int count)
         {
             T expectedItem = default(T);
-            List<T> list = GenericListFactory(count);
-            List<T> beforeList = list.ToList();
+            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueListBuilder<T> beforeList = list.ToList();
             int index;
             Predicate<T> EqualsDefaultDelegate = (T item) => { return expectedItem == null ? item == null : expectedItem.Equals(item); };
 
@@ -424,8 +424,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void FindIndex_VerifyDuplicates(int count)
         {
-            List<T> list = GenericListFactory(count);
-            List<T> beforeList = list.ToList();
+            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueListBuilder<T> beforeList = list.ToList();
             T expectedItem = default(T);
             int index;
             Predicate<T> EqualsDelegate = (T item) => { return expectedItem == null ? item == null : expectedItem.Equals(item); };
@@ -460,8 +460,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void FindIndexInt_VerifyVanilla(int count)
         {
             T expectedItem = default(T);
-            List<T> list = GenericListFactory(count);
-            List<T> beforeList = list.ToList();
+            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueListBuilder<T> beforeList = list.ToList();
             int index;
             Predicate<T> EqualsDelegate = delegate (T item) { return expectedItem == null ? item == null : expectedItem.Equals(item); };
 
@@ -513,8 +513,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void FindIndexInt_VerifyDuplicates(int count)
         {
             T expectedItem = default(T);
-            List<T> list = GenericListFactory(count);
-            List<T> beforeList = list.ToList();
+            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueListBuilder<T> beforeList = list.ToList();
             int index;
             Predicate<T> EqualsDelegate = delegate (T item) { return expectedItem == null ? item == null : expectedItem.Equals(item); };
 
@@ -558,8 +558,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void FindIndexIntInt_VerifyVanilla(int count)
         {
             T expectedItem = default(T);
-            List<T> list = GenericListFactory(count);
-            List<T> beforeList = list.ToList();
+            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueListBuilder<T> beforeList = list.ToList();
             int index;
             Predicate<T> EqualsDelegate = delegate (T item) { return expectedItem == null ? item == null : expectedItem.Equals(item); };
 
@@ -636,8 +636,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void FindIndexIntInt_VerifyDuplicates(int count)
         {
             T expectedItem = default(T);
-            List<T> list = GenericListFactory(count);
-            List<T> beforeList = list.ToList();
+            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueListBuilder<T> beforeList = list.ToList();
             int index;
             Predicate<T> EqualsDelegate = delegate (T item) { return expectedItem == null ? item == null : expectedItem.Equals(item); };
 
@@ -681,8 +681,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void FindLastIndex_VerifyVanilla(int count)
         {
             T expectedItem = default(T);
-            List<T> list = GenericListFactory(count);
-            List<T> beforeList = list.ToList();
+            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueListBuilder<T> beforeList = list.ToList();
             int index;
             Predicate<T> EqualsDelegate = delegate (T item) { return expectedItem == null ? item == null : expectedItem.Equals(item); };
 
@@ -710,8 +710,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void FindLastIndex_VerifyDuplicates(int count)
         {
             T expectedItem = default(T);
-            List<T> list = GenericListFactory(count);
-            List<T> beforeList = list.ToList();
+            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueListBuilder<T> beforeList = list.ToList();
             int index;
             Predicate<T> EqualsDelegate = delegate (T item) { return expectedItem == null ? item == null : expectedItem.Equals(item); };
 
@@ -745,8 +745,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void FindLastIndexInt_VerifyVanilla(int count)
         {
             T expectedItem = default(T);
-            List<T> list = GenericListFactory(count);
-            List<T> beforeList = list.ToList();
+            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueListBuilder<T> beforeList = list.ToList();
             int index;
             Predicate<T> EqualsDelegate = (T item) => { return expectedItem == null ? item == null : expectedItem.Equals(item); };
 
@@ -797,8 +797,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void FindLastIndexInt_VerifyDuplicates(int count)
         {
             T expectedItem = default(T);
-            List<T> list = GenericListFactory(count);
-            List<T> beforeList = list.ToList();
+            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueListBuilder<T> beforeList = list.ToList();
             int index;
             Predicate<T> EqualsDelegate = (T item) => { return expectedItem == null ? item == null : expectedItem.Equals(item); };
 
@@ -842,8 +842,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void FindLastIndexIntInt_VerifyVanilla(int count)
         {
             T expectedItem = default(T);
-            List<T> list = GenericListFactory(count);
-            List<T> beforeList = list.ToList();
+            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueListBuilder<T> beforeList = list.ToList();
             int index;
             Predicate<T> EqualsDelegate = (T item) => { return expectedItem == null ? item == null : expectedItem.Equals(item); };
 
@@ -923,8 +923,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void FindLastIndexIntInt_VerifyDuplicates(int count)
         {
             T expectedItem = default(T);
-            List<T> list = GenericListFactory(count);
-            List<T> beforeList = list.ToList();
+            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueListBuilder<T> beforeList = list.ToList();
             int index;
             Predicate<T> EqualsDelegate = (T item) => { return expectedItem == null ? item == null : expectedItem.Equals(item); };
 
@@ -957,8 +957,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void FindAll_VerifyVanilla(int count)
         {
-            List<T> list = GenericListFactory(count);
-            List<T> beforeList = list.ToList();
+            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueListBuilder<T> beforeList = list.ToList();
             T expectedItem = default(T);
             Predicate<T> EqualsDelegate = (value) => expectedItem == null ? value == null : expectedItem.Equals(value);
 
@@ -966,7 +966,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             for (int i = 0; i < count; ++i)
             {
                 expectedItem = beforeList[i];
-                List<T> results = list.FindAll(EqualsDelegate);
+                ValueListBuilder<T> results = list.FindAll(EqualsDelegate);
                 VerifyList(results, beforeList.Where((value) => EqualsDelegate(value)).ToList());
             }
 
@@ -974,24 +974,24 @@ namespace Badeend.ValueCollections.Tests.Reference
             VerifyList(list.FindAll(_alwaysTrueDelegate), beforeList);
 
             //[] Verify FindAll returns an empty List if the match returns false on every item
-            VerifyList(list.FindAll(_alwaysFalseDelegate), new List<T>());
+            VerifyList(list.FindAll(_alwaysFalseDelegate), new ValueListBuilder<T>());
         }
 
         [Theory]
         [MemberData(nameof(ValidCollectionSizes))]
         public void FindAll_VerifyDuplicates(int count)
         {
-            List<T> list = GenericListFactory(count);
+            ValueListBuilder<T> list = GenericListFactory(count);
             for (int i = 0; i < count / 2; i++)
                 list.Add(list[i]);
-            List<T> beforeList = list.ToList();
+            ValueListBuilder<T> beforeList = list.ToList();
             T expectedItem = default(T);
             Predicate<T> EqualsDelegate = (value) => expectedItem == null ? value == null : expectedItem.Equals(value);
             //[] Verify FindAll returns the correct List with one item
             for (int i = 0; i < count; ++i)
             {
                 expectedItem = beforeList[i];
-                List<T> results = list.FindAll(EqualsDelegate);
+                ValueListBuilder<T> results = list.FindAll(EqualsDelegate);
                 VerifyList(results, beforeList.Where((value) => EqualsDelegate(value)).ToList());
             }
 
@@ -999,16 +999,16 @@ namespace Badeend.ValueCollections.Tests.Reference
             VerifyList(list.FindAll(_alwaysTrueDelegate), beforeList);
 
             //[] Verify FindAll returns an empty List if the match returns false on every item
-            VerifyList(list.FindAll(_alwaysFalseDelegate), new List<T>());
+            VerifyList(list.FindAll(_alwaysFalseDelegate), new ValueListBuilder<T>());
         }
 
         [Fact]
         public void FindAll_ListSizeCanBeChanged()
         {
-            List<int> list = new List<int>() { 1, 2, 3 };
-            List<int> expectedList = new List<int>() { 1, 2, 3, 2, 3, 4, 3, 4, 4 };
+            ValueListBuilder<int> list = new ValueListBuilder<int>() { 1, 2, 3 };
+            ValueListBuilder<int> expectedList = new ValueListBuilder<int>() { 1, 2, 3, 2, 3, 4, 3, 4, 4 };
 
-            List<int> result = list.FindAll(i =>
+            ValueListBuilder<int> result = list.FindAll(i =>
             {
                 if (i < 4)
                 {

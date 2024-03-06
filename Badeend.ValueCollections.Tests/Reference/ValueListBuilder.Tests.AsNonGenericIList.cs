@@ -24,12 +24,12 @@ namespace Badeend.ValueCollections.Tests.Reference
             return GenericListFactory(count);
         }
 
-        protected virtual List<string> GenericListFactory()
+        protected virtual ValueListBuilder<string> GenericListFactory()
         {
-            return new List<string>();
+            return new ValueListBuilder<string>();
         }
 
-        protected virtual List<string> GenericListFactory(int count)
+        protected virtual ValueListBuilder<string> GenericListFactory(int count)
         {
             var list = GenericListFactory();
             int seed = 5321;

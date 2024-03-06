@@ -18,8 +18,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(EnumerableTestData))]
         public void AddRange(EnumerableType enumerableType, int listLength, int enumerableLength, int numberOfMatchingElements, int numberOfDuplicateElements)
         {
-            List<T> list = GenericListFactory(listLength);
-            List<T> listBeforeAdd = list.ToList();
+            ValueListBuilder<T> list = GenericListFactory(listLength);
+            ValueListBuilder<T> listBeforeAdd = list.ToList();
             IEnumerable<T> enumerable = CreateEnumerable(enumerableType, list, enumerableLength, numberOfMatchingElements, numberOfDuplicateElements);
             list.AddRange(enumerable);
 
@@ -40,8 +40,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ListTestData))]
         public void AddRange_Span(EnumerableType enumerableType, int listLength, int enumerableLength, int numberOfMatchingElements, int numberOfDuplicateElements)
         {
-            List<T> list = GenericListFactory(listLength);
-            List<T> listBeforeAdd = list.ToList();
+            ValueListBuilder<T> list = GenericListFactory(listLength);
+            ValueListBuilder<T> listBeforeAdd = list.ToList();
             Span<T> span = CreateEnumerable(enumerableType, list, enumerableLength, numberOfMatchingElements, numberOfDuplicateElements).ToArray();
             list.AddRange(span);
 
@@ -69,8 +69,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void AddRange_NullEnumerable_ThrowsArgumentNullException(int count)
         {
-            List<T> list = GenericListFactory(count);
-            List<T> listBeforeAdd = list.ToList();
+            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueListBuilder<T> listBeforeAdd = list.ToList();
             Assert.Throws<ArgumentNullException>(() => list.AddRange(null));
             Assert.Equal(listBeforeAdd, list);
         }
@@ -78,7 +78,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void AddRange_AddSelfAsEnumerable_ThrowsExceptionWhenNotEmpty()
         {
-            List<T> list = GenericListFactory(0);
+            ValueListBuilder<T> list = GenericListFactory(0);
 
             // Succeeds when list is empty.
             list.AddRange(list);
@@ -102,7 +102,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void AddRange_CollectionWithLargeCount_ThrowsOverflowException()
         {
-            List<T> list = GenericListFactory(count: 1);
+            ValueListBuilder<T> list = GenericListFactory(count: 1);
             ICollection<T> collection = new CollectionWithLargeCount();
 
             Assert.Throws<OverflowException>(() => list.AddRange(collection));

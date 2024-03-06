@@ -15,8 +15,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void ForEach_Verify(int count)
         {
-            List<T> list = GenericListFactory(count);
-            List<T> visitedItems = new List<T>();
+            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueListBuilder<T> visitedItems = new ValueListBuilder<T>();
             Action<T> action = delegate (T item) { visitedItems.Add(item); };
 
             //[] Verify ForEach looks at every item
@@ -28,7 +28,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void ForEach_NullAction_ThrowsArgumentNullException()
         {
-            List<T> list = GenericListFactory();
+            ValueListBuilder<T> list = GenericListFactory();
             Assert.Throws<ArgumentNullException>(() => list.ForEach(null));
         }
     }
