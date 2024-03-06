@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace Badeend.ValueCollections.Tests.Reference
 {
-    public class List_Generic_Tests_string : List_Generic_Tests<string>
+    public class ValueListBuilder_Tests_string : ValueListBuilder_Tests<string>
     {
         protected override string CreateT(int seed)
         {
@@ -17,7 +17,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         }
     }
 
-    public class List_Generic_Tests_int : List_Generic_Tests<int>
+    public class ValueListBuilder_Tests_int : ValueListBuilder_Tests<int>
     {
         protected override int CreateT(int seed)
         {
@@ -26,7 +26,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         }
     }
 
-    public class List_Generic_Tests_string_ReadOnly : List_Generic_Tests<string>
+    public class ValueListBuilder_Tests_string_ReadOnly : ValueListBuilder_Tests<string>
     {
         protected override string CreateT(int seed)
         {
@@ -54,7 +54,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         protected override bool Enumerator_Empty_Current_UndefinedOperation_Throws => true;
     }
 
-    public class List_Generic_Tests_int_ReadOnly : List_Generic_Tests<int>
+    public class ValueListBuilder_Tests_int_ReadOnly : ValueListBuilder_Tests<int>
     {
         protected override int CreateT(int seed)
         {

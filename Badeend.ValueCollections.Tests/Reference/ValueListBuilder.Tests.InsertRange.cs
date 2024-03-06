@@ -10,7 +10,7 @@ namespace Badeend.ValueCollections.Tests.Reference
     /// <summary>
     /// Contains tests that ensure the correctness of the List class.
     /// </summary>
-    public abstract partial class List_Generic_Tests<T> : IList_Generic_Tests<T>
+    public abstract partial class ValueListBuilder_Tests<T> : IList_Generic_Tests<T>
     {
         [Fact]
         public void InsertRange_InvalidArgs_Throws()

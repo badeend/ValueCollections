@@ -7,7 +7,7 @@ using Xunit;
 
 namespace Badeend.ValueCollections.Tests.Reference
 {
-    public abstract partial class List_Generic_Tests<T> : IList_Generic_Tests<T>
+    public abstract partial class ValueListBuilder_Tests<T> : IList_Generic_Tests<T>
     {
         [Fact]
         public void ConvertAll()

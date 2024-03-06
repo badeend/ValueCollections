@@ -10,7 +10,7 @@ namespace Badeend.ValueCollections.Tests.Reference
     /// <summary>
     /// Contains tests that ensure the correctness of the List class.
     /// </summary>
-    public class List_Generic_Tests_Insert
+    public class ValueListBuilder_Tests_Insert
     {
         internal class Driver<T>
         {
