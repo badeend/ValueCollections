@@ -14,14 +14,28 @@ public static class ValueListBuilder
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueListBuilder<T> AddRange<T>(this ValueListBuilder<T> builder, ReadOnlySpan<T> items)
-		=> builder.AddRangeSpan(items);
+	{
+		if (builder is null)
+		{
+			throw new ArgumentNullException(nameof(builder));
+		}
+
+		return builder.AddRangeSpan(items);
+	}
 
 	/// <summary>
 	/// Insert the <paramref name="items"/> into the list at the specified <paramref name="index"/>.
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueListBuilder<T> InsertRange<T>(this ValueListBuilder<T> builder, int index, ReadOnlySpan<T> items)
-		=> builder.InsertRangeSpan(index, items);
+	{
+		if (builder is null)
+		{
+			throw new ArgumentNullException(nameof(builder));
+		}
+
+		return builder.InsertRangeSpan(index, items);
+	}
 }
 
 /// <summary>
