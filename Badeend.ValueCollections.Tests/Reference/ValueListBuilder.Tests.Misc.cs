@@ -270,33 +270,6 @@ namespace Badeend.ValueCollections.Tests.Reference
             }
 
             #endregion
-
-            #region ToArray
-
-            public void BasicToArray(T[] items)
-            {
-                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
-
-                T[] arr = list.ToArray();
-
-                for (int i = 0; i < items.Length; i++)
-                {
-                    Assert.Equal(((object)arr[i]), items[i]); //"Should be equal."
-                }
-            }
-
-            public void EnsureNotUnderlyingToArray(T[] items, T item)
-            {
-                ValueListBuilder<T> list = new ValueListBuilder<T>(items);
-                T[] arr = list.ToArray();
-                list[0] = item;
-                if (((object)arr[0]) == null)
-                    Assert.NotNull(list[0]); //"Should NOT be null"
-                else
-                    Assert.NotEqual(((object)arr[0]), list[0]); //"Should NOT be equal."
-            }
-
-            #endregion
         }
 
         [Fact]
