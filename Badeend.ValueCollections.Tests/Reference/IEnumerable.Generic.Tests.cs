@@ -730,7 +730,11 @@ namespace Badeend.ValueCollections.Tests.Reference
                 {
                     if (ModifyEnumerable(enumerable))
                     {
-                        if (count == 0 ? Enumerator_Empty_ModifiedDuringEnumeration_ThrowsInvalidOperationException : Enumerator_ModifiedDuringEnumeration_ThrowsInvalidOperationException)
+                        if (!ResetImplemented)
+                        {
+                            Assert.Throws<NotSupportedException>(() => enumerator.Reset());
+                        }
+                        else if (count == 0 ? Enumerator_Empty_ModifiedDuringEnumeration_ThrowsInvalidOperationException : Enumerator_ModifiedDuringEnumeration_ThrowsInvalidOperationException)
                         {
                             Assert.Throws<InvalidOperationException>(() => enumerator.Reset());
                         }
@@ -754,7 +758,14 @@ namespace Badeend.ValueCollections.Tests.Reference
                 {
                     if (ModifyEnumerable(enumerable))
                     {
-                        enumerator.Reset();
+                        if (!ResetImplemented)
+                        {
+                            Assert.Throws<NotSupportedException>(() => enumerator.Reset());
+                        }
+                        else
+                        {
+                            enumerator.Reset();
+                        }
                     }
                 }
             });
@@ -773,7 +784,11 @@ namespace Badeend.ValueCollections.Tests.Reference
                         enumerator.MoveNext();
                     if (ModifyEnumerable(enumerable))
                     {
-                        if (count == 0 ? Enumerator_Empty_ModifiedDuringEnumeration_ThrowsInvalidOperationException : Enumerator_ModifiedDuringEnumeration_ThrowsInvalidOperationException)
+                        if (!ResetImplemented)
+                        {
+                            Assert.Throws<NotSupportedException>(() => enumerator.Reset());
+                        }
+                        else if (count == 0 ? Enumerator_Empty_ModifiedDuringEnumeration_ThrowsInvalidOperationException : Enumerator_ModifiedDuringEnumeration_ThrowsInvalidOperationException)
                         {
                             Assert.Throws<InvalidOperationException>(() => enumerator.Reset());
                         }
@@ -799,7 +814,14 @@ namespace Badeend.ValueCollections.Tests.Reference
                         enumerator.MoveNext();
                     if (ModifyEnumerable(enumerable))
                     {
-                        enumerator.Reset();
+                        if (!ResetImplemented)
+                        {
+                            Assert.Throws<NotSupportedException>(() => enumerator.Reset());
+                        }
+                        else
+                        {
+                            enumerator.Reset();
+                        }
                     }
                 }
             });
@@ -817,7 +839,11 @@ namespace Badeend.ValueCollections.Tests.Reference
                     while (enumerator.MoveNext()) ;
                     if (ModifyEnumerable(enumerable))
                     {
-                        if (count == 0 ? Enumerator_Empty_ModifiedDuringEnumeration_ThrowsInvalidOperationException : Enumerator_ModifiedDuringEnumeration_ThrowsInvalidOperationException)
+                        if (!ResetImplemented)
+                        {
+                            Assert.Throws<NotSupportedException>(() => enumerator.Reset());
+                        }
+                        else if (count == 0 ? Enumerator_Empty_ModifiedDuringEnumeration_ThrowsInvalidOperationException : Enumerator_ModifiedDuringEnumeration_ThrowsInvalidOperationException)
                         {
                             Assert.Throws<InvalidOperationException>(() => enumerator.Reset());
                         }
@@ -843,7 +869,14 @@ namespace Badeend.ValueCollections.Tests.Reference
                         ;
                     if (ModifyEnumerable(enumerable))
                     {
-                        enumerator.Reset();
+                        if (!ResetImplemented)
+                        {
+                            Assert.Throws<NotSupportedException>(() => enumerator.Reset());
+                        }
+                        else
+                        {
+                            enumerator.Reset();
+                        }
                     }
                 }
             });
@@ -852,91 +885,29 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void IEnumerable_Generic_Enumerator_Reset()
         {
-            if (!ResetImplemented)
-            {
-                RepeatTest(
-                    (enumerator, items) =>
+            RepeatTest(
+                (enumerator, items, iter) =>
+                {
+                    if (iter == 1)
                     {
-                        Assert.Throws<NotSupportedException>(
-                            () => enumerator.Reset());
-                    });
-                RepeatTest(
-                    (enumerator, items, iter) =>
+                        VerifyEnumerator(
+                            enumerator,
+                            items,
+                            0,
+                            items.Length / 2,
+                            true,
+                            false);
+                    }
+                    else if (iter == 3)
                     {
-                        if (iter == 1)
-                        {
-                            VerifyEnumerator(
-                                enumerator,
-                                items,
-                                0,
-                                items.Length / 2,
-                                true,
-                                false);
-                            for (int i = 0; i < 3; i++)
-                            {
-                                Assert.Throws<NotSupportedException>(
-                                    () => enumerator.Reset());
-                            }
-                            VerifyEnumerator(
-                                enumerator,
-                                items,
-                                items.Length / 2,
-                                items.Length - (items.Length / 2),
-                                false,
-                                true);
-                        }
-                        else if (iter == 2)
-                        {
-                            VerifyEnumerator(enumerator, items);
-                            for (int i = 0; i < 3; i++)
-                            {
-                                Assert.Throws<NotSupportedException>(
-                                    () => enumerator.Reset());
-                            }
-                            VerifyEnumerator(
-                                enumerator,
-                                items,
-                                0,
-                                0,
-                                false,
-                                true);
-                        }
-                        else
-                        {
-                            VerifyEnumerator(enumerator, items);
-                        }
-                    });
-            }
-            else
-            {
-                RepeatTest(
-                    (enumerator, items, iter) =>
+                        VerifyEnumerator(enumerator, items);
+                    }
+                    else
                     {
-                        if (iter == 1)
-                        {
-                            VerifyEnumerator(
-                                enumerator,
-                                items,
-                                0,
-                                items.Length / 2,
-                                true,
-                                false);
-                            enumerator.Reset();
-                            enumerator.Reset();
-                        }
-                        else if (iter == 3)
-                        {
-                            VerifyEnumerator(enumerator, items);
-                            enumerator.Reset();
-                            enumerator.Reset();
-                        }
-                        else
-                        {
-                            VerifyEnumerator(enumerator, items);
-                        }
-                    },
-                    5);
-            }
+                        VerifyEnumerator(enumerator, items);
+                    }
+                },
+                5);
         }
 
         #endregion
