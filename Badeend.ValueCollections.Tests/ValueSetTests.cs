@@ -103,4 +103,16 @@ public class ValueSetTests
 
         Assert.True(hashCodes.Count() == hashCodes.Distinct().Count(), "Hash codes: " + string.Join(", ", hashCodes.Select(x => x.ToString())));
     }
+
+    [Fact]
+    public void SerializeToString()
+    {
+        ValueSet<int> a = [];
+        ValueSet<int> b = [42];
+        ValueSet<string?> c = ["A", null, "B"];
+
+        Assert.True(a.ToString() == "ValueSet(Count: 0) { }");
+        Assert.True(b.ToString() == "ValueSet(Count: 1) { 42 }");
+        Assert.True(c.ToString().StartsWith("ValueSet(Count: 3) { "));
+    }
 }

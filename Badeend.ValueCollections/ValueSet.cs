@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace Badeend.ValueCollections;
 
@@ -401,6 +402,37 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 	}
 #pragma warning restore CA1815 // Override equals and operator equals on value types
 #pragma warning restore CA1034 // Nested types should not be visible
+
+	/// <inheritdoc/>
+	public override string ToString()
+	{
+		if (this.Count == 0)
+		{
+			return "ValueSet(Count: 0) { }";
+		}
+
+		var builder = new StringBuilder();
+		builder.Append("ValueSet(Count: ");
+		builder.Append(this.Count);
+		builder.Append(") { ");
+
+		var index = 0;
+		foreach (var item in this)
+		{
+			if (index > 0)
+			{
+				builder.Append(", ");
+			}
+
+			var itemString = item?.ToString() ?? "null";
+			builder.Append(itemString);
+
+			index++;
+		}
+
+		builder.Append(" }");
+		return builder.ToString();
+	}
 
 	/// <inheritdoc/>
 	void ICollection<T>.Add(T item) => throw CreateImmutableException();

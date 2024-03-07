@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Badeend.ValueCollections;
 
@@ -508,5 +509,36 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 		}
 
 		return SequenceEqual(left.Value, right.Value);
+	}
+
+	/// <inheritdoc/>
+	public override string ToString()
+	{
+		if (this.Length == 0)
+		{
+			return "ValueSlice(Length: 0) { }";
+		}
+
+		var builder = new StringBuilder();
+		builder.Append("ValueSlice(Length: ");
+		builder.Append(this.Length);
+		builder.Append(") { ");
+
+		var index = 0;
+		foreach (var item in this)
+		{
+			if (index > 0)
+			{
+				builder.Append(", ");
+			}
+
+			var itemString = item?.ToString() ?? "null";
+			builder.Append(itemString);
+
+			index++;
+		}
+
+		builder.Append(" }");
+		return builder.ToString();
 	}
 }

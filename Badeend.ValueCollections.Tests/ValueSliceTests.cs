@@ -198,4 +198,16 @@ public class ValueSliceTests
 
         Assert.True(slice[2] == 42);
     }
+
+    [Fact]
+    public void SerializeToString()
+    {
+        ValueSlice<int> a = [];
+        ValueSlice<int> b = [42];
+        ValueSlice<string?> c = ["A", null, "B"];
+
+        Assert.True(a.ToString() == "ValueSlice(Length: 0) { }");
+        Assert.True(b.ToString() == "ValueSlice(Length: 1) { 42 }");
+        Assert.True(c.ToString() == "ValueSlice(Length: 3) { A, null, B }");
+    }
 }

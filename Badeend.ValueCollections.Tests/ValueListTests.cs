@@ -152,4 +152,16 @@ public class ValueListTests
 
         Assert.True(valueList[2] == 42);
     }
+
+    [Fact]
+    public void SerializeToString()
+    {
+        ValueList<int> a = [];
+        ValueList<int> b = [42];
+        ValueList<string?> c = ["A", null, "B"];
+
+        Assert.True(a.ToString() == "ValueList(Count: 0) { }");
+        Assert.True(b.ToString() == "ValueList(Count: 1) { 42 }");
+        Assert.True(c.ToString() == "ValueList(Count: 3) { A, null, B }");
+    }
 }
