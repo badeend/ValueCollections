@@ -195,4 +195,42 @@ public static class ValueCollectionExtensions
 
 		return builder.InsertRangeSpan(index, items);
 	}
+
+	/// <summary>
+	/// Copy the <paramref name="items"/> into a new <see cref="ValueSet{T}"/>.
+	/// </summary>
+	public static ValueSet<T> ToValueSet<T>(this ReadOnlySpan<T> items) => ValueSet<T>.FromReadOnlySpan(items);
+
+	/// <summary>
+	/// Copy the <paramref name="items"/> into a new <see cref="ValueSet{T}"/>.
+	/// </summary>
+	public static ValueSet<T> ToValueSet<T>(this Span<T> items) => ValueSet<T>.FromReadOnlySpan(items);
+
+	/// <summary>
+	/// Copy the <paramref name="items"/> into a new <see cref="ValueSet{T}"/>.
+	/// </summary>
+	public static ValueSet<T> ToValueSet<T>(this ReadOnlyMemory<T> items) => ValueSet<T>.FromReadOnlySpan(items.Span);
+
+	/// <summary>
+	/// Copy the <paramref name="items"/> into a new <see cref="ValueSet{T}"/>.
+	/// </summary>
+	public static ValueSet<T> ToValueSet<T>(this Memory<T> items) => ValueSet<T>.FromReadOnlySpan(items.Span);
+
+	/// <summary>
+	/// Copy the <paramref name="items"/> into a new <see cref="ValueSet{T}"/>.
+	/// </summary>
+	public static ValueSet<T> ToValueSet<T>(this IEnumerable<T> items)
+	{
+		if (items is ValueSet<T> list)
+		{
+			return list;
+		}
+
+		// if (items is ValueSetBuilder<T> builder)
+		// {
+		// 	return builder.ToValueSet();
+		// }
+
+		return ValueSet<T>.FromHashSetUnsafe(new HashSet<T>(items));
+	}
 }
