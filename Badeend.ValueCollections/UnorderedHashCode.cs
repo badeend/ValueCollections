@@ -11,6 +11,7 @@ internal struct UnorderedHashCode
 	private const int BucketCount = 32; // Must be a power of 2 and match the number of fields in this struct.
 	private const int BucketMask = BucketCount - 1;
 
+#pragma warning disable CS0169 // Private field is never used
 	private int h0;
 	private int h1;
 	private int h2;
@@ -43,6 +44,7 @@ internal struct UnorderedHashCode
 	private int h29;
 	private int h30;
 	private int h31;
+#pragma warning restore CS0169 // Private field is never used
 
 	internal void Add<T>(T value)
 	{
