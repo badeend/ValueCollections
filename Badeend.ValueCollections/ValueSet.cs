@@ -22,6 +22,20 @@ public static class ValueSet
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueSet<T> Create<T>(ReadOnlySpan<T> items) => ValueSet<T>.FromReadOnlySpan(items);
+
+	/// <summary>
+	/// Create a new empty <see cref="ValueSetBuilder{T}"/>. This builder can
+	/// then be used to efficiently construct an immutable <see cref="ValueSet{T}"/>.
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ValueSetBuilder<T> Builder<T>() => new();
+
+	/// <summary>
+	/// Create a new <see cref="ValueSetBuilder{T}"/> with the provided
+	/// <paramref name="items"/> as its initial content.
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ValueSetBuilder<T> Builder<T>(ReadOnlySpan<T> items) => ValueSetBuilder<T>.FromReadOnlySpan(items);
 }
 
 /// <summary>
@@ -31,6 +45,11 @@ public static class ValueSet
 /// are in no particular order. Enumerating a set returns its contents in
 /// undefined order and the may even be different on each iteration.
 ///
+/// Constructing new instances can be done using
+/// <see cref="ValueSet.Builder{T}()"/> or <see cref="ValueSet{T}.ToBuilder()"/>.
+/// For creating ValueSets, <see cref="ValueSetBuilder{T}"/> is generally more
+/// efficient than <see cref="HashSet{T}"/>.
+///
 /// ValueSets have "structural equality". This means that two sets
 /// are considered equal only when their contents are equal. Due to technical
 /// reasons, the type parameter <typeparamref name="T"/> is currently not restricted
@@ -39,9 +58,10 @@ public static class ValueSet
 /// </summary>
 /// <typeparam name="T">The type of items in the set.</typeparam>
 [CollectionBuilder(typeof(ValueSet), nameof(ValueSet.Create))]
-public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<ValueSet<T>>
 #if NET5_0_OR_GREATER
-	, IReadOnlySet<T>
+public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<ValueSet<T>>, IReadOnlySet<T>
+#else
+public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<ValueSet<T>>
 #endif
 {
 	private const int UninitializedHashCode = 0;
@@ -59,6 +79,12 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 	/// Warning! This class promises to be thread-safe, yet this is a mutable field.
 	/// </summary>
 	private int hashCode = UninitializedHashCode;
+
+	internal HashSet<T> Items
+	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		get => this.items;
+	}
 
 	/// <summary>
 	/// Number of items in the set.
@@ -93,7 +119,12 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 			return Empty;
 		}
 
-#if NET472_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+		return new(SpanToHashSet(items));
+	}
+
+	internal static HashSet<T> SpanToHashSet(ReadOnlySpan<T> items)
+	{
+#if NET472_OR_GREATER || NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_0_OR_GREATER
 		var set = new HashSet<T>(items.Length);
 
 		foreach (var item in items)
@@ -107,6 +138,8 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 		{
 			set.TrimExcess();
 		}
+
+		return set;
 #else
 		var set = new HashSet<T>();
 
@@ -114,9 +147,9 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 		{
 			set.Add(item);
 		}
-#endif
 
-		return new(set);
+		return set;
+#endif
 	}
 
 	internal static ValueSet<T> FromHashSetUnsafe(HashSet<T> items)
@@ -128,6 +161,16 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 
 		return new(items);
 	}
+
+	/// <summary>
+	/// Create a new <see cref="ValueSetBuilder{T}"/> with this set as its
+	/// initial content. This builder can then be used to efficiently construct
+	/// an immutable <see cref="ValueSet{T}"/>.
+	///
+	/// This is an <c>O(1)</c> operation and performs only a small fixed-size
+	/// memory allocation. This does not perform a bulk copy of the contents.
+	/// </summary>
+	public ValueSetBuilder<T> ToBuilder() => ValueSetBuilder<T>.FromValueSet(this);
 
 	/// <summary>
 	/// Copy the contents of the set into a new array.
@@ -160,7 +203,7 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 	{
 		if (destination.Length < this.Count)
 		{
-			throw new ArgumentException(nameof(destination));
+			throw new ArgumentException("Destination too short", nameof(destination));
 		}
 
 		this.CopyToUnchecked(destination);

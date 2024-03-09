@@ -226,11 +226,86 @@ public static class ValueCollectionExtensions
 			return list;
 		}
 
-		// if (items is ValueSetBuilder<T> builder)
-		// {
-		// 	return builder.ToValueSet();
-		// }
+		if (items is ValueSetBuilder<T> builder)
+		{
+			return builder.ToValueSet();
+		}
 
 		return ValueSet<T>.FromHashSetUnsafe(new HashSet<T>(items));
+	}
+
+	/// <summary>
+	/// Copy the <paramref name="items"/> into a new <see cref="ValueSetBuilder{T}"/>.
+	/// </summary>
+	public static ValueSetBuilder<T> ToValueSetBuilder<T>(this ReadOnlySpan<T> items) => ValueSetBuilder<T>.FromReadOnlySpan(items);
+
+	/// <summary>
+	/// Copy the <paramref name="items"/> into a new <see cref="ValueSetBuilder{T}"/>.
+	/// </summary>
+	public static ValueSetBuilder<T> ToValueSetBuilder<T>(this Span<T> items) => ValueSetBuilder<T>.FromReadOnlySpan(items);
+
+	/// <summary>
+	/// Copy the <paramref name="items"/> into a new <see cref="ValueSetBuilder{T}"/>.
+	/// </summary>
+	public static ValueSetBuilder<T> ToValueSetBuilder<T>(this ReadOnlyMemory<T> items) => ValueSetBuilder<T>.FromReadOnlySpan(items.Span);
+
+	/// <summary>
+	/// Copy the <paramref name="items"/> into a new <see cref="ValueSetBuilder{T}"/>.
+	/// </summary>
+	public static ValueSetBuilder<T> ToValueSetBuilder<T>(this Memory<T> items) => ValueSetBuilder<T>.FromReadOnlySpan(items.Span);
+
+	/// <summary>
+	/// Copy the <paramref name="items"/> into a new <see cref="ValueSetBuilder{T}"/>.
+	/// </summary>
+	[Obsolete("Use .ToBuilder() instead.")]
+	[Browsable(false)]
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	public static ValueSetBuilder<T> ToValueSetBuilder<T>(this ValueSet<T> items) => items.ToBuilder();
+
+	/// <summary>
+	/// Copy the <paramref name="items"/> into a new <see cref="ValueSetBuilder{T}"/>.
+	/// </summary>
+	public static ValueSetBuilder<T> ToValueSetBuilder<T>(this IEnumerable<T> items)
+	{
+		if (items is ValueSet<T> list)
+		{
+			return list.ToBuilder();
+		}
+
+		return ValueSetBuilder<T>.FromHashSetUnsafe(new HashSet<T>(items));
+	}
+
+	/// <summary>
+	/// Add the <paramref name="items"/> to the set.
+	/// </summary>
+	/// <remarks>
+	/// This overload is an extension method to avoid call site ambiguity.
+	/// </remarks>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ValueSetBuilder<T> UnionWith<T>(this ValueSetBuilder<T> builder, ReadOnlySpan<T> items)
+	{
+		if (builder is null)
+		{
+			throw new ArgumentNullException(nameof(builder));
+		}
+
+		return builder.UnionWithSpan(items);
+	}
+
+	/// <summary>
+	/// Remove the <paramref name="items"/> from the set.
+	/// </summary>
+	/// <remarks>
+	/// This overload is an extension method to avoid call site ambiguity.
+	/// </remarks>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ValueSetBuilder<T> ExceptWith<T>(this ValueSetBuilder<T> builder, ReadOnlySpan<T> items)
+	{
+		if (builder is null)
+		{
+			throw new ArgumentNullException(nameof(builder));
+		}
+
+		return builder.ExceptWithSpan(items);
 	}
 }
