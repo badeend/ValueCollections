@@ -94,6 +94,21 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 
 	private ISet<T> Read() => this.items;
 
+	/// <summary>
+	/// Try to get the underlying HashSet as enumerable.
+	/// Some of HashSet's methods can take advantage of specialized optimizations
+	/// when the `other` parameter is also a HashSet.
+	/// </summary>
+	private static IEnumerable<T> PreferHashSet(IEnumerable<T> input)
+	{
+		if (input is ValueSet<T> valueSet)
+		{
+			return valueSet.Items;
+		}
+
+		return input;
+	}
+
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_0_OR_GREATER
 	/// <summary>
 	/// The total number of elements the internal data structure can hold without resizing.
@@ -356,22 +371,22 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	}
 
 	/// <inheritdoc/>
-	public bool IsProperSubsetOf(IEnumerable<T> other) => this.Read().IsProperSubsetOf(other);
+	public bool IsProperSubsetOf(IEnumerable<T> other) => this.Read().IsProperSubsetOf(PreferHashSet(other));
 
 	/// <inheritdoc/>
-	public bool IsProperSupersetOf(IEnumerable<T> other) => this.Read().IsProperSupersetOf(other);
+	public bool IsProperSupersetOf(IEnumerable<T> other) => this.Read().IsProperSupersetOf(PreferHashSet(other));
 
 	/// <inheritdoc/>
-	public bool IsSubsetOf(IEnumerable<T> other) => this.Read().IsSubsetOf(other);
+	public bool IsSubsetOf(IEnumerable<T> other) => this.Read().IsSubsetOf(PreferHashSet(other));
 
 	/// <inheritdoc/>
-	public bool IsSupersetOf(IEnumerable<T> other) => this.Read().IsSupersetOf(other);
+	public bool IsSupersetOf(IEnumerable<T> other) => this.Read().IsSupersetOf(PreferHashSet(other));
 
 	/// <inheritdoc/>
 	public bool Overlaps(IEnumerable<T> other) => this.Read().Overlaps(other);
 
 	/// <inheritdoc/>
-	public bool SetEquals(IEnumerable<T> other) => this.Read().SetEquals(other);
+	public bool SetEquals(IEnumerable<T> other) => this.Read().SetEquals(PreferHashSet(other));
 
 	/// <summary>
 	/// Remove all elements that appear in the <paramref name="other"/> collection.
@@ -408,7 +423,7 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	/// </summary>
 	public ValueSetBuilder<T> SymmetricExceptWith(IEnumerable<T> other)
 	{
-		this.Mutate().SymmetricExceptWith(other);
+		this.Mutate().SymmetricExceptWith(PreferHashSet(other));
 		return this;
 	}
 
@@ -422,7 +437,7 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	/// </summary>
 	public ValueSetBuilder<T> IntersectWith(IEnumerable<T> other)
 	{
-		this.Mutate().IntersectWith(other);
+		this.Mutate().IntersectWith(PreferHashSet(other));
 		return this;
 	}
 

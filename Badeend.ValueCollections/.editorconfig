@@ -20,6 +20,7 @@ dotnet_diagnostic.CA1805.severity = none # Do not initialize unnecessarily
 dotnet_diagnostic.SA1129.severity = none # DoNotUseDefaultValueTypeConstructor
 dotnet_diagnostic.SA1201.severity = none # ElementsMustAppearInTheCorrectOrder
 dotnet_diagnostic.SA1202.severity = none # ElementsMustBeOrderedByAccess
+dotnet_diagnostic.SA1204.severity = none # StaticElementsMustAppearBeforeInstanceElements
 dotnet_diagnostic.SA1402.severity = none # FileMayOnlyContainASingleType
 dotnet_diagnostic.SA1405.severity = none # DebugAssertMustProvideMessageText
 dotnet_diagnostic.SA1611.severity = none # ElementParametersMustBeDocumented
