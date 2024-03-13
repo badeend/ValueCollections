@@ -490,7 +490,18 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	/// </remarks>
 	public ValueSetBuilder<T> ExceptWith(IEnumerable<T> other)
 	{
-		this.Mutate().ExceptWith(other);
+		var set = this.Mutate();
+
+		// Special case; a set minus itself is always an empty set.
+		if (this == other)
+		{
+			set.Clear();
+		}
+		else
+		{
+			set.ExceptWith(other);
+		}
+
 		return this;
 	}
 
@@ -516,7 +527,18 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	/// </summary>
 	public ValueSetBuilder<T> SymmetricExceptWith(IEnumerable<T> other)
 	{
-		this.Mutate().SymmetricExceptWith(PreferHashSet(other));
+		var set = this.Mutate();
+
+		// Special case; a set minus itself is always an empty set.
+		if (this == other)
+		{
+			set.Clear();
+		}
+		else
+		{
+			set.SymmetricExceptWith(PreferHashSet(other));
+		}
+
 		return this;
 	}
 
@@ -530,7 +552,14 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	/// </summary>
 	public ValueSetBuilder<T> IntersectWith(IEnumerable<T> other)
 	{
-		this.Mutate().IntersectWith(PreferHashSet(other));
+		var set = this.Mutate();
+
+		// Special case; intersection of two identical sets is the same set.
+		if (this != other)
+		{
+			set.IntersectWith(PreferHashSet(other));
+		}
+
 		return this;
 	}
 
@@ -546,7 +575,14 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	/// </remarks>
 	public ValueSetBuilder<T> UnionWith(IEnumerable<T> other)
 	{
-		this.Mutate().UnionWith(other);
+		var set = this.Mutate();
+
+		// Special case; union of two identical sets is the same set.
+		if (this != other)
+		{
+			set.UnionWith(other);
+		}
+
 		return this;
 	}
 
