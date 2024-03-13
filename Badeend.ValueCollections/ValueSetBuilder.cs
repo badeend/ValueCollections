@@ -214,6 +214,9 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	/// <exception cref="ArgumentOutOfRangeException">
 	/// <paramref name="capacity"/> is less than <see cref="Count"/>.
 	/// </exception>
+	/// <remarks>
+	/// Available on .NET Framework 4.7.2 and higher.
+	/// </remarks>
 	public ValueSetBuilder<T> TrimExcess(int capacity)
 	{
 #if NET9_0_OR_GREATER
