@@ -69,17 +69,7 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	private HashSet<T> Mutate()
 	{
 		this.version++;
-		return this.GetOrCreateHashSet();
-	}
 
-	private HashSet<T> MutateForCapacityOnly()
-	{
-		// Don't update version.
-		return this.GetOrCreateHashSet();
-	}
-
-	private HashSet<T> GetOrCreateHashSet()
-	{
 		if (this.items is HashSet<T> set)
 		{
 			return set;
@@ -186,7 +176,7 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 		// inside their internal `SetCapacity` method.
 		// From .NET 5 onwards it seems to work fine.
 #if NET5_0_OR_GREATER
-		this.MutateForCapacityOnly().EnsureCapacity(capacity);
+		this.Mutate().EnsureCapacity(capacity);
 #else
 		if (capacity < 0)
 		{
@@ -200,6 +190,7 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 		}
 
 		this.items = CopyWithCapacity(this.Read(), capacity);
+		this.version++;
 #endif
 		return this;
 	}
@@ -236,6 +227,7 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 		}
 
 		this.items = CopyWithCapacity(this.Read(), capacity);
+		this.version++;
 #endif
 		return this;
 	}
@@ -385,7 +377,7 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	/// </remarks>
 	public ValueSetBuilder<T> TrimExcess()
 	{
-		this.MutateForCapacityOnly().TrimExcess();
+		this.Mutate().TrimExcess();
 		return this;
 	}
 

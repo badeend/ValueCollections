@@ -11,20 +11,6 @@ namespace Badeend.ValueCollections.Tests.Reference
     /// </summary>
     public abstract partial class ValueListBuilder_Tests<T> : IList_Generic_Tests<T>
     {
-        [Theory]
-        [MemberData(nameof(ValidCollectionSizes))]
-        public void EnsureCapacity_RequestingLargerCapacity_DoesNotInvalidateEnumeration(int count)
-        {
-            ValueListBuilder<T> list = GenericListFactory(count);
-            var copiedListEnumerator = new ValueListBuilder<T>(list).GetEnumerator();
-            var enumerator = list.GetEnumerator();
-            var capacity = list.Capacity;
-
-            list.EnsureCapacity(capacity + 1);
-
-            enumerator.MoveNext();
-        }
-
         [Fact]
         public void EnsureCapacity_NotInitialized_RequestedZero_ReturnsZero()
         {
