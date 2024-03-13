@@ -6,6 +6,66 @@ namespace Badeend.ValueCollections;
 
 internal static class UnsafeHelpers
 {
+	// Prevent silent data corruption in case a binary is used that was compiled
+	// for a different target framework.
+	static UnsafeHelpers()
+	{
+		var list = new List<int>();
+		PlatformAssert(ReflectList(ref list)._version == 0);
+		PlatformAssert(ReflectList(ref list)._size == 0);
+		PlatformAssert(ReflectList(ref list)._items is int[]);
+		PlatformAssert(ReflectList(ref list)._items.Length == 0);
+
+		list.Add(42);
+
+		PlatformAssert(ReflectList(ref list)._version == 1);
+		PlatformAssert(ReflectList(ref list)._size == 1);
+		PlatformAssert(ReflectList(ref list)._items.Length > 0);
+		PlatformAssert(ReflectList(ref list)._items.Length <= 16);
+
+		list.RemoveAt(0);
+
+		PlatformAssert(ReflectList(ref list)._version == 2);
+		PlatformAssert(ReflectList(ref list)._size == 0);
+		PlatformAssert(ReflectList(ref list)._items.Length > 0);
+		PlatformAssert(ReflectList(ref list)._items.Length <= 16);
+
+#if NETFRAMEWORK
+		var set = new HashSet<int>();
+		PlatformAssert(ReflectNetFrameworkHashSet(ref set).m_version == 0);
+		PlatformAssert(ReflectNetFrameworkHashSet(ref set).m_count == 0);
+		PlatformAssert(ReflectNetFrameworkHashSet(ref set).m_buckets is null);
+		PlatformAssert(ReflectNetFrameworkHashSet(ref set).m_slots is null);
+
+		set.Add(42);
+
+		PlatformAssert(ReflectNetFrameworkHashSet(ref set).m_version == 1);
+		PlatformAssert(ReflectNetFrameworkHashSet(ref set).m_count == 1);
+		PlatformAssert(ReflectNetFrameworkHashSet(ref set).m_buckets is int[]);
+		PlatformAssert(ReflectNetFrameworkHashSet(ref set).m_buckets!.Length > 0);
+		PlatformAssert(ReflectNetFrameworkHashSet(ref set).m_buckets!.Length <= 16);
+		PlatformAssert(ReflectNetFrameworkHashSet(ref set).m_slots!.Length > 0);
+		PlatformAssert(ReflectNetFrameworkHashSet(ref set).m_slots!.Length <= 16);
+
+		set.Remove(42);
+
+		PlatformAssert(ReflectNetFrameworkHashSet(ref set).m_version == 2);
+		PlatformAssert(ReflectNetFrameworkHashSet(ref set).m_count == 0);
+		PlatformAssert(ReflectNetFrameworkHashSet(ref set).m_buckets!.Length > 0);
+		PlatformAssert(ReflectNetFrameworkHashSet(ref set).m_buckets!.Length <= 16);
+		PlatformAssert(ReflectNetFrameworkHashSet(ref set).m_slots!.Length > 0);
+		PlatformAssert(ReflectNetFrameworkHashSet(ref set).m_slots!.Length <= 16);
+#endif
+	}
+
+	private static void PlatformAssert(bool condition)
+	{
+		if (condition == false)
+		{
+			throw new PlatformNotSupportedException("The installed binary of ValueCollections does not support the current runtime. Reinstalling the nuget package might resolve this error.");
+		}
+	}
+
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static T[] AsArray<T>(ImmutableArray<T> items)
 	{
