@@ -31,7 +31,7 @@ internal static class UnsafeHelpers
 	internal static List<T> AsList<T>(T[] items)
 	{
 		var list = new List<T>();
-		ref var listRef = ref Reflect(ref list);
+		ref var listRef = ref ReflectList(ref list);
 		listRef._items = items;
 		listRef._size = items.Length;
 		return list;
@@ -71,7 +71,7 @@ internal static class UnsafeHelpers
 
 		var previousCount = list.Count;
 
-		ref var listRef = ref Reflect(ref list);
+		ref var listRef = ref ReflectList(ref list);
 		listRef._size = count;
 		listRef._version++;
 
@@ -140,14 +140,25 @@ internal static class UnsafeHelpers
 #endif
 	}
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal static T[] GetBackingArray<T>(List<T> items)
+	internal static int GetCapacity<T>(HashSet<T> set)
 	{
-		return Reflect(ref items)._items;
+#if NET9_0_OR_GREATER
+		return set.Capacity;
+#elif NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_0_OR_GREATER
+		return set.EnsureCapacity(0);
+#elif NETFRAMEWORK
+		return ReflectNetFrameworkHashSet(ref set).m_slots?.Length ?? 0;
+#endif
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static ref ListLayout<T> Reflect<T>(ref List<T> items)
+	internal static T[] GetBackingArray<T>(List<T> items)
+	{
+		return ReflectList(ref items)._items;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static ref ListLayout<T> ReflectList<T>(ref List<T> items)
 	{
 		// Here be dragons...
 
@@ -159,6 +170,27 @@ internal static class UnsafeHelpers
 		return ref Unsafe.As<List<T>, ListLayout<T>>(ref items);
 	}
 
+#if NETFRAMEWORK
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static ref NetFrameworkHashSetLayout<T> ReflectNetFrameworkHashSet<T>(ref HashSet<T> items)
+	{
+		// Here be dragons...
+
+		// Get the private fields by reinterpreting the HashSet<T> reference as a
+		// reference to our own NetFrameworkHashSetLayout<T> with identical memory layout.
+		return ref Unsafe.As<HashSet<T>, NetFrameworkHashSetLayout<T>>(ref items);
+	}
+#endif
+
+#pragma warning disable SA1309 // Field names should not begin with underscore
+#pragma warning disable SA1401 // Fields should be private
+#pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
+#pragma warning disable SA1308 // Variable names should not be prefixed
+#pragma warning disable CS0649 // Field 'field' is never assigned to, and will always have its default value 'value'
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
+#pragma warning disable CA1852 // Seal internal types
+#pragma warning disable CS0414 // Private field is assigned but its value is never used
+
 	/// <summary>
 	/// A clone of <see cref="List{T}"/>'s memory layout.
 	///
@@ -169,12 +201,6 @@ internal static class UnsafeHelpers
 	/// - .NET 8: https://github.com/dotnet/runtime/blob/v8.0.0/src/libraries/System.Private.CoreLib/src/System/Collections/Generic/List.cs
 	/// .
 	/// </summary>
-#pragma warning disable SA1309 // Field names should not begin with underscore
-#pragma warning disable SA1401 // Fields should be private
-#pragma warning disable CS0649 // Field 'field' is never assigned to, and will always have its default value 'value'
-#pragma warning disable CA1812 // Avoid uninstantiated internal classes
-#pragma warning disable CA1852 // Seal internal types
-#pragma warning disable CS0414 // Private field is assigned but its value is never used
 	private class ListLayout<T>
 	{
 		internal T[] _items = null!;
@@ -184,10 +210,37 @@ internal static class UnsafeHelpers
 		private object _syncRoot = null!;
 #endif
 	}
+
+	/// <summary>
+	/// A clone of <see cref="HashSet{T}"/>'s memory layout.
+	/// - .NET Framework 4.6.2: https://github.com/microsoft/referencesource/blob/4.6.2/System.Core/System/Collections/Generic/HashSet.cs
+	/// - .NET Framework 4.8: https://github.com/microsoft/referencesource/blob/master/System.Core/System/Collections/Generic/HashSet.cs
+	/// .
+	/// </summary>
+	private class NetFrameworkHashSetLayout<T>
+	{
+		internal int[]? m_buckets;
+		internal Slot[]? m_slots;
+		internal int m_count;
+		internal int m_lastIndex;
+		internal int m_freeList;
+		internal IEqualityComparer<T> m_comparer = null!;
+		internal int m_version;
+		internal System.Runtime.Serialization.SerializationInfo? m_siInfo;
+
+		internal struct Slot
+		{
+			internal int hashCode;
+			internal int next;
+			internal T value;
+		}
+	}
 #pragma warning restore CS0414 // Private field is assigned but its value is never used
 #pragma warning restore CA1852 // Seal internal types
 #pragma warning restore CA1812 // Avoid uninstantiated internal classes
 #pragma warning restore CS0649 // Field 'field' is never assigned to, and will always have its default value 'value'
+#pragma warning restore SA1308 // Variable names should not be prefixed
+#pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
 #pragma warning restore SA1401 // Fields should be private
 #pragma warning restore SA1309 // Field names should not begin with underscore
 }

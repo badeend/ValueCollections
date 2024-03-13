@@ -112,30 +112,6 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 		return input;
 	}
 
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_0_OR_GREATER
-	/// <summary>
-	/// The total number of elements the internal data structure can hold without resizing.
-	/// </summary>
-	public int Capacity
-	{
-		get
-		{
-			var hashSet = this.items switch
-			{
-				HashSet<T> items => items,
-				ValueSet<T> items => items.Items,
-				_ => throw UnreachableException(),
-			};
-
-#if NET9_0_OR_GREATER
-			return hashSet.Capacity;
-#else
-			return hashSet.EnsureCapacity(0);
-#endif
-		}
-	}
-#endif
-
 	/// <summary>
 	/// Current size of the set.
 	/// </summary>
@@ -152,9 +128,13 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 		this.items = ValueSet<T>.Empty;
 	}
 
+#if NET472_OR_GREATER || NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_0_OR_GREATER
 	/// <summary>
 	/// Construct a new empty set builder with the specified initial capacity.
 	/// </summary>
+	/// <remarks>
+	/// Available on .NET Framework 4.7.2 and higher.
+	/// </remarks>
 	/// <exception cref="ArgumentOutOfRangeException">
 	///   <paramref name="capacity"/> is less than 0.
 	/// </exception>
@@ -166,13 +146,104 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 		}
 		else
 		{
-#if NET472_OR_GREATER || NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_0_OR_GREATER
 			this.items = new HashSet<T>(capacity);
-#else
-			this.items = new HashSet<T>();
-#endif
 		}
 	}
+
+	/// <summary>
+	/// The total number of elements the internal data structure can hold without resizing.
+	/// </summary>
+	/// <remarks>
+	/// Available on .NET Framework 4.7.2 and higher.
+	/// </remarks>
+	public int Capacity
+	{
+		get
+		{
+			var hashSet = this.items switch
+			{
+				HashSet<T> items => items,
+				ValueSet<T> items => items.Items,
+				_ => throw UnreachableException(),
+			};
+
+			return UnsafeHelpers.GetCapacity(hashSet);
+		}
+	}
+
+	/// <summary>
+	/// Ensures that the capacity of this set is at least the specified capacity.
+	/// If the current capacity is less than capacity, it is increased to at
+	/// least the specified capacity.
+	/// </summary>
+	/// <remarks>
+	/// Available on .NET Framework 4.7.2 and higher.
+	/// </remarks>
+	public ValueSetBuilder<T> EnsureCapacity(int capacity)
+	{
+		// FYI, earlier .NET Core versions also had EnsureCapacity, but those
+		// implementations were buggy and result in an `IndexOutOfRangeException`
+		// inside their internal `SetCapacity` method.
+		// From .NET 5 onwards it seems to work fine.
+#if NET5_0_OR_GREATER
+		this.MutateForCapacityOnly().EnsureCapacity(capacity);
+#else
+		if (capacity < 0)
+		{
+			throw new ArgumentOutOfRangeException(nameof(capacity));
+		}
+
+		if (this.Capacity >= capacity)
+		{
+			// Nothing to do.
+			return this;
+		}
+
+		this.items = CopyWithCapacity(this.Read(), capacity);
+#endif
+		return this;
+	}
+
+	/// <summary>
+	/// Reduce the capacity of the set to roughly the specified value. If the
+	/// current capacity is already smaller than the requested capacity, this
+	/// method does nothing. The specified <paramref name="capacity"/> is only
+	/// a hint. After this method returns, the <see cref="Capacity"/> may be
+	/// rounded up to a nearby, implementation-specific value.
+	/// </summary>
+	/// <exception cref="ArgumentOutOfRangeException">
+	/// <paramref name="capacity"/> is less than <see cref="Count"/>.
+	/// </exception>
+	public ValueSetBuilder<T> TrimExcess(int capacity)
+	{
+#if NET9_0_OR_GREATER
+		this.MutateForCapacityOnly().TrimExcess(capacity);
+#else
+		var count = this.Count;
+		var currentCapacity = this.Capacity;
+		if (capacity < count)
+		{
+			throw new ArgumentOutOfRangeException(nameof(capacity));
+		}
+
+		if (capacity >= currentCapacity)
+		{
+			// Nothing to do.
+			return this;
+		}
+
+		this.items = CopyWithCapacity(this.Read(), capacity);
+#endif
+		return this;
+	}
+
+	private static HashSet<T> CopyWithCapacity(ISet<T> input, int minimumCapacity)
+	{
+		var copy = new HashSet<T>(minimumCapacity);
+		copy.UnionWith(input);
+		return copy;
+	}
+#endif
 
 	/// <summary>
 	/// Construct a new <see cref="ValueSetBuilder{T}"/> with the provided
@@ -295,30 +366,23 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	}
 
 	/// <summary>
-	/// Set the capacity to the actual number of elements in the set, if that
-	/// number is less than a threshold value.
+	/// Reduce the capacity of this set as much as possible. After calling this
+	/// method, the <see cref="Capacity"/> of the set may still be higher than
+	/// the <see cref="Count"/>.
 	/// </summary>
+	/// <remarks>
+	/// This method can be used to minimize the memory overhead of long-lived
+	/// sets. This method is most useful just before calling
+	/// <see cref="ToValueSet"/>, e.g.:
+	/// <code>
+	/// var longLivedSet = builder.TrimExcess().ToValueSet()
+	/// </code>
+	/// Excessive use of this method most likely introduces more performance
+	/// problems than it solves.
+	/// </remarks>
 	public ValueSetBuilder<T> TrimExcess()
 	{
 		this.MutateForCapacityOnly().TrimExcess();
-		return this;
-	}
-
-	/// <summary>
-	/// Ensures that the capacity of this set is at least the specified capacity.
-	/// If the current capacity is less than capacity, it is increased to at
-	/// least the specified capacity.
-	/// </summary>
-	public ValueSetBuilder<T> EnsureCapacity(int capacity)
-	{
-		var set = this.MutateForCapacityOnly();
-
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
-		set.EnsureCapacity(capacity);
-#else
-		// Ignore
-#endif
-
 		return this;
 	}
 
