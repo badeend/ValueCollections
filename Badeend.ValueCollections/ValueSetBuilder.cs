@@ -8,7 +8,10 @@ namespace Badeend.ValueCollections;
 /// A mutable set that can be used to efficiently construct new immutable sets.
 ///
 /// Most mutating methods on this class return `this`, allowing the caller to
-/// chain multiple mutations in a row.
+/// chain multiple mutations in a row. The boolean-returning
+/// <see cref="HashSet{T}.Add(T)">HashSet.Add</see> and
+/// <see cref="HashSet{T}.Remove(T)">HashSet.Remove</see> are implemented as
+/// <see cref="TryAdd(T)"/> and <see cref="TryRemove(T)"/>.
 ///
 /// When you're done building, call <see cref="ToValueSet()"/> to get out the
 /// resulting set.
@@ -215,22 +218,34 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	}
 
 	/// <summary>
+	/// Attempt to add the <paramref name="item"/> to the set.
+	/// Returns <see langword="false"/> when the element was
+	/// already present.
+	/// </summary>
+	/// <remarks>
+	/// This is the equivalent of <see cref="HashSet{T}.Add(T)">HashSet.Add</see>.
+	/// </remarks>
+	public bool TryAdd(T item) => this.Mutate().Add(item);
+
+	/// <summary>
 	/// Add the <paramref name="item"/> to the set if it isn't already present.
 	/// </summary>
 	/// <remarks>
-	/// Use <c>.UnionWith</c> to add multiple values at once.
+	/// Use <see cref="UnionWith"/> to add multiple values at once.
+	/// Use <see cref="TryAdd"/> if you want to know whether the element was
+	/// actually added.
 	/// </remarks>
 	public ValueSetBuilder<T> Add(T item)
 	{
-		this.Mutate().Add(item);
+		this.TryAdd(item);
 		return this;
 	}
 
 	/// <inheritdoc/>
-	bool ISet<T>.Add(T item) => this.Mutate().Add(item);
+	bool ISet<T>.Add(T item) => this.TryAdd(item);
 
 	/// <inheritdoc/>
-	void ICollection<T>.Add(T item) => this.Add(item);
+	void ICollection<T>.Add(T item) => this.TryAdd(item);
 
 	/// <summary>
 	/// Remove all elements from the set.
@@ -245,19 +260,30 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	void ICollection<T>.Clear() => this.Clear();
 
 	/// <summary>
-	/// Remove a specific element from the set.
+	/// Attempt to remove a specific element from the set.
+	/// Returns <see langword="false"/> when the element was not found.
 	/// </summary>
 	/// <remarks>
-	/// Use <c>.ExceptWith</c> to remove multiple values at once.
+	/// This is the equivalent of <see cref="HashSet{T}.Remove(T)">HashSet.Remove</see>.
+	/// </remarks>
+	public bool TryRemove(T item) => this.Mutate().Remove(item);
+
+	/// <summary>
+	/// Remove a specific element from the set if it exists.
+	/// </summary>
+	/// <remarks>
+	/// Use <see cref="ExceptWith"/> to remove multiple values at once.
+	/// Use <see cref="TryRemove"/> if you want to know whether any element was
+	/// actually removed.
 	/// </remarks>
 	public ValueSetBuilder<T> Remove(T item)
 	{
-		this.Mutate().Remove(item);
+		this.TryRemove(item);
 		return this;
 	}
 
 	/// <inheritdoc/>
-	bool ICollection<T>.Remove(T item) => this.Mutate().Remove(item);
+	bool ICollection<T>.Remove(T item) => this.TryRemove(item);
 
 	/// <summary>
 	/// Remove all elements that match the predicate.
