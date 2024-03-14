@@ -15,24 +15,21 @@ namespace Badeend.ValueCollections.Tests.Reference
     /// </summary>
     public abstract class ValueSetBuilder_Generic_Tests<T> : ISet_Generic_Tests<T>
     {
-        #region ISet<T> Helper Methods
+        protected override bool ResetImplemented => false;
         protected override bool Enumerator_Empty_UsesSingletonInstance => true;
+        protected override bool Enumerator_Current_UndefinedOperation_Throws => true;
         protected override bool Enumerator_Empty_Current_UndefinedOperation_Throws => true;
+        protected override bool Enumerator_Empty_ModifiedDuringEnumeration_ThrowsInvalidOperationException => false;
+        protected override bool Enumerator_ModifiedDuringEnumeration_ThrowsInvalidOperationException => true;
 
-        protected override bool ResetImplemented => true;
 
-        protected override ModifyOperation ModifyEnumeratorThrows => base.ModifyEnumeratorAllowed & ~(ModifyOperation.Remove | ModifyOperation.Clear);
-
-        protected override ModifyOperation ModifyEnumeratorAllowed => ModifyOperation.Overwrite | ModifyOperation.Remove | ModifyOperation.Clear;
 
         protected override ISet<T> GenericISetFactory()
         {
             return new ValueSetBuilder<T>();
         }
 
-        #endregion
-
-        #region Constructors
+        
 
         private static IEnumerable<int> NonSquares(int limit)
         {
@@ -49,28 +46,6 @@ namespace Badeend.ValueCollections.Tests.Reference
         {
             ValueSetBuilder<T> set = new ValueSetBuilder<T>();
             Assert.Empty(set);
-        }
-
-        [Fact]
-        public void ValueSetBuilder_Generic_Constructor_IEqualityComparer()
-        {
-            IEqualityComparer<T> comparer = GetIEqualityComparer();
-            ValueSetBuilder<T> set = new ValueSetBuilder<T>(comparer);
-            if (comparer == null)
-                Assert.Equal(EqualityComparer<T>.Default, set.Comparer);
-            else
-                Assert.Equal(comparer, set.Comparer);
-        }
-
-        [Fact]
-        public void ValueSetBuilder_Generic_Constructor_NullIEqualityComparer()
-        {
-            IEqualityComparer<T> comparer = null;
-            ValueSetBuilder<T> set = new ValueSetBuilder<T>(comparer);
-            if (comparer == null)
-                Assert.Equal(EqualityComparer<T>.Default, set.Comparer);
-            else
-                Assert.Equal(comparer, set.Comparer);
         }
 
         [Theory]
@@ -98,13 +73,13 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void ValueSetBuilder_Generic_Constructor_ValueSetBuilder_SparselyFilled(int count)
         {
-            ValueSetBuilder<T> source = (ValueSetBuilder<T>)CreateEnumerable(EnumerableType.ValueSetBuilder, null, count, 0, 0);
+            ValueSetBuilder<T> source = CreateEnumerable(EnumerableType.HashSet, null, count, 0, 0).ToValueSetBuilder();
             List<T> sourceElements = source.ToList();
             foreach (int i in NonSquares(count))
                 source.Remove(sourceElements[i]);// Unevenly spaced survivors increases chance of catching any spacing-related bugs.
 
 
-            ValueSetBuilder<T> set = new ValueSetBuilder<T>(source, GetIEqualityComparer());
+            ValueSetBuilder<T> set = new ValueSetBuilder<T>(source);
             Assert.True(set.SetEquals(source));
         }
 
@@ -112,21 +87,9 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void ValueSetBuilder_Generic_Constructor_IEnumerable_Null()
         {
             Assert.Throws<ArgumentNullException>(() => new ValueSetBuilder<T>((IEnumerable<T>)null));
-            Assert.Throws<ArgumentNullException>(() => new ValueSetBuilder<T>((IEnumerable<T>)null, EqualityComparer<T>.Default));
         }
 
-        [Theory]
-        [MemberData(nameof(EnumerableTestData))]
-        public void ValueSetBuilder_Generic_Constructor_IEnumerable_IEqualityComparer(EnumerableType enumerableType, int setLength, int enumerableLength, int numberOfMatchingElements, int numberOfDuplicateElements)
-        {
-            _ = setLength;
-            _ = numberOfMatchingElements;
-            _ = numberOfDuplicateElements;
-            IEnumerable<T> enumerable = CreateEnumerable(enumerableType, null, enumerableLength, 0, 0);
-            ValueSetBuilder<T> set = new ValueSetBuilder<T>(enumerable, GetIEqualityComparer());
-            Assert.True(set.SetEquals(enumerable));
-        }
-
+#if NET472_OR_GREATER || NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_0_OR_GREATER
         [Theory]
         [InlineData(1)]
         [InlineData(100)]
@@ -135,10 +98,6 @@ namespace Badeend.ValueCollections.Tests.Reference
             var hashSet = new ValueSetBuilder<T>(capacity);
             Assert.True(capacity <= hashSet.Capacity);
         }
-
-        #endregion
-
-        #region Properties
 
         [Fact]
         public void ValueSetBuilderResized_CapacityChanged()
@@ -153,17 +112,16 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             Assert.True(afterCapacity > initialCapacity);
         }
+#endif
 
-        #endregion
-
-        #region RemoveWhere
+        
 
         [Theory]
         [MemberData(nameof(ValidCollectionSizes))]
         public void ValueSetBuilder_Generic_RemoveWhere_AllElements(int setLength)
         {
             ValueSetBuilder<T> set = (ValueSetBuilder<T>)GenericISetFactory(setLength);
-            int removedCount = set.RemoveWhere((value) => { return true; });
+            int removedCount = set.RemoveAndCountWhere((value) => { return true; });
             Assert.Equal(setLength, removedCount);
         }
 
@@ -172,7 +130,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void ValueSetBuilder_Generic_RemoveWhere_NoElements(int setLength)
         {
             ValueSetBuilder<T> set = (ValueSetBuilder<T>)GenericISetFactory(setLength);
-            int removedCount = set.RemoveWhere((value) => { return false; });
+            int removedCount = set.RemoveAndCountWhere((value) => { return false; });
             Assert.Equal(0, removedCount);
             Assert.Equal(setLength, set.Count);
         }
@@ -187,7 +145,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             set.Add(obj);
             set.Remove(obj);
             foreach (object o in set) { }
-            set.CopyTo(array, 0, 2);
+            set.CopyTo(array.AsSpan(0, 2));
             set.RemoveWhere((element) => { return false; });
         }
 
@@ -199,10 +157,8 @@ namespace Badeend.ValueCollections.Tests.Reference
             Assert.Throws<ArgumentNullException>(() => set.RemoveWhere(null));
         }
 
-        #endregion
-
-        #region TrimExcess
-
+        
+#if NET472_OR_GREATER || NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_0_OR_GREATER
         [Theory]
         [InlineData(1, -1)]
         [InlineData(2, 1)]
@@ -219,8 +175,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(10, 20, 13)]
         public void HashHet_Generic_TrimExcess_LargePopulatedValueSetBuilder_TrimReducesSize(int initialCount, int initialCapacity, int trimCapacity)
         {
-            ValueSetBuilder<T> set = CreateHashSetWithCapacity(initialCount, initialCapacity);
-            ValueSetBuilder<T> clone = new(set, set.Comparer);
+            ValueSetBuilder<T> set = CreateValueSetBuilderSetWithCapacity(initialCount, initialCapacity);
+            ValueSetBuilder<T> clone = new(set);
 
             Assert.True(set.Capacity >= initialCapacity);
             Assert.Equal(initialCount, set.Count);
@@ -237,7 +193,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(10, 20, 7)]
         public void HashHet_Generic_TrimExcess_LargePopulatedValueSetBuilder_TrimCapacityIsLessThanCount_ThrowsArgumentOutOfRangeException(int initialCount, int initialCapacity, int trimCapacity)
         {
-            ValueSetBuilder<T> set = CreateHashSetWithCapacity(initialCount, initialCapacity);
+            ValueSetBuilder<T> set = CreateValueSetBuilderSetWithCapacity(initialCount, initialCapacity);
 
             Assert.True(set.Capacity >= initialCapacity);
             Assert.Equal(initialCount, set.Count);
@@ -247,7 +203,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             Assert.True(set.Capacity >= initialCapacity);
             Assert.Equal(initialCount, set.Count);
         }
-
+#endif
         [Theory]
         [MemberData(nameof(ValidCollectionSizes))]
         public void ValueSetBuilder_Generic_TrimExcess_OnValidSetThatHasntBeenRemovedFrom(int setLength)
@@ -279,7 +235,7 @@ namespace Badeend.ValueCollections.Tests.Reference
                 T elementToRemove = set.ElementAt(0);
 
                 set.TrimExcess();
-                Assert.True(set.Remove(elementToRemove));
+                Assert.True(set.TryRemove(elementToRemove));
                 expected.Remove(elementToRemove);
                 set.TrimExcess();
 
@@ -323,100 +279,6 @@ namespace Badeend.ValueCollections.Tests.Reference
             }
         }
 
-        #endregion
-
-        #region CopyTo
-
-        [Theory]
-        [MemberData(nameof(ValidCollectionSizes))]
-        public void ValueSetBuilder_Generic_CopyTo_NegativeCount_ThrowsArgumentOutOfRangeException(int count)
-        {
-            ValueSetBuilder<T> set = (ValueSetBuilder<T>)GenericISetFactory(count);
-            T[] arr = new T[count];
-            Assert.Throws<ArgumentOutOfRangeException>(() => set.CopyTo(arr, 0, -1));
-            Assert.Throws<ArgumentOutOfRangeException>(() => set.CopyTo(arr, 0, int.MinValue));
-        }
-
-        [Theory]
-        [MemberData(nameof(ValidCollectionSizes))]
-        public void ValueSetBuilder_Generic_CopyTo_NoIndexDefaultsToZero(int count)
-        {
-            ValueSetBuilder<T> set = (ValueSetBuilder<T>)GenericISetFactory(count);
-            T[] arr1 = new T[count];
-            T[] arr2 = new T[count];
-            set.CopyTo(arr1);
-            set.CopyTo(arr2, 0);
-            Assert.True(arr1.SequenceEqual(arr2));
-        }
-
-        #endregion
-
-        #region CreateSetComparer
-
-        [Fact]
-        public void SetComparer_SetEqualsTests()
-        {
-            List<T> objects = new List<T>() { CreateT(1), CreateT(2), CreateT(3), CreateT(4), CreateT(5), CreateT(6) };
-
-            var set = new ValueSetBuilder<ValueSetBuilder<T>>()
-            {
-                new ValueSetBuilder<T> { objects[0], objects[1], objects[2] },
-                new ValueSetBuilder<T> { objects[3], objects[4], objects[5] }
-            };
-
-            var noComparerSet = new ValueSetBuilder<ValueSetBuilder<T>>()
-            {
-                new ValueSetBuilder<T> { objects[0], objects[1], objects[2] },
-                new ValueSetBuilder<T> { objects[3], objects[4], objects[5] }
-            };
-
-            var comparerSet1 = new ValueSetBuilder<ValueSetBuilder<T>>(ValueSetBuilder<T>.CreateSetComparer())
-            {
-                new ValueSetBuilder<T> { objects[0], objects[1], objects[2] },
-                new ValueSetBuilder<T> { objects[3], objects[4], objects[5] }
-            };
-
-            var comparerSet2 = new ValueSetBuilder<ValueSetBuilder<T>>(ValueSetBuilder<T>.CreateSetComparer())
-            {
-                new ValueSetBuilder<T> { objects[3], objects[4], objects[5] },
-                new ValueSetBuilder<T> { objects[0], objects[1], objects[2] }
-            };
-
-            Assert.False(noComparerSet.SetEquals(set));
-            Assert.True(comparerSet1.SetEquals(set));
-            Assert.True(comparerSet2.SetEquals(set));
-        }
-
-        [Fact]
-        public void SetComparer_SequenceEqualTests()
-        {
-            List<T> objects = new List<T>() { CreateT(1), CreateT(2), CreateT(3), CreateT(4), CreateT(5), CreateT(6) };
-
-            var set = new ValueSetBuilder<ValueSetBuilder<T>>()
-            {
-                new ValueSetBuilder<T> { objects[0], objects[1], objects[2] },
-                new ValueSetBuilder<T> { objects[3], objects[4], objects[5] }
-            };
-
-            var noComparerSet = new ValueSetBuilder<ValueSetBuilder<T>>()
-            {
-                new ValueSetBuilder<T> { objects[0], objects[1], objects[2] },
-                new ValueSetBuilder<T> { objects[3], objects[4], objects[5] }
-            };
-
-            var comparerSet = new ValueSetBuilder<ValueSetBuilder<T>>(ValueSetBuilder<T>.CreateSetComparer())
-            {
-                new ValueSetBuilder<T> { objects[0], objects[1], objects[2] },
-                new ValueSetBuilder<T> { objects[3], objects[4], objects[5] }
-            };
-
-            Assert.False(noComparerSet.SequenceEqual(set));
-            Assert.True(noComparerSet.SequenceEqual(set, ValueSetBuilder<T>.CreateSetComparer()));
-            Assert.False(comparerSet.SequenceEqual(set));
-        }
-
-        #endregion
-
         [Fact]
         public void CanBeCastedToISet()
         {
@@ -425,6 +287,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             Assert.NotNull(iset);
         }
 
+#if NET472_OR_GREATER || NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_0_OR_GREATER
         [Theory]
         [MemberData(nameof(ValidCollectionSizes))]
         public void ValueSetBuilder_Generic_Constructor_int(int capacity)
@@ -455,7 +318,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             // Assert that the HashTable's capacity is set to the descendant prime number of the given one.
             const int NextPrime = 7199371;
-            Assert.Equal(NextPrime, set.EnsureCapacity(0));
+            Assert.Equal(NextPrime, set.EnsureAndGetCapacity(0));
         }
 
         [Fact]
@@ -463,121 +326,6 @@ namespace Badeend.ValueCollections.Tests.Reference
         {
             AssertExtensions.Throws<ArgumentOutOfRangeException>("capacity", () => new ValueSetBuilder<T>(-1));
             AssertExtensions.Throws<ArgumentOutOfRangeException>("capacity", () => new ValueSetBuilder<T>(int.MinValue));
-        }
-
-        [Theory]
-        [MemberData(nameof(ValidCollectionSizes))]
-        public void ValueSetBuilder_Generic_Constructor_int_IEqualityComparer(int capacity)
-        {
-            IEqualityComparer<T> comparer = GetIEqualityComparer();
-            ValueSetBuilder<T> set = new ValueSetBuilder<T>(capacity, comparer);
-            Assert.Equal(0, set.Count);
-            if (comparer == null)
-                Assert.Equal(EqualityComparer<T>.Default, set.Comparer);
-            else
-                Assert.Equal(comparer, set.Comparer);
-        }
-
-        [Theory]
-        [MemberData(nameof(ValidCollectionSizes))]
-        public void ValueSetBuilder_Generic_Constructor_int_IEqualityComparer_AddUpToAndBeyondCapacity(int capacity)
-        {
-            IEqualityComparer<T> comparer = GetIEqualityComparer();
-            ValueSetBuilder<T> set = new ValueSetBuilder<T>(capacity, comparer);
-
-            AddToCollection(set, capacity);
-            Assert.Equal(capacity, set.Count);
-
-            AddToCollection(set, capacity + 1);
-            Assert.Equal(capacity + 1, set.Count);
-        }
-
-        [Fact]
-        public void ValueSetBuilder_Generic_Constructor_int_IEqualityComparer_Negative_ThrowsArgumentOutOfRangeException()
-        {
-            IEqualityComparer<T> comparer = GetIEqualityComparer();
-            AssertExtensions.Throws<ArgumentOutOfRangeException>("capacity", () => new ValueSetBuilder<T>(-1, comparer));
-            AssertExtensions.Throws<ArgumentOutOfRangeException>("capacity", () => new ValueSetBuilder<T>(int.MinValue, comparer));
-        }
-
-        #region TryGetValue
-
-        [Fact]
-        public void ValueSetBuilder_Generic_TryGetValue_Contains()
-        {
-            T value = CreateT(1);
-            ValueSetBuilder<T> set = new ValueSetBuilder<T> { value };
-            T equalValue = CreateT(1);
-            T actualValue;
-            Assert.True(set.TryGetValue(equalValue, out actualValue));
-            Assert.Equal(value, actualValue);
-            if (!typeof(T).IsValueType)
-            {
-#pragma warning disable xUnit2005 // Do not use Assert.Same() on value type 'T'. Value types do not have identity. Use Assert.Equal instead.
-                Assert.Same((object)value, (object)actualValue);
-#pragma warning restore xUnit2005
-            }
-        }
-
-        [Fact]
-        public void ValueSetBuilder_Generic_TryGetValue_Contains_OverwriteOutputParam()
-        {
-            T value = CreateT(1);
-            ValueSetBuilder<T> set = new ValueSetBuilder<T> { value };
-            T equalValue = CreateT(1);
-            T actualValue = CreateT(2);
-            Assert.True(set.TryGetValue(equalValue, out actualValue));
-            Assert.Equal(value, actualValue);
-            if (!typeof(T).IsValueType)
-            {
-#pragma warning disable xUnit2005 // Do not use Assert.Same() on value type 'T'. Value types do not have identity. Use Assert.Equal instead.
-                Assert.Same((object)value, (object)actualValue);
-#pragma warning restore xUnit2005
-            }
-        }
-
-        [Fact]
-        public void ValueSetBuilder_Generic_TryGetValue_NotContains()
-        {
-            T value = CreateT(1);
-            ValueSetBuilder<T> set = new ValueSetBuilder<T> { value };
-            T equalValue = CreateT(2);
-            T actualValue;
-            Assert.False(set.TryGetValue(equalValue, out actualValue));
-            Assert.Equal(default(T), actualValue);
-        }
-
-        [Fact]
-        public void ValueSetBuilder_Generic_TryGetValue_NotContains_OverwriteOutputParam()
-        {
-            T value = CreateT(1);
-            ValueSetBuilder<T> set = new ValueSetBuilder<T> { value };
-            T equalValue = CreateT(2);
-            T actualValue = equalValue;
-            Assert.False(set.TryGetValue(equalValue, out actualValue));
-            Assert.Equal(default(T), actualValue);
-        }
-
-        #endregion
-
-        #region EnsureCapacity
-
-        [Theory]
-        [MemberData(nameof(ValidCollectionSizes))]
-        public void EnsureCapacity_Generic_RequestingLargerCapacity_DoesNotInvalidateEnumeration(int setLength)
-        {
-            ValueSetBuilder<T> set = (ValueSetBuilder<T>)(GenericISetFactory(setLength));
-            var capacity = set.EnsureCapacity(0);
-            IEnumerator valuesEnum = set.GetEnumerator();
-            IEnumerator valuesListEnum = new List<T>(set).GetEnumerator();
-
-            set.EnsureCapacity(capacity + 1); // Verify EnsureCapacity does not invalidate enumeration
-
-            while (valuesEnum.MoveNext())
-            {
-                valuesListEnum.MoveNext();
-                Assert.Equal(valuesListEnum.Current, valuesEnum.Current);
-            }
         }
 
         [Fact]
@@ -591,7 +339,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void EnsureCapacity_Generic_HashsetNotInitialized_RequestedZero_ReturnsZero()
         {
             var set = new ValueSetBuilder<T>();
-            Assert.Equal(0, set.EnsureCapacity(0));
+            Assert.Equal(0, set.Capacity);
         }
 
         [Theory]
@@ -602,7 +350,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void EnsureCapacity_Generic_HashsetNotInitialized_RequestedNonZero_CapacityIsSetToAtLeastTheRequested(int requestedCapacity)
         {
             var set = new ValueSetBuilder<T>();
-            Assert.InRange(set.EnsureCapacity(requestedCapacity), requestedCapacity, int.MaxValue);
+            Assert.InRange(set.EnsureAndGetCapacity(requestedCapacity), requestedCapacity, int.MaxValue);
         }
 
         [Theory]
@@ -616,7 +364,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             for (int i = 0; i <= currentCapacity; i++)
             {
                 set = new ValueSetBuilder<T>(currentCapacity);
-                Assert.Equal(currentCapacity, set.EnsureCapacity(i));
+                Assert.Equal(currentCapacity, set.EnsureAndGetCapacity(i));
             }
         }
 
@@ -626,10 +374,10 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void EnsureCapacity_Generic_ExistingCapacityRequested_SameValueReturned(int capacity)
         {
             var set = new ValueSetBuilder<T>(capacity);
-            Assert.Equal(capacity, set.EnsureCapacity(capacity));
+            Assert.Equal(capacity, set.EnsureAndGetCapacity(capacity));
 
             set = (ValueSetBuilder<T>)GenericISetFactory(capacity);
-            Assert.Equal(capacity, set.EnsureCapacity(capacity));
+            Assert.Equal(capacity, set.EnsureAndGetCapacity(capacity));
         }
 
         [Theory]
@@ -641,16 +389,16 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void EnsureCapacity_Generic_EnsureCapacityCalledTwice_ReturnsSameValue(int setLength)
         {
             ValueSetBuilder<T> set = (ValueSetBuilder<T>)GenericISetFactory(setLength);
-            int capacity = set.EnsureCapacity(0);
-            Assert.Equal(capacity, set.EnsureCapacity(0));
+            int capacity = set.Capacity;
+            Assert.Equal(capacity, set.EnsureAndGetCapacity(0));
 
             set = (ValueSetBuilder<T>)GenericISetFactory(setLength);
-            capacity = set.EnsureCapacity(setLength);
-            Assert.Equal(capacity, set.EnsureCapacity(setLength));
+            capacity = set.EnsureAndGetCapacity(setLength);
+            Assert.Equal(capacity, set.EnsureAndGetCapacity(setLength));
 
             set = (ValueSetBuilder<T>)GenericISetFactory(setLength);
-            capacity = set.EnsureCapacity(setLength + 1);
-            Assert.Equal(capacity, set.EnsureCapacity(setLength + 1));
+            capacity = set.EnsureAndGetCapacity(setLength + 1);
+            Assert.Equal(capacity, set.EnsureAndGetCapacity(setLength + 1));
         }
 
         [Theory]
@@ -661,7 +409,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void EnsureCapacity_Generic_HashsetNotEmpty_RequestedSmallerThanCount_ReturnsAtLeastSizeOfCount(int setLength)
         {
             ValueSetBuilder<T> set = (ValueSetBuilder<T>)GenericISetFactory(setLength);
-            Assert.InRange(set.EnsureCapacity(setLength - 1), setLength, int.MaxValue);
+            Assert.InRange(set.EnsureAndGetCapacity(setLength - 1), setLength, int.MaxValue);
         }
 
         [Theory]
@@ -672,10 +420,10 @@ namespace Badeend.ValueCollections.Tests.Reference
             ValueSetBuilder<T> set = (ValueSetBuilder<T>)GenericISetFactory(setLength);
 
             // get current capacity
-            int currentCapacity = set.EnsureCapacity(0);
+            int currentCapacity = set.Capacity;
 
             // assert we can update to a larger capacity
-            int newCapacity = set.EnsureCapacity(currentCapacity * 2);
+            int newCapacity = set.EnsureAndGetCapacity(currentCapacity * 2);
             Assert.InRange(newCapacity, currentCapacity * 2, int.MaxValue);
         }
 
@@ -683,13 +431,13 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void EnsureCapacity_Generic_CapacityIsSetToPrimeNumberLargerOrEqualToRequested()
         {
             var set = new ValueSetBuilder<T>();
-            Assert.Equal(17, set.EnsureCapacity(17));
+            Assert.Equal(17, set.EnsureAndGetCapacity(17));
 
             set = new ValueSetBuilder<T>();
-            Assert.Equal(17, set.EnsureCapacity(15));
+            Assert.Equal(17, set.EnsureAndGetCapacity(15));
 
             set = new ValueSetBuilder<T>();
-            Assert.Equal(17, set.EnsureCapacity(13));
+            Assert.Equal(17, set.EnsureAndGetCapacity(13));
         }
 
         [Theory]
@@ -700,91 +448,49 @@ namespace Badeend.ValueCollections.Tests.Reference
             ValueSetBuilder<T> set = (ValueSetBuilder<T>)GenericISetFactory(setLength);
 
             // Remove the first element to ensure we have a free list.
-            Assert.True(set.Remove(set.ElementAt(0)));
+            Assert.True(set.TryRemove(set.ElementAt(0)));
 
-            int currentCapacity = set.EnsureCapacity(0);
+            int currentCapacity = set.Capacity;
             Assert.True(currentCapacity > 0);
 
-            int newCapacity = set.EnsureCapacity(currentCapacity + 1);
+            int newCapacity = set.EnsureAndGetCapacity(currentCapacity + 1);
             Assert.True(newCapacity > currentCapacity);
         }
 
-        #endregion
-
-        #region Remove
-
-        [Theory]
-        [MemberData(nameof(ValidPositiveCollectionSizes))]
-        public void Remove_NonDefaultComparer_ComparerUsed(int capacity)
+        /// <summary>
+        /// Create a ValueSetBuilder with a specific initial capacity and fill it with a specific number of elements.
+        /// </summary>
+        protected ValueSetBuilder<T> CreateValueSetBuilderSetWithCapacity(int count, int capacity)
         {
-            var c = new TrackingEqualityComparer<T>();
-            var set = new ValueSetBuilder<T>(capacity, c);
+            var set = new ValueSetBuilder<T>(capacity);
+            int seed = 528;
 
-            AddToCollection(set, capacity);
-            T first = set.First();
-            c.EqualsCalls = 0;
-            c.GetHashCodeCalls = 0;
-
-            Assert.Equal(capacity, set.Count);
-            set.Remove(first);
-            Assert.Equal(capacity - 1, set.Count);
-
-            Assert.InRange(c.EqualsCalls, 1, int.MaxValue);
-            Assert.InRange(c.GetHashCodeCalls, 1, int.MaxValue);
-        }
-
-        #endregion
-
-        #region Serialization
-
-        [ConditionalFact(typeof(PlatformDetection), nameof(PlatformDetection.IsBinaryFormatterSupported))]
-        public void ComparerSerialization()
-        {
-            // Strings switch between randomized and non-randomized comparers,
-            // however this should never be observable externally.
-            TestComparerSerialization(EqualityComparer<string>.Default);
-
-            // OrdinalCaseSensitiveComparer is internal and (de)serializes as OrdinalComparer
-            TestComparerSerialization(StringComparer.Ordinal, "System.OrdinalComparer");
-
-            // OrdinalIgnoreCaseComparer is internal and (de)serializes as OrdinalComparer
-            TestComparerSerialization(StringComparer.OrdinalIgnoreCase, "System.OrdinalComparer");
-            TestComparerSerialization(StringComparer.CurrentCulture);
-            TestComparerSerialization(StringComparer.CurrentCultureIgnoreCase);
-            TestComparerSerialization(StringComparer.InvariantCulture);
-            TestComparerSerialization(StringComparer.InvariantCultureIgnoreCase);
-
-            // Check other types while here, IEquatable valuetype, nullable valuetype, and non IEquatable object
-            TestComparerSerialization(EqualityComparer<int>.Default);
-            TestComparerSerialization(EqualityComparer<int?>.Default);
-            TestComparerSerialization(EqualityComparer<object>.Default);
-
-            static void TestComparerSerialization<TCompared>(IEqualityComparer<TCompared> equalityComparer, string internalTypeName = null)
+            for (int i = 0; i < count; i++)
             {
-                var bf = new BinaryFormatter();
-                var s = new MemoryStream();
-
-                var dict = new ValueSetBuilder<TCompared>(equalityComparer);
-
-                Assert.Same(equalityComparer, dict.Comparer);
-
-                bf.Serialize(s, dict);
-                s.Position = 0;
-                dict = (ValueSetBuilder<TCompared>)bf.Deserialize(s);
-
-                if (internalTypeName == null)
-                {
-                    Assert.IsType(equalityComparer.GetType(), dict.Comparer);
-                }
-                else
-                {
-                    Assert.Equal(internalTypeName, dict.Comparer.GetType().ToString());
-                }
-
-                Assert.True(equalityComparer.Equals(dict.Comparer));
+                while (!set.TryAdd(CreateT(seed++))) ;
             }
-        }
 
-        #endregion
+            return set;
+        }
+#endif
+
+    }
+
+    file static class ValueSetBuilderExtensions
+    {
+#if NET472_OR_GREATER || NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_0_OR_GREATER
+        internal static int EnsureAndGetCapacity<T>(this ValueSetBuilder<T> builder, int capacity)
+        {
+            builder.EnsureCapacity(capacity);
+            return builder.Capacity;
+        }
+#endif
+
+        internal static int RemoveAndCountWhere<T>(this ValueSetBuilder<T> builder, Predicate<T> match)
+        {
+            var countBefore = builder.Count;
+            builder.RemoveWhere(match);
+            return countBefore - builder.Count;
+        }
     }
 }

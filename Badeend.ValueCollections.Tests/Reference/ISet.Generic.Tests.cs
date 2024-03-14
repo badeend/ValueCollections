@@ -447,7 +447,6 @@ namespace Badeend.ValueCollections.Tests.Reference
 
         [Theory]
         [MemberData(nameof(ValidCollectionSizes))]
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework, ".NET Framework throws InvalidOperationException")]
         public void ISet_Generic_IntersectWith_Itself(int setLength)
         {
             if (!IsReadOnly)
@@ -532,7 +531,6 @@ namespace Badeend.ValueCollections.Tests.Reference
         #region Set Function tests on a large Set
 
         [Fact]
-        [OuterLoop]
         public void ISet_Generic_ExceptWith_LargeSet()
         {
             if (!IsReadOnly)
@@ -544,7 +542,6 @@ namespace Badeend.ValueCollections.Tests.Reference
         }
 
         [Fact]
-        [OuterLoop]
         public void ISet_Generic_IntersectWith_LargeSet()
         {
             if (!IsReadOnly)
@@ -556,7 +553,6 @@ namespace Badeend.ValueCollections.Tests.Reference
         }
 
         [Fact]
-        [OuterLoop]
         public void ISet_Generic_IsProperSubsetOf_LargeSet()
         {
             ISet<T> set = GenericISetFactory(ISet_Large_Capacity);
@@ -565,7 +561,6 @@ namespace Badeend.ValueCollections.Tests.Reference
         }
 
         [Fact]
-        [OuterLoop]
         public void ISet_Generic_IsProperSupersetOf_LargeSet()
         {
             ISet<T> set = GenericISetFactory(ISet_Large_Capacity);
@@ -574,7 +569,6 @@ namespace Badeend.ValueCollections.Tests.Reference
         }
 
         [Fact]
-        [OuterLoop]
         public void ISet_Generic_IsSubsetOf_LargeSet()
         {
             ISet<T> set = GenericISetFactory(ISet_Large_Capacity);
@@ -583,7 +577,6 @@ namespace Badeend.ValueCollections.Tests.Reference
         }
 
         [Fact]
-        [OuterLoop]
         public void ISet_Generic_IsSupersetOf_LargeSet()
         {
             ISet<T> set = GenericISetFactory(ISet_Large_Capacity);
@@ -592,7 +585,6 @@ namespace Badeend.ValueCollections.Tests.Reference
         }
 
         [Fact]
-        [OuterLoop]
         public void ISet_Generic_Overlaps_LargeSet()
         {
             ISet<T> set = GenericISetFactory(ISet_Large_Capacity);
@@ -601,7 +593,6 @@ namespace Badeend.ValueCollections.Tests.Reference
         }
 
         [Fact]
-        [OuterLoop]
         public void ISet_Generic_SetEquals_LargeSet()
         {
             ISet<T> set = GenericISetFactory(ISet_Large_Capacity);
@@ -610,7 +601,6 @@ namespace Badeend.ValueCollections.Tests.Reference
         }
 
         [Fact]
-        [OuterLoop]
         public void ISet_Generic_SymmetricExceptWith_LargeSet()
         {
             if (!IsReadOnly)
@@ -622,7 +612,6 @@ namespace Badeend.ValueCollections.Tests.Reference
         }
 
         [Fact]
-        [OuterLoop]
         public void ISet_Generic_UnionWith_LargeSet()
         {
             if (!IsReadOnly)
