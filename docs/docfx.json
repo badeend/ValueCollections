@@ -6,28 +6,34 @@
       },
       "src": [
         {
-          "src": ".",
+          "src": "..",
           "files": [
             "Badeend.ValueCollections/Badeend.ValueCollections.csproj"
           ]
         }
       ],
-      "dest": "docs/api"
+      "dest": "api"
     }
   ],
   "build": {
     "content": [
       {
         "files": [
-          "README.md",
-          "docs/api/*.yml"
+          "**/*.{md,yml}"
         ],
         "exclude": [
-          "docs/rendered/**"
+          "rendered/**"
         ]
       }
     ],
-    "output": "docs/rendered",
+    "resource": [
+      {
+        "files": [
+          "images/**"
+        ]
+      }
+    ],
+    "output": "rendered",
     "template": [
       "default",
       "modern"
@@ -35,8 +41,9 @@
     "globalMetadata": {
       "_appName": "ValueCollections",
       "_appTitle": "ValueCollections",
-      "_enableSearch": false,
-      "_disableNavbar": true,
+      "_appLogoPath": "images/logo-header.png",
+      "_appFaviconPath": "images/favicon.ico",
+      "_enableSearch": true,
       "pdf": false
     }
   }
