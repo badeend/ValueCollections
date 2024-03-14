@@ -1,6 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <PackageId>Badeend.ValueCollections</PackageId>
+    <Version>0.0.3</Version>
+    <Authors>Dave Bakker</Authors>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Description>Low overhead immutable collection types with structural equality</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://badeend.github.io/ValueCollections/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/badeend/ValueCollections</RepositoryUrl>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <IncludeSource>true</IncludeSource>
+
     <TargetFrameworks>net462;net472;netcoreapp3.1;net5.0;net6.0;net8.0</TargetFrameworks>
     <LangVersion>12</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -31,6 +44,8 @@
 
   <ItemGroup>
     <AdditionalFiles Include="stylecop.json" />
+    <None Include="../nuget/README.md" Pack="true" PackagePath="\"/>
+    <None Include="../nuget/icon.png" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
 </Project>

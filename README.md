@@ -8,4 +8,7 @@
 
 ---
 
+[![NuGet Version](https://img.shields.io/nuget/v/Badeend.ValueCollections)](https://www.nuget.org/packages/Badeend.ValueCollections)
+
 - [Documentation](https://badeend.github.io/ValueCollections/)
+- [Issues](https://github.com/badeend/ValueCollections/issues)
