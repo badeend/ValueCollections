@@ -362,7 +362,7 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 
 	/// <summary>
 	/// Reduce the capacity of this set as much as possible. After calling this
-	/// method, the <see cref="Capacity"/> of the set may still be higher than
+	/// method, the <c>Capacity</c> of the set may still be higher than
 	/// the <see cref="Count"/>.
 	/// </summary>
 	/// <remarks>
