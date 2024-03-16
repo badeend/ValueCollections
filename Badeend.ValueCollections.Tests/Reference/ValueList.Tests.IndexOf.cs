@@ -93,7 +93,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             T defaultValue = default;
             ValueList<T> list = GenericListFactory(count);
             IndexOfDelegate IndexOf = IndexOfDelegateFromType(indexOfMethod);
-            list = list.ToBuilder().RemoveAll(defaultValue).Add(defaultValue).ToValueList();
+            list = list.ToBuilder().RemoveAll(defaultValue).Add(defaultValue).Build();
             Assert.Equal(count, IndexOf(list, defaultValue));
         }
 
@@ -103,7 +103,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         {
             ValueList<T> list = GenericListFactory(count);
             ValueList<T> withoutDuplicates = list.ToValueList();
-            list = list.ToBuilder().AddRange(list).ToValueList();
+            list = list.ToBuilder().AddRange(list).Build();
             IndexOfDelegate IndexOf = IndexOfDelegateFromType(indexOfMethod);
 
             Assert.All(Enumerable.Range(0, count), i =>

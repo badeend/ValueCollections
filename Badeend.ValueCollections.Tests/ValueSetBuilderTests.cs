@@ -26,7 +26,7 @@ public class ValueSetBuilderTests
             .Add(1)
             .Add(2)
             .Add(3)
-            .ToValueSet();
+            .Build();
     }
 
     [Fact]
@@ -39,11 +39,11 @@ public class ValueSetBuilderTests
     }
 
     [Fact]
-    public void ToValueSetPerformsCopy()
+    public void BuildPerformsCopy()
     {
         ValueSetBuilder<int> builder = [1, 2, 3];
 
-        var list = builder.ToValueSet();
+        var list = builder.Build();
 
         builder.Remove(1); // In reality _this_ performs the copy.
 
@@ -55,8 +55,8 @@ public class ValueSetBuilderTests
     {
         ValueSetBuilder<int> builder = [1, 2, 3];
 
-        var list1 = builder.ToValueSet();
-        var list2 = builder.ToValueSet();
+        var list1 = builder.Build();
+        var list2 = builder.Build();
 
         Assert.True(object.ReferenceEquals(list1, list2));
     }

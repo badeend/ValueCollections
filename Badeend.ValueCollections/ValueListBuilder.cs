@@ -10,7 +10,7 @@ namespace Badeend.ValueCollections;
 /// Most mutating methods on this class return `this`, allowing the caller to
 /// chain multiple mutations in a row.
 ///
-/// When you're done building, call <see cref="ToValueList()"/> to get out the
+/// When you're done building, call <see cref="Build()"/> to get out the
 /// resulting list.
 ///
 /// For constructing <see cref="ValueList{T}"/>s it is recommended to use this
@@ -40,8 +40,10 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	///
 	/// This is an <c>O(1)</c> operation and performs only a small fixed-size
 	/// memory allocation. This does not perform a bulk copy of the contents.
+	/// After calling this method the builder remains usable, but the next
+	/// mutation on it <em>will</em> trigger a full copy its contents.
 	/// </summary>
-	public ValueList<T> ToValueList()
+	public ValueList<T> Build()
 	{
 		if (this.items is List<T> list)
 		{
@@ -491,7 +493,7 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	///
 	/// Mutations on the underlying builder instance are still visible through
 	/// the ReadOnlyCollection. If you need an immutable snapshot of the builder,
-	/// use <see cref="ToValueList"/> instead.
+	/// use <see cref="Build"/> instead.
 	///
 	/// This is an <c>O(1)</c> operation.
 	/// </summary>

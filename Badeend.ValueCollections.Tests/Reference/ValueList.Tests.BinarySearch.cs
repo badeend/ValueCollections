@@ -22,7 +22,7 @@ namespace Badeend.ValueCollections.Tests.Reference
                     builder.RemoveFirst(item);
             builder.Sort();
             T[] beforeList = builder.ToArray();
-            ValueList<T> list = builder.ToValueList();
+            ValueList<T> list = builder.Build();
 
             Assert.All(Enumerable.Range(0, list.Count), index =>
             {
@@ -41,7 +41,7 @@ namespace Badeend.ValueCollections.Tests.Reference
                 builder.Add(builder[0]);
                 builder.Sort();
                 T[] beforeList = builder.ToArray();
-                ValueList<T> list = builder.ToValueList();
+                ValueList<T> list = builder.Build();
 
                 Assert.All(Enumerable.Range(0, list.Count), index =>
                 {

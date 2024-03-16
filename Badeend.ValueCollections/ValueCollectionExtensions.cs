@@ -55,7 +55,7 @@ public static class ValueCollectionExtensions
 
 		if (items is ValueListBuilder<T> builder)
 		{
-			return builder.ToValueList().AsValueSlice();
+			return builder.Build().AsValueSlice();
 		}
 
 		return new(items.ToArray());
@@ -101,6 +101,14 @@ public static class ValueCollectionExtensions
 	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueList{T}"/>.
 	/// </summary>
+	[Obsolete("Use .Build() instead.")]
+	[Browsable(false)]
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	public static ValueList<T> ToValueList<T>(this ValueListBuilder<T> items) => items.Build();
+
+	/// <summary>
+	/// Copy the <paramref name="items"/> into a new <see cref="ValueList{T}"/>.
+	/// </summary>
 	public static ValueList<T> ToValueList<T>(this IEnumerable<T> items)
 	{
 		if (items is ValueList<T> list)
@@ -110,7 +118,7 @@ public static class ValueCollectionExtensions
 
 		if (items is ValueListBuilder<T> builder)
 		{
-			return builder.ToValueList();
+			return builder.Build();
 		}
 
 		return ValueList<T>.FromArrayUnsafe(items.ToArray());
@@ -219,6 +227,14 @@ public static class ValueCollectionExtensions
 	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueSet{T}"/>.
 	/// </summary>
+	[Obsolete("Use .Build() instead.")]
+	[Browsable(false)]
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	public static ValueSet<T> ToValueSet<T>(this ValueSetBuilder<T> items) => items.Build();
+
+	/// <summary>
+	/// Copy the <paramref name="items"/> into a new <see cref="ValueSet{T}"/>.
+	/// </summary>
 	public static ValueSet<T> ToValueSet<T>(this IEnumerable<T> items)
 	{
 		if (items is ValueSet<T> list)
@@ -228,7 +244,7 @@ public static class ValueCollectionExtensions
 
 		if (items is ValueSetBuilder<T> builder)
 		{
-			return builder.ToValueSet();
+			return builder.Build();
 		}
 
 		return ValueSet<T>.FromHashSetUnsafe(new HashSet<T>(items));

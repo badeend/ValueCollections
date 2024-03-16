@@ -13,7 +13,7 @@ namespace Badeend.ValueCollections;
 /// <see cref="HashSet{T}.Remove(T)">HashSet.Remove</see> are implemented as
 /// <see cref="TryAdd(T)"/> and <see cref="TryRemove(T)"/>.
 ///
-/// When you're done building, call <see cref="ToValueSet()"/> to get out the
+/// When you're done building, call <see cref="Build()"/> to get out the
 /// resulting set.
 ///
 /// For constructing <see cref="ValueSet{T}"/>s it is recommended to use this
@@ -48,8 +48,10 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	///
 	/// This is an <c>O(1)</c> operation and performs only a small fixed-size
 	/// memory allocation. This does not perform a bulk copy of the contents.
+	/// After calling this method the builder remains usable, but the next
+	/// mutation on it <em>will</em> trigger a full copy its contents.
 	/// </summary>
-	public ValueSet<T> ToValueSet()
+	public ValueSet<T> Build()
 	{
 		if (this.items is HashSet<T> set)
 		{
@@ -368,9 +370,9 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	/// <remarks>
 	/// This method can be used to minimize the memory overhead of long-lived
 	/// sets. This method is most useful just before calling
-	/// <see cref="ToValueSet"/>, e.g.:
+	/// <see cref="Build"/>, e.g.:
 	/// <code>
-	/// var longLivedSet = builder.TrimExcess().ToValueSet()
+	/// var longLivedSet = builder.TrimExcess().Build()
 	/// </code>
 	/// Excessive use of this method most likely introduces more performance
 	/// problems than it solves.
