@@ -378,22 +378,16 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// <inheritdoc/>
 	public override int GetHashCode()
 	{
-		int hashCode = typeof(T).GetHashCode();
-		hashCode = (hashCode * -1521134295) + this.length;
+		var hasher = new HashCode();
+		hasher.Add(typeof(ValueSlice<T>));
+		hasher.Add(this.Length);
 
-		// Include first item
-		if (this.length >= 1)
+		foreach (var item in this)
 		{
-			hashCode = (hashCode * -1521134295) + (this[0]?.GetHashCode() ?? 0);
+			hasher.Add(item);
 		}
 
-		// Include last item
-		if (this.length >= 2)
-		{
-			hashCode = (hashCode * -1521134295) + (this[this.length - 1]?.GetHashCode() ?? 0);
-		}
-
-		return hashCode;
+		return hasher.ToHashCode();
 	}
 
 	/// <summary>

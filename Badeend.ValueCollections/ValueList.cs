@@ -66,6 +66,8 @@ public static class ValueList
 [CollectionBuilder(typeof(ValueList), nameof(ValueList.Create))]
 public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueList<T>>
 {
+	private const int UninitializedHashCode = 0;
+
 	/// <summary>
 	/// Get a new empty list.
 	///
@@ -78,6 +80,11 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	/// </summary>
 	private readonly T[] items;
 	private readonly int count;
+
+	/// <summary>
+	/// Warning! This class promises to be thread-safe, yet this is a mutable field.
+	/// </summary>
+	private int hashCode = UninitializedHashCode;
 
 	internal T[] Items
 	{
@@ -289,7 +296,39 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	}
 
 	/// <inheritdoc/>
-	public sealed override int GetHashCode() => this.AsValueSlice().GetHashCode();
+	public sealed override int GetHashCode()
+	{
+		var hashCode = Volatile.Read(ref this.hashCode);
+		if (hashCode != UninitializedHashCode)
+		{
+			return hashCode;
+		}
+
+		hashCode = this.ComputeHashCode();
+		Volatile.Write(ref this.hashCode, hashCode);
+		return hashCode;
+	}
+
+	private int ComputeHashCode()
+	{
+		var hasher = new HashCode();
+		hasher.Add(typeof(ValueList<T>));
+		hasher.Add(this.Count);
+
+		foreach (var item in this)
+		{
+			hasher.Add(item);
+		}
+
+		var hashCode = hasher.ToHashCode();
+		if (hashCode == UninitializedHashCode)
+		{
+			// Never return 0, as that is our placeholder value.
+			hashCode = 1;
+		}
+
+		return hashCode;
+	}
 
 	/// <summary>
 	/// Returns <see langword="true"/> when the two lists have identical length

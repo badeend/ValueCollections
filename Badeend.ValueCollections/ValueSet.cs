@@ -328,7 +328,7 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 		}
 
 		var hasher = new HashCode();
-		hasher.Add(typeof(T));
+		hasher.Add(typeof(ValueSet<T>));
 		hasher.Add(this.Count);
 		hasher.AddUnordered(ref contentHasher);
 
