@@ -36,7 +36,8 @@
     "output": "rendered",
     "template": [
       "default",
-      "modern"
+      "modern",
+      "template"
     ],
     "globalMetadata": {
       "_appName": "ValueCollections",
