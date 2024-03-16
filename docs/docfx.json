@@ -45,6 +45,10 @@
       "_appLogoPath": "images/logo-header.png",
       "_appFaviconPath": "images/favicon.ico",
       "_enableSearch": true,
+      "_gitContribute": {
+        "repo": "https://github.com/badeend/ValueCollections",
+        "branch": "main"
+      },
       "pdf": false
     }
   }
