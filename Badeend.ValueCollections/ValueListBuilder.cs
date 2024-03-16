@@ -105,6 +105,15 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	/// </summary>
 	public int Count => this.Read().Count;
 
+	/// <summary>
+	/// Shortcut for <c>.Count == 0</c>.
+	/// </summary>
+	public bool IsEmpty
+	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		get => this.Count == 0;
+	}
+
 	/// <inheritdoc/>
 	bool ICollection<T>.IsReadOnly => false;
 
