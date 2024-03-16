@@ -137,10 +137,9 @@ public class ValueListTests
     [Fact]
     public void MarshalAsValueList()
     {
-        List<int> list = [1, 2, 3, 4];
-        list.RemoveAt(3);
+        int[] unsafeItems = [1, 2, 3];
 
-        var valueList = ValueCollectionsMarshal.AsValueList(list);
+        var valueList = ValueCollectionsMarshal.AsValueList(unsafeItems);
 
         Assert.True(valueList.Count == 3);
         Assert.True(valueList[0] == 1);
@@ -148,7 +147,7 @@ public class ValueListTests
         Assert.True(valueList[2] == 3);
 
         // Don't ever do this:
-        list[2] = 42;
+        unsafeItems[2] = 42;
 
         Assert.True(valueList[2] == 42);
     }

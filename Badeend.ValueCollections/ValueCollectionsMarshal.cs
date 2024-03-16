@@ -18,16 +18,6 @@ public static class ValueCollectionsMarshal
 	public static ValueSlice<T> AsValueSlice<T>(T[] items) => new(items);
 
 	/// <summary>
-	/// Create a new <see cref="ValueSlice{T}"/> using the provided mutable list
-	/// as its backing store. This operation does not allocate any memory.
-	///
-	/// > [!WARNING]
-	/// > Ownership of the list is moved into the ValueSlice. It is the caller's
-	/// responsibility to never mutate the list ever again.
-	/// </summary>
-	public static ValueSlice<T> AsValueSlice<T>(List<T> items) => new(UnsafeHelpers.GetBackingArray(items), 0, items.Count);
-
-	/// <summary>
 	/// Create a new <see cref="ValueList{T}"/> using the provided mutable array
 	/// as its backing store. This operation only allocates a fixed amount of
 	/// memory for the new ValueList instance. For the actual content it reuses
@@ -38,19 +28,6 @@ public static class ValueCollectionsMarshal
 	/// responsibility to never mutate the array ever again.
 	/// </summary>
 	public static ValueList<T> AsValueList<T>(T[] items) => ValueList<T>.FromArrayUnsafe(items);
-
-	/// <summary>
-	/// Create a new <see cref="ValueList{T}"/> using the provided mutable list
-	/// as its backing store. This operation only allocates a fixed amount of
-	/// memory for the new ValueList instance. For the actual content it reuses
-	/// the backing array of the provided list rather than of copying the items
-	/// over.
-	///
-	/// > [!WARNING]
-	/// > Ownership of the list is moved into the ValueList. It is the caller's
-	/// responsibility to never mutate the list ever again.
-	/// </summary>
-	public static ValueList<T> AsValueList<T>(List<T> items) => ValueList<T>.FromArrayUnsafe(UnsafeHelpers.GetBackingArray(items), items.Count);
 
 	/// <summary>
 	/// Create a new <see cref="ValueListBuilder{T}"/> using the provided mutable
@@ -64,19 +41,6 @@ public static class ValueCollectionsMarshal
 	/// It is the caller's responsibility to never touch the array ever again.
 	/// </summary>
 	public static ValueListBuilder<T> AsValueListBuilder<T>(T[] items) => ValueListBuilder<T>.FromArrayUnsafe(items);
-
-	/// <summary>
-	/// Create a new <see cref="ValueListBuilder{T}"/> using the provided mutable
-	/// list as its initial backing store. This is a <c>O(1)</c> operation that
-	/// only allocates a fixed amount of memory for the new ValueListBuilder
-	/// instance. For the actual content it reuses the backing array of the
-	/// provided list instead of copying it over.
-	///
-	/// > [!WARNING]
-	/// > Ownership of the list is moved into the ValueListBuilder.
-	/// It is the caller's responsibility to never touch the list ever again.
-	/// </summary>
-	public static ValueListBuilder<T> AsValueListBuilder<T>(List<T> items) => ValueListBuilder<T>.FromListUnsafe(items);
 
 	/// <summary>
 	/// Update the count of the <paramref name="builder"/>.

@@ -183,10 +183,9 @@ public class ValueSliceTests
     [Fact]
     public void MarshalAsValueSlice()
     {
-        List<int> list = [1, 2, 3, 4];
-        list.RemoveAt(3);
+        int[] unsafeItems = [1, 2, 3];
 
-        var slice = ValueCollectionsMarshal.AsValueSlice(list);
+        var slice = ValueCollectionsMarshal.AsValueSlice(unsafeItems);
 
         Assert.True(slice.Length == 3);
         Assert.True(slice[0] == 1);
@@ -194,7 +193,7 @@ public class ValueSliceTests
         Assert.True(slice[2] == 3);
 
         // Don't ever do this:
-        list[2] = 42;
+        unsafeItems[2] = 42;
 
         Assert.True(slice[2] == 42);
     }
