@@ -235,10 +235,7 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	/// <summary>
 	/// Create a new <see cref="ValueListBuilder{T}"/> with this list as its
 	/// initial content. This builder can then be used to efficiently construct
-	/// an immutable <see cref="ValueList{T}"/>.
-	///
-	/// This is an <c>O(1)</c> operation and performs only a small fixed-size
-	/// memory allocation. This does not perform a bulk copy of the contents.
+	/// a new immutable <see cref="ValueList{T}"/>.
 	/// </summary>
 	public ValueListBuilder<T> ToBuilder() => ValueListBuilder<T>.FromValueList(this);
 
