@@ -1,5 +1,7 @@
 - name: Introduction
   href: index.md
+- name: Why & how?
+  href: rationale.md
 - name: API Reference
   href: api/toc.yml
   expanded: true

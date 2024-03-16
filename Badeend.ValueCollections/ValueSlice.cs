@@ -31,7 +31,7 @@ public static class ValueSlice
 /// <summary>
 /// An immutable, thread-safe span with value semantics.
 ///
-/// This type is very similar to <see cref="ReadOnlySpan{T}"/> and
+/// This type is similar to <see cref="ReadOnlySpan{T}"/> and
 /// <see cref="ReadOnlyMemory{T}"/> in that this too is just a view
 /// into an existing allocation at a specified offset+length. Taking a subslice
 /// with <see cref="ValueSlice{T}.Slice(int)"/> and
