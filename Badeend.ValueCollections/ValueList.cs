@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Immutable;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -336,8 +337,12 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	/// </summary>
 	public bool Equals(ValueList<T>? other) => other is null ? false : this.AsValueSlice() == other.AsValueSlice();
 
+#pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
 	/// <inheritdoc/>
+	[Obsolete("Use == instead.")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public sealed override bool Equals(object? obj) => obj is ValueList<T> other && EqualsUtil(this, other);
+#pragma warning restore CS0809 // Obsolete member overrides non-obsolete member
 
 	/// <summary>
 	/// Check for equality.

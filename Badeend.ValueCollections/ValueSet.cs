@@ -1,4 +1,5 @@
 using System.Collections;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -348,8 +349,12 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 	/// </summary>
 	public bool Equals(ValueSet<T>? other) => EqualsUtil(this, other);
 
+#pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
 	/// <inheritdoc/>
+	[Obsolete("Use == instead.")]
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public sealed override bool Equals(object? obj) => obj is ValueSet<T> other && EqualsUtil(this, other);
+#pragma warning restore CS0809 // Obsolete member overrides non-obsolete member
 
 	/// <summary>
 	/// Check for equality.
