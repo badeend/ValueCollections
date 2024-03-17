@@ -505,7 +505,10 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 		return SequenceEqual(left.Value, right.Value);
 	}
 
-	/// <inheritdoc/>
+	/// <summary>
+	/// Get a string representation of the collection for debugging purposes.
+	/// The format is not stable and may change without prior notice.
+	/// </summary>
 	public override string ToString()
 	{
 		if (this.Length == 0)

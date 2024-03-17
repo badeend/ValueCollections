@@ -432,7 +432,10 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 #pragma warning restore CA1815 // Override equals and operator equals on value types
 #pragma warning restore CA1034 // Nested types should not be visible
 
-	/// <inheritdoc/>
+	/// <summary>
+	/// Get a string representation of the collection for debugging purposes.
+	/// The format is not stable and may change without prior notice.
+	/// </summary>
 	public override string ToString()
 	{
 		if (this.Count == 0)
