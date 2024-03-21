@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
 
 namespace Badeend.ValueCollections;
@@ -496,17 +495,6 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 		ValueList<T> items => items.ToArray(),
 		_ => throw UnreachableException(),
 	};
-
-	/// <summary>
-	/// Create a read-only live view on this builder.
-	///
-	/// Mutations on the underlying builder instance are still visible through
-	/// the ReadOnlyCollection. If you need an immutable snapshot of the builder,
-	/// use <see cref="Build"/> instead.
-	///
-	/// This is an <c>O(1)</c> operation.
-	/// </summary>
-	public ReadOnlyCollection<T> AsReadOnly() => new(this);
 
 	/// <summary>
 	/// Attempt to copy the contents of the list into an existing
