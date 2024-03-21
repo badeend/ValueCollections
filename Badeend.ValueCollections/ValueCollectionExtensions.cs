@@ -16,32 +16,6 @@ public static class ValueCollectionExtensions
 	public static ValueSlice<T> AsValueSlice<T>(this ImmutableArray<T> items) => new(UnsafeHelpers.AsArray(items));
 
 	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueSlice{T}"/>.
-	/// </summary>
-	[Obsolete("Use .AsValueSlice() instead.")]
-	[Browsable(false)]
-	[EditorBrowsable(EditorBrowsableState.Never)]
-	public static ValueSlice<T> ToValueSlice<T>(this ImmutableArray<T> items) => items.AsValueSlice();
-
-	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueSlice{T}"/>.
-	/// </summary>
-	public static ValueSlice<T> ToValueSlice<T>(this IEnumerable<T> items)
-	{
-		if (items is ValueList<T> list)
-		{
-			return list.AsValueSlice();
-		}
-
-		if (items is ValueListBuilder<T> builder)
-		{
-			return builder.Build().AsValueSlice();
-		}
-
-		return new(items.ToArray());
-	}
-
-	/// <summary>
 	/// Create a new <see cref="ValueList{T}"/> that reuses the backing allocation
 	/// of the <see cref="ImmutableArray{T}"/>.
 	///
