@@ -237,9 +237,9 @@ public static class ValueCollectionExtensions
 	/// </summary>
 	public static ValueSet<T> ToValueSet<T>(this IEnumerable<T> items)
 	{
-		if (items is ValueSet<T> list)
+		if (items is ValueSet<T> set)
 		{
-			return list;
+			return set;
 		}
 
 		if (items is ValueSetBuilder<T> builder)
@@ -283,9 +283,9 @@ public static class ValueCollectionExtensions
 	/// </summary>
 	public static ValueSetBuilder<T> ToValueSetBuilder<T>(this IEnumerable<T> items)
 	{
-		if (items is ValueSet<T> list)
+		if (items is ValueSet<T> set)
 		{
-			return list.ToBuilder();
+			return set.ToBuilder();
 		}
 
 		return ValueSetBuilder<T>.FromHashSetUnsafe(new HashSet<T>(items));
