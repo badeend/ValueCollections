@@ -13,7 +13,7 @@ namespace Badeend.ValueCollections;
 /// <see cref="HashSet{T}.Remove(T)">HashSet.Remove</see> are implemented as
 /// <see cref="TryAdd(T)"/> and <see cref="TryRemove(T)"/>.
 ///
-/// When you're done building, call <see cref="Build()"/> to get out the
+/// When you're done building, call <see cref="Build()"/> to extract the
 /// resulting set.
 ///
 /// For constructing <see cref="ValueSet{T}"/>s it is recommended to use this
@@ -33,6 +33,8 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>, IReadO
 public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 #endif
 {
+	private const int VersionBuilt = -1;
+
 	/// <summary>
 	/// Can be one of:
 	/// - ValueSet{T}: when copy-on-write hasn't kicked in yet.
@@ -40,18 +42,53 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	/// </summary>
 	private ISet<T> items;
 
+	/// <summary>
+	/// Mutation counter.
+	/// `-1` means: Collection has been built and the builder is now read-only.
+	/// </summary>
 	private int version;
 
 	/// <summary>
-	/// Create a <see cref="ValueSet{T}"/> based on the current contents of the
-	/// builder.
+	/// Returns <see langword="true"/> when this instance has been built and is
+	/// now read-only.
+	/// </summary>
+	public bool IsReadOnly => this.version == VersionBuilt;
+
+	/// <summary>
+	/// Finalize the builder and export its contents as a <see cref="ValueSet{T}"/>.
+	/// This makes the builder read-only. Any future attempt to mutate the
+	/// builder will throw.
 	///
 	/// This is an <c>O(1)</c> operation and performs only a small fixed-size
 	/// memory allocation. This does not perform a bulk copy of the contents.
-	/// After calling this method the builder remains usable, but the next
-	/// mutation on it <em>will</em> trigger a full copy its contents.
 	/// </summary>
+	/// <remarks>
+	/// If you need an intermediate snapshot of the contents while keeping the
+	/// builder open for mutation, use <see cref="ToValueSet"/> instead.
+	/// </remarks>
+	/// <exception cref="InvalidOperationException">
+	/// This instance has already been built.
+	/// </exception>
 	public ValueSet<T> Build()
+	{
+		if (this.version == VersionBuilt)
+		{
+			throw BuiltException();
+		}
+
+		this.version = VersionBuilt;
+
+		return this.ToValueSet();
+	}
+
+	/// <summary>
+	/// Copy the current contents of the builder into a new <see cref="ValueSet{T}"/>.
+	/// </summary>
+	/// <remarks>
+	/// If you don't need the builder anymore after this method, consider using
+	/// <see cref="Build"/> instead.
+	/// </remarks>
+	public ValueSet<T> ToValueSet()
 	{
 		if (this.items is HashSet<T> set)
 		{
@@ -70,6 +107,11 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 
 	private HashSet<T> Mutate()
 	{
+		if (this.version == VersionBuilt)
+		{
+			throw BuiltException();
+		}
+
 		this.version++;
 
 		if (this.items is HashSet<T> set)
@@ -117,9 +159,6 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		get => this.Count == 0;
 	}
-
-	/// <inheritdoc/>
-	bool ICollection<T>.IsReadOnly => false;
 
 	/// <summary>
 	/// Construct a new empty set builder.
@@ -676,4 +715,6 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 #pragma warning restore CA1034 // Nested types should not be visible
 
 	private static InvalidOperationException UnreachableException() => new("Unreachable");
+
+	private static InvalidOperationException BuiltException() => new("Builder has already been built");
 }

@@ -39,11 +39,11 @@ public class ValueSetBuilderTests
     }
 
     [Fact]
-    public void BuildPerformsCopy()
+    public void ToValueSetPerformsCopy()
     {
         ValueSetBuilder<int> builder = [1, 2, 3];
 
-        var list = builder.Build();
+        var list = builder.ToValueSet();
 
         builder.Remove(1); // In reality _this_ performs the copy.
 
@@ -55,7 +55,7 @@ public class ValueSetBuilderTests
     {
         ValueSetBuilder<int> builder = [1, 2, 3];
 
-        var list1 = builder.Build();
+        var list1 = builder.ToValueSet();
         var list2 = builder.Build();
 
         Assert.True(object.ReferenceEquals(list1, list2));
@@ -85,5 +85,26 @@ public class ValueSetBuilderTests
         builder.ExceptWith(d);
         builder.ExceptWith(e);
         builder.ExceptWith([1, 2]);
+    }
+
+    [Fact]
+    public void BuildIsFinal()
+    {
+        var builder = new ValueSetBuilder<int>();
+
+        Assert.False(builder.IsReadOnly);
+        builder.Add(1);
+
+        _ = builder.ToValueSet();
+
+        Assert.False(builder.IsReadOnly);
+        builder.Add(2);
+
+        _ = builder.Build();
+
+        Assert.True(builder.IsReadOnly);
+        Assert.Throws<InvalidOperationException>(() => builder.Add(3));
+
+        Assert.Throws<InvalidOperationException>(() => builder.Build());
     }
 }

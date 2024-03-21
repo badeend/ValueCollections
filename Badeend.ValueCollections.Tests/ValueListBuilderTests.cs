@@ -39,11 +39,11 @@ public class ValueListBuilderTests
     }
 
     [Fact]
-    public void BuildPerformsCopy()
+    public void ToValueListPerformsCopy()
     {
         ValueListBuilder<int> builder = [1, 2, 3];
 
-        var list = builder.Build();
+        var list = builder.ToValueList();
 
         builder.SetItem(0, 42); // In reality _this_ performs the copy.
 
@@ -55,7 +55,7 @@ public class ValueListBuilderTests
     {
         ValueListBuilder<int> builder = [1, 2, 3];
 
-        var list1 = builder.Build();
+        var list1 = builder.ToValueList();
         var list2 = builder.Build();
 
         Assert.True(object.ReferenceEquals(list1, list2));
@@ -66,43 +66,43 @@ public class ValueListBuilderTests
     {
         ValueListBuilder<int> a = [];
 
-        Assert.True(a.Build() == []);
+        Assert.True(a.ToValueList() == []);
 
         a.Add(3);
 
-        Assert.True(a.Build() == [3]);
+        Assert.True(a.ToValueList() == [3]);
         
         a.AddRange([]);
 
-        Assert.True(a.Build() == [3]);
+        Assert.True(a.ToValueList() == [3]);
         
         a.AddRange([5, 5]);
 
-        Assert.True(a.Build() == [3, 5, 5]);
+        Assert.True(a.ToValueList() == [3, 5, 5]);
 
         a.Insert(0, 1);
 
-        Assert.True(a.Build() == [1, 3, 5, 5]);
+        Assert.True(a.ToValueList() == [1, 3, 5, 5]);
         
         a.InsertRange(1, []);
 
-        Assert.True(a.Build() == [1, 3, 5, 5]);
+        Assert.True(a.ToValueList() == [1, 3, 5, 5]);
         
         a.InsertRange(1, [2, 3]);
 
-        Assert.True(a.Build() == [1, 2, 3, 3, 5, 5]);
+        Assert.True(a.ToValueList() == [1, 2, 3, 3, 5, 5]);
         
         a.RemoveAt(3);
 
-        Assert.True(a.Build() == [1, 2, 3, 5, 5]);
+        Assert.True(a.ToValueList() == [1, 2, 3, 5, 5]);
 
         a.SetItem(3, 4);
 
-        Assert.True(a.Build() == [1, 2, 3, 4, 5]);
+        Assert.True(a.ToValueList() == [1, 2, 3, 4, 5]);
 
         a.RemoveRange(1, 3);
 
-        Assert.True(a.Build() == [1, 5]);
+        Assert.True(a.ToValueList() == [1, 5]);
     }
 
     [Fact]
@@ -112,11 +112,11 @@ public class ValueListBuilderTests
 
         a.RemoveFirst(2);
 
-        Assert.True(a.Build() == [4, 4, 2, 4, 2]);
+        Assert.True(a.ToValueList() == [4, 4, 2, 4, 2]);
 
         a.RemoveAll(4);
 
-        Assert.True(a.Build() == [2, 2]);
+        Assert.True(a.ToValueList() == [2, 2]);
     }
 
     [Fact]
@@ -126,7 +126,7 @@ public class ValueListBuilderTests
 
         a.Reverse();
 
-        Assert.True(a.Build() == [4, 3, 2, 1]);
+        Assert.True(a.ToValueList() == [4, 3, 2, 1]);
     }
 
     [Fact]
@@ -136,7 +136,7 @@ public class ValueListBuilderTests
 
         a.Sort();
 
-        Assert.True(a.Build() == [1, 2, 3, 4]);
+        Assert.True(a.ToValueList() == [1, 2, 3, 4]);
     }
 
     [Fact]
@@ -176,5 +176,26 @@ public class ValueListBuilderTests
 
         unsafeItems[1] = 42;
         Assert.True(list[1] == 42);
+    }
+
+    [Fact]
+    public void BuildIsFinal()
+    {
+        var builder = new ValueListBuilder<int>();
+
+        Assert.False(builder.IsReadOnly);
+        builder.Add(1);
+
+        _ = builder.ToValueList();
+
+        Assert.False(builder.IsReadOnly);
+        builder.Add(2);
+
+        _ = builder.Build();
+
+        Assert.True(builder.IsReadOnly);
+        Assert.Throws<InvalidOperationException>(() => builder.Add(3));
+
+        Assert.Throws<InvalidOperationException>(() => builder.Build());
     }
 }

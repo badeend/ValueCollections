@@ -9,7 +9,7 @@ namespace Badeend.ValueCollections;
 /// Most mutating methods on this class return `this`, allowing the caller to
 /// chain multiple mutations in a row.
 ///
-/// When you're done building, call <see cref="Build()"/> to get out the
+/// When you're done building, call <see cref="Build()"/> to extract the
 /// resulting list.
 ///
 /// For constructing <see cref="ValueList{T}"/>s it is recommended to use this
@@ -24,6 +24,8 @@ namespace Badeend.ValueCollections;
 [CollectionBuilder(typeof(ValueList), nameof(ValueList.Builder))]
 public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 {
+	private const int VersionBuilt = -1;
+
 	/// <summary>
 	/// Can be one of:
 	/// - ValueList{T}: when copy-on-write hasn't kicked in yet.
@@ -31,18 +33,53 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	/// </summary>
 	private IReadOnlyList<T> items;
 
+	/// <summary>
+	/// Mutation counter.
+	/// `-1` means: Collection has been built and the builder is now read-only.
+	/// </summary>
 	private int version;
 
 	/// <summary>
-	/// Create a <see cref="ValueList{T}"/> based on the current contents of the
-	/// builder.
+	/// Returns <see langword="true"/> when this instance has been built and is
+	/// now read-only.
+	/// </summary>
+	public bool IsReadOnly => this.version == VersionBuilt;
+
+	/// <summary>
+	/// Finalize the builder and export its contents as a <see cref="ValueList{T}"/>.
+	/// This makes the builder read-only. Any future attempt to mutate the
+	/// builder will throw.
 	///
 	/// This is an <c>O(1)</c> operation and performs only a small fixed-size
 	/// memory allocation. This does not perform a bulk copy of the contents.
-	/// After calling this method the builder remains usable, but the next
-	/// mutation on it <em>will</em> trigger a full copy its contents.
 	/// </summary>
+	/// <remarks>
+	/// If you need an intermediate snapshot of the contents while keeping the
+	/// builder open for mutation, use <see cref="ToValueList"/> instead.
+	/// </remarks>
+	/// <exception cref="InvalidOperationException">
+	/// This instance has already been built.
+	/// </exception>
 	public ValueList<T> Build()
+	{
+		if (this.version == VersionBuilt)
+		{
+			throw BuiltException();
+		}
+
+		this.version = VersionBuilt;
+
+		return this.ToValueList();
+	}
+
+	/// <summary>
+	/// Copy the current contents of the builder into a new <see cref="ValueList{T}"/>.
+	/// </summary>
+	/// <remarks>
+	/// If you don't need the builder anymore after this method, consider using
+	/// <see cref="Build"/> instead.
+	/// </remarks>
+	public ValueList<T> ToValueList()
 	{
 		if (this.items is List<T> list)
 		{
@@ -61,6 +98,11 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 
 	private List<T> Mutate()
 	{
+		if (this.version == VersionBuilt)
+		{
+			throw BuiltException();
+		}
+
 		this.version++;
 
 		if (this.items is List<T> list)
@@ -112,9 +154,6 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		get => this.Count == 0;
 	}
-
-	/// <inheritdoc/>
-	bool ICollection<T>.IsReadOnly => false;
 
 	/// <summary>
 	/// Construct a new empty list builder.
@@ -572,6 +611,8 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<T>)this).GetEnumerator();
 
 	private static InvalidOperationException UnreachableException() => new("Unreachable");
+
+	private static InvalidOperationException BuiltException() => new("Builder has already been built");
 
 	/// <summary>
 	/// Returns an enumerator for this <see cref="ValueListBuilder{T}"/>.
