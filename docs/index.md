@@ -90,7 +90,7 @@ var newList = existingList.ToBuilder()
 
 ## Boring interface
 
-Despite being a 100% drop-in replacement for `System.Collections.Generic` is _not_ a goal for this project, the interface should still feel _very_ familiar:
+Being a 100% drop-in replacement for `System.Collections.Generic` is _not_ a goal for this project. Nonetheless, the interface should still feel _very_ familiar:
 
 ```cs
 ValueList<int> a = ...;
