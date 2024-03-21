@@ -26,26 +26,6 @@ public static class ValueCollectionExtensions
 	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueSlice{T}"/>.
 	/// </summary>
-	public static ValueSlice<T> ToValueSlice<T>(this ReadOnlySpan<T> items) => new(items.ToArray());
-
-	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueSlice{T}"/>.
-	/// </summary>
-	public static ValueSlice<T> ToValueSlice<T>(this Span<T> items) => new(items.ToArray());
-
-	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueSlice{T}"/>.
-	/// </summary>
-	public static ValueSlice<T> ToValueSlice<T>(this ReadOnlyMemory<T> items) => new(items.ToArray());
-
-	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueSlice{T}"/>.
-	/// </summary>
-	public static ValueSlice<T> ToValueSlice<T>(this Memory<T> items) => new(items.ToArray());
-
-	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueSlice{T}"/>.
-	/// </summary>
 	public static ValueSlice<T> ToValueSlice<T>(this IEnumerable<T> items)
 	{
 		if (items is ValueList<T> list)
@@ -81,26 +61,6 @@ public static class ValueCollectionExtensions
 	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueList{T}"/>.
 	/// </summary>
-	public static ValueList<T> ToValueList<T>(this ReadOnlySpan<T> items) => ValueList<T>.FromArrayUnsafe(items.ToArray());
-
-	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueList{T}"/>.
-	/// </summary>
-	public static ValueList<T> ToValueList<T>(this Span<T> items) => ValueList<T>.FromArrayUnsafe(items.ToArray());
-
-	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueList{T}"/>.
-	/// </summary>
-	public static ValueList<T> ToValueList<T>(this ReadOnlyMemory<T> items) => ValueList<T>.FromArrayUnsafe(items.ToArray());
-
-	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueList{T}"/>.
-	/// </summary>
-	public static ValueList<T> ToValueList<T>(this Memory<T> items) => ValueList<T>.FromArrayUnsafe(items.ToArray());
-
-	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueList{T}"/>.
-	/// </summary>
 	[Obsolete("Use .Build() instead.")]
 	[Browsable(false)]
 	[EditorBrowsable(EditorBrowsableState.Never)]
@@ -123,31 +83,6 @@ public static class ValueCollectionExtensions
 
 		return ValueList<T>.FromArrayUnsafe(items.ToArray());
 	}
-
-	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueListBuilder{T}"/>.
-	/// </summary>
-	public static ValueListBuilder<T> ToValueListBuilder<T>(this ImmutableArray<T> items) => ValueListBuilder<T>.FromArrayUnsafe(items.ToArray());
-
-	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueListBuilder{T}"/>.
-	/// </summary>
-	public static ValueListBuilder<T> ToValueListBuilder<T>(this ReadOnlySpan<T> items) => ValueListBuilder<T>.FromArrayUnsafe(items.ToArray());
-
-	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueListBuilder{T}"/>.
-	/// </summary>
-	public static ValueListBuilder<T> ToValueListBuilder<T>(this Span<T> items) => ValueListBuilder<T>.FromArrayUnsafe(items.ToArray());
-
-	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueListBuilder{T}"/>.
-	/// </summary>
-	public static ValueListBuilder<T> ToValueListBuilder<T>(this ReadOnlyMemory<T> items) => ValueListBuilder<T>.FromArrayUnsafe(items.ToArray());
-
-	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueListBuilder{T}"/>.
-	/// </summary>
-	public static ValueListBuilder<T> ToValueListBuilder<T>(this Memory<T> items) => ValueListBuilder<T>.FromArrayUnsafe(items.ToArray());
 
 	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueListBuilder{T}"/>.
@@ -207,26 +142,6 @@ public static class ValueCollectionExtensions
 	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueSet{T}"/>.
 	/// </summary>
-	public static ValueSet<T> ToValueSet<T>(this ReadOnlySpan<T> items) => ValueSet<T>.FromReadOnlySpan(items);
-
-	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueSet{T}"/>.
-	/// </summary>
-	public static ValueSet<T> ToValueSet<T>(this Span<T> items) => ValueSet<T>.FromReadOnlySpan(items);
-
-	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueSet{T}"/>.
-	/// </summary>
-	public static ValueSet<T> ToValueSet<T>(this ReadOnlyMemory<T> items) => ValueSet<T>.FromReadOnlySpan(items.Span);
-
-	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueSet{T}"/>.
-	/// </summary>
-	public static ValueSet<T> ToValueSet<T>(this Memory<T> items) => ValueSet<T>.FromReadOnlySpan(items.Span);
-
-	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueSet{T}"/>.
-	/// </summary>
 	[Obsolete("Use .Build() instead.")]
 	[Browsable(false)]
 	[EditorBrowsable(EditorBrowsableState.Never)]
@@ -249,26 +164,6 @@ public static class ValueCollectionExtensions
 
 		return ValueSet<T>.FromHashSetUnsafe(new HashSet<T>(items));
 	}
-
-	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueSetBuilder{T}"/>.
-	/// </summary>
-	public static ValueSetBuilder<T> ToValueSetBuilder<T>(this ReadOnlySpan<T> items) => ValueSetBuilder<T>.FromReadOnlySpan(items);
-
-	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueSetBuilder{T}"/>.
-	/// </summary>
-	public static ValueSetBuilder<T> ToValueSetBuilder<T>(this Span<T> items) => ValueSetBuilder<T>.FromReadOnlySpan(items);
-
-	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueSetBuilder{T}"/>.
-	/// </summary>
-	public static ValueSetBuilder<T> ToValueSetBuilder<T>(this ReadOnlyMemory<T> items) => ValueSetBuilder<T>.FromReadOnlySpan(items.Span);
-
-	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueSetBuilder{T}"/>.
-	/// </summary>
-	public static ValueSetBuilder<T> ToValueSetBuilder<T>(this Memory<T> items) => ValueSetBuilder<T>.FromReadOnlySpan(items.Span);
 
 	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueSetBuilder{T}"/>.
