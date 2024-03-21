@@ -31,7 +31,7 @@ public class ValueListTests
     [Fact]
     public void Empty()
     {
-        var a = ValueList.Empty<int>();
+        var a = ValueList<int>.Empty;
 
         Assert.True(a.IsEmpty == true);
         Assert.True(a.Count == 0);

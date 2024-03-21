@@ -11,14 +11,6 @@ namespace Badeend.ValueCollections;
 public static class ValueSet
 {
 	/// <summary>
-	/// Create a new empty set.
-	///
-	/// This does not allocate any memory.
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueSet<T> Empty<T>() => ValueSet<T>.Empty;
-
-	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueSet{T}"/>.
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -68,7 +60,7 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 	private const int UninitializedHashCode = 0;
 
 	/// <summary>
-	/// Get a new empty set.
+	/// Get an empty set.
 	///
 	/// This does not allocate any memory.
 	/// </summary>

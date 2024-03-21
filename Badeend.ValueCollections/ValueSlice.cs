@@ -14,14 +14,6 @@ namespace Badeend.ValueCollections;
 public static class ValueSlice
 {
 	/// <summary>
-	/// Create a new empty slice.
-	///
-	/// This does not allocate any memory.
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueSlice<T> Empty<T>() => default;
-
-	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueSlice{T}"/>.
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -61,7 +53,7 @@ public static class ValueSlice
 public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 {
 	/// <summary>
-	/// Get a new empty slice.
+	/// Get an empty slice.
 	///
 	/// This does not allocate any memory.
 	/// </summary>

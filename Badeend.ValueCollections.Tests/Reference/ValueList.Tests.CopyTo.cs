@@ -24,7 +24,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             ValueList<int> list;
             Span<int> destination;
 
-            list = ValueList.Empty<int>();
+            list = ValueList<int>.Empty;
             destination = Span<int>.Empty;
             list.CopyTo(destination);
 

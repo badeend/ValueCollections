@@ -15,7 +15,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void Constructor_Default()
         {
-            ValueList<T> list = ValueList.Empty<T>();
+            ValueList<T> list = ValueList<T>.Empty;
             Assert.Equal(0, list.Count); //"Do not expect anything to be in the list."
             Assert.True(((IList<T>)list).IsReadOnly); //"List should be readonly"
         }

@@ -54,7 +54,7 @@ public class ValueSetTests
     [Fact]
     public void Empty()
     {
-        var a = ValueSet.Empty<int>();
+        var a = ValueSet<int>.Empty;
 
         Assert.True(a.IsEmpty == true);
         Assert.True(a.Count == 0);

@@ -12,14 +12,6 @@ namespace Badeend.ValueCollections;
 public static class ValueList
 {
 	/// <summary>
-	/// Create a new empty list.
-	///
-	/// This does not allocate any memory.
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueList<T> Empty<T>() => ValueList<T>.Empty;
-
-	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueList{T}"/>.
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -70,7 +62,7 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	private const int UninitializedHashCode = 0;
 
 	/// <summary>
-	/// Get a new empty list.
+	/// Get an empty list.
 	///
 	/// This does not allocate any memory.
 	/// </summary>

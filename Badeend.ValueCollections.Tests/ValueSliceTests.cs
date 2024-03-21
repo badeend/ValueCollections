@@ -24,7 +24,7 @@ public class ValueSliceTests
     [Fact]
     public void Empty()
     {
-        var a = ValueSlice.Empty<int>();
+        var a = ValueSlice<int>.Empty;
 
         Assert.True(a.Length == 0);
     }
