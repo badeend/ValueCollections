@@ -3,6 +3,7 @@
   <PropertyGroup>
     <PackageId>Badeend.ValueCollections</PackageId>
     <Version>0.0.4</Version>
+    <PackageValidationBaselineVersion>0.0.4</PackageValidationBaselineVersion>
     <Authors>Dave Bakker</Authors>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -21,6 +22,7 @@
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisMode>All</AnalysisMode>
     <WarningsAsErrors>Nullable</WarningsAsErrors>
+    <EnablePackageValidation>true</EnablePackageValidation>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)'!='Debug'">
