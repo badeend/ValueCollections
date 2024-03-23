@@ -44,10 +44,8 @@ public static class ValueSet
 /// efficient than <see cref="HashSet{T}"/>.
 ///
 /// ValueSets have "structural equality". This means that two sets
-/// are considered equal only when their contents are equal. Due to technical
-/// reasons, the type parameter <typeparamref name="T"/> is currently not restricted
-/// to implement <see cref="IEquatable{T}"/>, but it is highly encouraged to
-/// only use ValueSets on types that implement it nonetheless.
+/// are considered equal only when their contents are equal. As long as a value
+/// is present in a ValueSet, its hash code may not change.
 /// </summary>
 /// <typeparam name="T">The type of items in the set.</typeparam>
 [CollectionBuilder(typeof(ValueSet), nameof(ValueSet.Create))]

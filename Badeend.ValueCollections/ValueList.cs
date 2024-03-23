@@ -46,10 +46,8 @@ public static class ValueList
 /// efficient than <see cref="List{T}"/>.
 ///
 /// ValueLists have "structural equality". This means that two lists
-/// are considered equal only when their contents are equal. Due to technical
-/// reasons, the type parameter <typeparamref name="T"/> is currently not restricted
-/// to implement <see cref="IEquatable{T}"/>, but it is highly encouraged to
-/// only use ValueLists on types that implement it nonetheless.
+/// are considered equal only when their contents are equal. As long as a value
+/// is present in a ValueList, its hash code may not change.
 ///
 /// Taking a subslice with <see cref="ValueList{T}.Slice(int)"/> and
 /// <see cref="ValueList{T}.Slice(int, int)"/> is very cheap as it reuses the

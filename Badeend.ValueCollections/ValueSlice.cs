@@ -34,10 +34,8 @@ public static class ValueSlice
 /// guaranteed to be immutable.
 ///
 /// Additionally, ValueSlice has "structural equality". This means that two slices
-/// are considered equal only when their contents are equal. Due to technical
-/// reasons, the type parameter <typeparamref name="T"/> is currently not restricted
-/// to implement <see cref="IEquatable{T}"/>, but it is highly encouraged to
-/// only use ValueSlices on types that implement it nonetheless.
+/// are considered equal only when their contents are equal. As long as a value
+/// is present in a ValueSlice, its hash code may not change.
 ///
 /// To prevent accidental boxing, ValueSlice does not implement commonly used
 /// interfaces such as <see cref="IEnumerable{T}"/> and
