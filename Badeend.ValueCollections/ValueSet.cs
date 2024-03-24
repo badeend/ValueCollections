@@ -115,7 +115,7 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 
 	internal static HashSet<T> SpanToHashSet(ReadOnlySpan<T> items)
 	{
-#if NET472_OR_GREATER || NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_0_OR_GREATER
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
 		var set = new HashSet<T>(items.Length);
 
 		foreach (var item in items)

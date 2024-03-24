@@ -214,8 +214,6 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 
 	internal static ValueListBuilder<T> FromListUnsafe(List<T> items) => new(items);
 
-	internal static ValueListBuilder<T> FromArrayUnsafe(T[] items) => new(UnsafeHelpers.AsList(items));
-
 	/// <summary>
 	/// Replaces an element at a given position in the list with the specified
 	/// element.
@@ -238,8 +236,22 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	// Accessible through an extension method.
 	internal ValueListBuilder<T> AddRangeSpan(ReadOnlySpan<T> items)
 	{
-		UnsafeHelpers.AddRange(this.Mutate(), items);
+		AddRange(this.Mutate(), items);
 		return this;
+	}
+
+	private static void AddRange(List<T> list, ReadOnlySpan<T> items)
+	{
+#if NET8_0_OR_GREATER
+		CollectionExtensions.AddRange(list, items);
+#else
+		EnsureCapacity(list, list.Count + items.Length);
+
+		foreach (var item in items)
+		{
+			list.Add(item);
+		}
+#endif
 	}
 
 	/// <summary>
@@ -305,7 +317,43 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	// Accessible through an extension method.
 	internal ValueListBuilder<T> InsertRangeSpan(int index, ReadOnlySpan<T> items)
 	{
-		UnsafeHelpers.InsertRange(this.Mutate(), index, items);
+		var list = this.Mutate();
+
+#if NET8_0_OR_GREATER
+		CollectionExtensions.InsertRange(list, index, items);
+#else
+		if (index == this.Count)
+		{
+			AddRange(list, items);
+			return this;
+		}
+
+		if (index < 0 || index > list.Count)
+		{
+			throw new ArgumentOutOfRangeException(nameof(index));
+		}
+
+		if (items.Length == 0)
+		{
+			// Nothing to do
+		}
+		else if (items.Length == 1)
+		{
+			list.Insert(index, items[0]);
+		}
+		else
+		{
+			// FYI, the following only works because List<T>.InsertRange has
+			// specialized behavior for ICollection<T>
+
+			// Make room inside the backing array:
+			list.InsertRange(index, new NoOpCollection(items.Length));
+
+			// Actually write the content:
+			items.CopyTo(UnsafeHelpers.GetBackingArray(list).AsSpan(index));
+		}
+#endif
+
 		return this;
 	}
 
@@ -453,7 +501,27 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	/// <inheritdoc cref="ValueCollectionsMarshal.SetCount"/>
 	internal void SetCountUnsafe(int count)
 	{
-		UnsafeHelpers.SetCount(this.Mutate(), count);
+		var list = this.Mutate();
+
+#if NET8_0_OR_GREATER
+		System.Runtime.InteropServices.CollectionsMarshal.SetCount(list, count);
+#else
+		if (count < 0)
+		{
+			throw new ArgumentOutOfRangeException(nameof(count));
+		}
+
+		var currentCount = list.Count;
+
+		if (count > currentCount)
+		{
+			list.AddRange(new NoOpCollection(count - currentCount));
+		}
+		else if (count < currentCount)
+		{
+			list.RemoveRange(count, currentCount - count);
+		}
+#endif
 	}
 
 	/// <summary>
@@ -473,8 +541,45 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	/// </summary>
 	public ValueListBuilder<T> EnsureCapacity(int capacity)
 	{
-		UnsafeHelpers.EnsureCapacity(this.Mutate(), capacity);
+		EnsureCapacity(this.Mutate(), capacity);
 		return this;
+	}
+
+	private static void EnsureCapacity(List<T> list, int capacity)
+	{
+#if NET6_0_OR_GREATER
+		list.EnsureCapacity(capacity);
+#else
+		if (capacity < 0)
+		{
+			throw new ArgumentOutOfRangeException(nameof(capacity));
+		}
+
+		var currentCapacity = list.Capacity;
+		if (currentCapacity < capacity)
+		{
+			const int DefaultCapacity = 4;
+			const int MaxCapacity = 0X7FFFFFC7;
+
+			var newCapacity = currentCapacity == 0 ? DefaultCapacity : 2 * currentCapacity;
+
+			// Allow the list to grow to maximum possible capacity (~2G elements) before encountering overflow.
+			// Note that this check works even when _items.Length overflowed thanks to the (uint) cast
+			if ((uint)newCapacity > MaxCapacity)
+			{
+				newCapacity = MaxCapacity;
+			}
+
+			// If the computed capacity is still less than specified, set to the original argument.
+			// Capacities exceeding Array.MaxLength will be surfaced as OutOfMemoryException by Array.Resize.
+			if (newCapacity < capacity)
+			{
+				newCapacity = capacity;
+			}
+
+			list.Capacity = newCapacity;
+		}
+#endif
 	}
 
 	/// <summary>
@@ -613,6 +718,42 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	private static InvalidOperationException UnreachableException() => new("Unreachable");
 
 	private static InvalidOperationException BuiltException() => new("Builder has already been built");
+
+#if !NET8_0_OR_GREATER
+	/// <summary>
+	/// ICollection with a specified size, but no contents.
+	/// </summary>
+	private sealed class NoOpCollection : ICollection<T>
+	{
+		private readonly int size;
+
+		public int Count => this.size;
+
+		public bool IsReadOnly => true;
+
+		internal NoOpCollection(int size)
+		{
+			this.size = size;
+		}
+
+		public void CopyTo(T[] array, int arrayIndex)
+		{
+			// Do nothing.
+		}
+
+		public IEnumerator<T> GetEnumerator() => throw new NotImplementedException();
+
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+
+		public void Add(T item) => throw new NotSupportedException();
+
+		public void Clear() => throw new NotSupportedException();
+
+		public bool Contains(T item) => throw new NotSupportedException();
+
+		public bool Remove(T item) => throw new NotSupportedException();
+	}
+#endif
 
 	/// <summary>
 	/// Returns an enumerator for this <see cref="ValueListBuilder{T}"/>.

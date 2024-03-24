@@ -168,12 +168,12 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 		this.items = ValueSet<T>.Empty;
 	}
 
-#if NET472_OR_GREATER || NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_0_OR_GREATER
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
 	/// <summary>
 	/// Construct a new empty set builder with the specified initial capacity.
 	/// </summary>
 	/// <remarks>
-	/// Available on .NET Framework 4.7.2 and higher.
+	/// Available on .NET Standard 2.1 and higher.
 	/// </remarks>
 	/// <exception cref="ArgumentOutOfRangeException">
 	///   <paramref name="capacity"/> is less than 0.
@@ -194,7 +194,7 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	/// The total number of elements the internal data structure can hold without resizing.
 	/// </summary>
 	/// <remarks>
-	/// Available on .NET Framework 4.7.2 and higher.
+	/// Available on .NET Standard 2.1 and higher.
 	/// </remarks>
 	public int Capacity
 	{
@@ -207,7 +207,11 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 				_ => throw UnreachableException(),
 			};
 
-			return UnsafeHelpers.GetCapacity(hashSet);
+#if NET9_0_OR_GREATER
+			return hashSet.Capacity;
+#else
+			return hashSet.EnsureCapacity(0);
+#endif
 		}
 	}
 
@@ -217,7 +221,7 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	/// least the specified capacity.
 	/// </summary>
 	/// <remarks>
-	/// Available on .NET Framework 4.7.2 and higher.
+	/// Available on .NET Standard 2.1 and higher.
 	/// </remarks>
 	public ValueSetBuilder<T> EnsureCapacity(int capacity)
 	{
@@ -256,7 +260,7 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	/// <paramref name="capacity"/> is less than <see cref="Count"/>.
 	/// </exception>
 	/// <remarks>
-	/// Available on .NET Framework 4.7.2 and higher.
+	/// Available on .NET Standard 2.1 and higher.
 	/// </remarks>
 	public ValueSetBuilder<T> TrimExcess(int capacity)
 	{

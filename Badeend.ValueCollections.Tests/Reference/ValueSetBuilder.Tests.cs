@@ -89,7 +89,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             Assert.Throws<ArgumentNullException>(() => new ValueSetBuilder<T>((IEnumerable<T>)null));
         }
 
-#if NET472_OR_GREATER || NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_0_OR_GREATER
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
         [Theory]
         [InlineData(1)]
         [InlineData(100)]
@@ -158,7 +158,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         }
 
         
-#if NET472_OR_GREATER || NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_0_OR_GREATER
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
         [Theory]
         [InlineData(1, -1)]
         [InlineData(2, 1)]
@@ -287,7 +287,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             Assert.NotNull(iset);
         }
 
-#if NET472_OR_GREATER || NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_0_OR_GREATER
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
         [Theory]
         [MemberData(nameof(ValidCollectionSizes))]
         public void ValueSetBuilder_Generic_Constructor_int(int capacity)
@@ -478,7 +478,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
     file static class ValueSetBuilderExtensions
     {
-#if NET472_OR_GREATER || NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_0_OR_GREATER
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
         internal static int EnsureAndGetCapacity<T>(this ValueSetBuilder<T> builder, int capacity)
         {
             builder.EnsureCapacity(capacity);

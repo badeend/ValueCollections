@@ -198,4 +198,32 @@ public class ValueListBuilderTests
 
         Assert.Throws<InvalidOperationException>(() => builder.Build());
     }
+
+    [Fact]
+    public void SetCount()
+    {
+        var builder = new ValueListBuilder<int>()
+        {
+            1,
+            2,
+            3,
+            4,
+        };
+
+        Assert.True(builder.Count == 4);
+        Assert.True(builder.ToValueList() == [1, 2, 3, 4]);
+
+        ValueCollectionsMarshal.SetCount(builder, 2);
+
+        Assert.True(builder.Count == 2);
+        Assert.True(builder.ToValueList() == [1, 2]);
+
+        ValueCollectionsMarshal.SetCount(builder, 6);
+
+        Assert.True(builder.Count == 6);
+        Assert.True(builder[0] == 1);
+        Assert.True(builder[1] == 2);
+        // The contents of newly available indexes is undefined.
+
+    }
 }

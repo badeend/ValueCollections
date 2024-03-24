@@ -30,19 +30,6 @@ public static class ValueCollectionsMarshal
 	public static ValueList<T> AsValueList<T>(T[] items) => ValueList<T>.FromArrayUnsafe(items);
 
 	/// <summary>
-	/// Create a new <see cref="ValueListBuilder{T}"/> using the provided mutable
-	/// array as its initial backing store. This is a <c>O(1)</c> operation that
-	/// only allocates a fixed amount of memory for the new ValueListBuilder
-	/// instance. For the actual content it reuses the provided array instead of
-	/// copying it over.
-	///
-	/// > [!WARNING]
-	/// > Ownership of the array is moved into the ValueListBuilder.
-	/// It is the caller's responsibility to never touch the array ever again.
-	/// </summary>
-	public static ValueListBuilder<T> AsValueListBuilder<T>(T[] items) => ValueListBuilder<T>.FromArrayUnsafe(items);
-
-	/// <summary>
 	/// Update the count of the <paramref name="builder"/>.
 	///
 	/// > [!WARNING]
