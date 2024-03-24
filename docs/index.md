@@ -44,8 +44,8 @@ Within a record:
 ```cs
 public record Blog(string Title, ValueList<string> Tags);
 
-var a = new Blog("The Value of Values", ["ddd", "sanity"]);
-var b = new Blog("The Value of Values", ["ddd", "sanity"]);
+var a = new Blog("The Value of Values", ["ddd", "fp"]);
+var b = new Blog("The Value of Values", ["ddd", "fp"]);
 
 Assert(a == b); // This would fail if `Tags` was a regular List<T>, ImmutableList<T> or IReadOnlyList<T>.
 ```
@@ -62,9 +62,13 @@ foreach (var x in /* complex source */)
     {
         builder.Add(x);
     }
+    else if (/* even more logic */)
+    {
+        builder.Insert(0, x);
+    }
     else
     {
-        builder.Remove(x);
+        builder.RemoveAll(x);
     }
 }
 
@@ -128,7 +132,7 @@ b.Sort();
 ## Other features & omissions
 
 - All immutable types are thread safe. (Pretty much by definition, but still.. :) )
-- First-class support for .NET Framework. Even for functionalities not originally present in .NET Framework, such as:
+- First-class support for .NET Framework. Even in combination with functionalities not originally present in .NET Framework, such as:
     - Spans
     - C#8 Nullable reference types.
     - C#12 collection expressions.
