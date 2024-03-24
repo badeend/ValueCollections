@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <PackageId>Badeend.ValueCollections</PackageId>
-    <Version>0.0.4</Version>
-    <PackageValidationBaselineVersion>0.0.4</PackageValidationBaselineVersion>
+    <Version>0.0.5</Version>
+    <PackageValidationBaselineVersion>0.0.5</PackageValidationBaselineVersion>
     <Authors>Dave Bakker</Authors>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
