@@ -233,18 +233,21 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 #if NET5_0_OR_GREATER
 		this.Mutate().EnsureCapacity(capacity);
 #else
+		var hashSet = this.Mutate();
+
 		if (capacity < 0)
 		{
 			throw new ArgumentOutOfRangeException(nameof(capacity));
 		}
 
-		if (this.Capacity >= capacity)
+		var currentCapacity = hashSet.EnsureCapacity(0);
+		if (currentCapacity >= capacity)
 		{
 			// Nothing to do.
 			return this;
 		}
 
-		this.items = CopyWithCapacity(this.Read(), capacity);
+		this.items = CopyWithCapacity(hashSet, capacity);
 		this.version++;
 #endif
 		return this;
@@ -268,26 +271,27 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 #if NET9_0_OR_GREATER
 		this.Mutate().TrimExcess(capacity);
 #else
-		var count = this.Count;
-		var currentCapacity = this.Capacity;
-		if (capacity < count)
+		var hashSet = this.Mutate();
+
+		if (capacity < hashSet.Count)
 		{
 			throw new ArgumentOutOfRangeException(nameof(capacity));
 		}
 
+		var currentCapacity = hashSet.EnsureCapacity(0);
 		if (capacity >= currentCapacity)
 		{
 			// Nothing to do.
 			return this;
 		}
 
-		this.items = CopyWithCapacity(this.Read(), capacity);
+		this.items = CopyWithCapacity(hashSet, capacity);
 		this.version++;
 #endif
 		return this;
 	}
 
-	private static HashSet<T> CopyWithCapacity(ISet<T> input, int minimumCapacity)
+	private static HashSet<T> CopyWithCapacity(HashSet<T> input, int minimumCapacity)
 	{
 		var copy = new HashSet<T>(minimumCapacity);
 		copy.UnionWith(input);
