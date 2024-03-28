@@ -297,10 +297,11 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	/// <summary>
 	/// Construct a new <see cref="ValueSetBuilder{T}"/> with the provided
 	/// <paramref name="items"/> as its initial content.
-	///
-	/// To construct a ValueSetBuilder from other types of inputs (Spans etc.),
-	/// use one of the <c>.ToValueSetBuilder()</c> extension methods.
 	/// </summary>
+	/// <remarks>
+	/// Use <see cref="ValueSet.Builder{T}(ReadOnlySpan{T})"/> to construct a
+	/// ValueSetBuilder from a span.
+	/// </remarks>
 	public ValueSetBuilder(IEnumerable<T> items)
 	{
 		if (items is ValueSet<T> valueSet)

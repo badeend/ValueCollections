@@ -184,10 +184,11 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	/// <summary>
 	/// Construct a new <see cref="ValueListBuilder{T}"/> with the provided
 	/// <paramref name="items"/> as its initial content.
-	///
-	/// To construct a ValueListBuilder from other types of inputs (Spans etc.),
-	/// use one of the <c>.ToValueListBuilder()</c> extension methods.
 	/// </summary>
+	/// <remarks>
+	/// Use <see cref="ValueList.Builder{T}(ReadOnlySpan{T})"/> to construct a
+	/// ValueListBuilder from a span.
+	/// </remarks>
 	public ValueListBuilder(IEnumerable<T> items)
 	{
 		if (items is ValueList<T> valueList)
