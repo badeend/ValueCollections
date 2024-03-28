@@ -266,7 +266,7 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	public ValueSetBuilder<T> TrimExcess(int capacity)
 	{
 #if NET9_0_OR_GREATER
-		this.MutateForCapacityOnly().TrimExcess(capacity);
+		this.Mutate().TrimExcess(capacity);
 #else
 		var count = this.Count;
 		var currentCapacity = this.Capacity;
