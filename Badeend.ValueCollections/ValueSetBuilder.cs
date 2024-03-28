@@ -170,7 +170,8 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
 	/// <summary>
-	/// Construct a new empty set builder with the specified initial capacity.
+	/// Construct a new empty set builder with at least the specified initial
+	/// capacity.
 	/// </summary>
 	/// <remarks>
 	/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
