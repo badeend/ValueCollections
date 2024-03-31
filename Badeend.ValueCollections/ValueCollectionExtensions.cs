@@ -177,4 +177,139 @@ public static class ValueCollectionExtensions
 
 		return builder.ExceptWithSpan(items);
 	}
+
+	/// <summary>
+	/// Copy the <paramref name="items"/> into a new <see cref="ValueDictionary{TKey, TValue}"/>.
+	/// </summary>
+	public static ValueDictionary<TKey, TValue> ToValueDictionary<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> items)
+		where TKey : notnull
+	{
+		if (items is ValueDictionary<TKey, TValue> dictionary)
+		{
+			return dictionary;
+		}
+
+		if (items is ValueDictionaryBuilder<TKey, TValue> builder)
+		{
+			return builder.ToValueDictionary();
+		}
+
+		var inner = ValueDictionary<TKey, TValue>.EnumerableToDictionary(items);
+
+		return ValueDictionary<TKey, TValue>.FromDictionaryUnsafe(inner);
+	}
+
+	/// <summary>
+	/// Creates a <see cref="ValueDictionary{TKey, TValue}"/> from an
+	/// <see cref="IEnumerable{T}"/> according to specified key selector function.
+	/// </summary>
+	/// <param name="items">Elements that will becomes the values of the dictionary.</param>
+	/// <param name="keySelector">A function to extract a key from each element.</param>
+	public static ValueDictionary<TKey, TValue> ToValueDictionary<TKey, TValue>(this IEnumerable<TValue> items, Func<TValue, TKey> keySelector)
+		where TKey : notnull
+	{
+		var inner = items.ToDictionary(keySelector);
+
+		return ValueDictionary<TKey, TValue>.FromDictionaryUnsafe(inner);
+	}
+
+	/// <summary>
+	/// Creates a <see cref="ValueDictionary{TKey, TValue}"/> from an
+	/// <see cref="IEnumerable{T}"/> according to specified key selector and
+	/// element selector functions.
+	/// </summary>
+	/// <param name="source">Elements to feed into the selector functions.</param>
+	/// <param name="keySelector">A function to extract a key from each element.</param>
+	/// <param name="valueSelector">A transform function to produce a result element value from each element.</param>
+	public static ValueDictionary<TKey, TValue> ToValueDictionary<TSource, TKey, TValue>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector, Func<TSource, TValue> valueSelector)
+		where TKey : notnull
+	{
+		var inner = source.ToDictionary(keySelector, valueSelector);
+
+		return ValueDictionary<TKey, TValue>.FromDictionaryUnsafe(inner);
+	}
+
+	/// <summary>
+	/// Copy the <paramref name="items"/> into a new <see cref="ValueDictionaryBuilder{TKey, TValue}"/>.
+	/// </summary>
+	[Obsolete("Use .ToBuilder() instead.")]
+	[Browsable(false)]
+	[EditorBrowsable(EditorBrowsableState.Never)]
+	public static ValueDictionaryBuilder<TKey, TValue> ToValueDictionaryBuilder<TKey, TValue>(this ValueDictionary<TKey, TValue> items)
+		where TKey : notnull => items.ToBuilder();
+
+	/// <summary>
+	/// Copy the <paramref name="items"/> into a new <see cref="ValueDictionaryBuilder{TKey, TValue}"/>.
+	/// </summary>
+	public static ValueDictionaryBuilder<TKey, TValue> ToValueDictionaryBuilder<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> items)
+		where TKey : notnull
+	{
+		if (items is ValueDictionary<TKey, TValue> dictionary)
+		{
+			return dictionary.ToBuilder();
+		}
+
+		var inner = ValueDictionary<TKey, TValue>.EnumerableToDictionary(items);
+
+		return ValueDictionaryBuilder<TKey, TValue>.FromDictionaryUnsafe(inner);
+	}
+
+	/// <summary>
+	/// Add multiple entries to the dictionary.
+	/// </summary>
+	/// <remarks>
+	/// This overload is an extension method to avoid call site ambiguity.
+	/// </remarks>
+	/// <exception cref="ArgumentException">
+	/// <paramref name="items"/> contains a duplicate key or a key that already
+	/// exists in the dictionary.
+	/// </exception>
+	public static ValueDictionaryBuilder<TKey, TValue> AddRange<TKey, TValue>(this ValueDictionaryBuilder<TKey, TValue> builder, ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
+		where TKey : notnull
+	{
+		if (builder is null)
+		{
+			throw new ArgumentNullException(nameof(builder));
+		}
+
+		return builder.AddRangeSpan(items);
+	}
+
+	/// <summary>
+	/// Sets the specified key/value pairs in the dictionary, possibly
+	/// overwriting existing values for the keys.
+	/// </summary>
+	/// <remarks>
+	/// When the same key appears multiple times in the <paramref name="items"/>,
+	/// the last value overwrites any earlier values.
+	///
+	/// This overload is an extension method to avoid call site ambiguity.
+	/// </remarks>
+	public static ValueDictionaryBuilder<TKey, TValue> SetItems<TKey, TValue>(this ValueDictionaryBuilder<TKey, TValue> builder, ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
+		where TKey : notnull
+	{
+		if (builder is null)
+		{
+			throw new ArgumentNullException(nameof(builder));
+		}
+
+		return builder.SetItemsSpan(items);
+	}
+
+	/// <summary>
+	/// Remove the provided <paramref name="keys"/> from the dictionary.
+	/// </summary>
+	/// <remarks>
+	/// This overload is an extension method to avoid call site ambiguity.
+	/// </remarks>
+	public static ValueDictionaryBuilder<TKey, TValue> RemoveRange<TKey, TValue>(this ValueDictionaryBuilder<TKey, TValue> builder, ReadOnlySpan<TKey> keys)
+		where TKey : notnull
+	{
+		if (builder is null)
+		{
+			throw new ArgumentNullException(nameof(builder));
+		}
+
+		return builder.RemoveRangeSpan(keys);
+	}
 }

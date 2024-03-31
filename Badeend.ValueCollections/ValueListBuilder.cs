@@ -259,7 +259,7 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	/// Add the <paramref name="items"/> to the end of the list.
 	/// </summary>
 	/// <remarks>
-	/// <see cref="ValueCollectionExtensions.AddRange">More overloads</see> are
+	/// <see cref="ValueCollectionExtensions.AddRange{T}(ValueListBuilder{T}, ReadOnlySpan{T})">More overloads</see> are
 	/// available as extension methods.
 	/// </remarks>
 	public ValueListBuilder<T> AddRange(IEnumerable<T> items)

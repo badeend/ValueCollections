@@ -14,7 +14,7 @@ In general, the performance and memory usage is equivalent to the regular `Syste
 - Comparison with `System.Collections.Immutable`
 - Comparison with `IReadOnlyCollection/List/Set/Dictionary`
 
-> Preface: The examples in this document focus on ValueLists, but the same principles apply equally to [ValueSets](https://badeend.github.io/ValueCollections/api/Badeend.ValueCollections.ValueSet-1.html) and ValueDictionaries.
+> Preface: The examples in this document focus on ValueLists, but the same principles apply equally to [ValueSets](https://badeend.github.io/ValueCollections/api/Badeend.ValueCollections.ValueSet-1.html) and [ValueDictionaries](https://badeend.github.io/ValueCollections/api/Badeend.ValueCollections.ValueDictionary-2.html).
 
 ## Installation
 
