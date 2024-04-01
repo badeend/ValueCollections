@@ -1,54 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <PackageId>Badeend.ValueCollections</PackageId>
-    <Version>0.0.5</Version>
-    <PackageValidationBaselineVersion>0.0.5</PackageValidationBaselineVersion>
-    <Authors>Dave Bakker</Authors>
-    <PackageIcon>icon.png</PackageIcon>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
     <Description>Low overhead immutable collection types with structural equality</Description>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://badeend.github.io/ValueCollections/</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/badeend/ValueCollections</RepositoryUrl>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <IncludeSymbols>true</IncludeSymbols>
-    <IncludeSource>true</IncludeSource>
-
     <TargetFrameworks>netstandard2.0;netstandard2.1;netcoreapp2.1;net5.0;net6.0;net8.0</TargetFrameworks>
-    <LangVersion>12</LangVersion>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>
-    <AnalysisMode>All</AnalysisMode>
-    <WarningsAsErrors>Nullable</WarningsAsErrors>
-    <NoWarn>NU1901;NU1902;NU1903;NU1904</NoWarn>
-    <EnablePackageValidation>true</EnablePackageValidation>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)'!='Debug'">
-      <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-  </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Microsoft.Bcl.HashCode" Version="1.1.1" />
-    <PackageReference Include="Stylecop.Analyzers" Version="1.2.0-beta.556">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
     <PackageReference Include="System.Collections.Immutable" Version="1.2.0" />
     <PackageReference Include="System.Memory" Version="4.5.0" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.5.3" />
-    <PackageReference Include="PolySharp" Version="1.14.1">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
   </ItemGroup>
-
-  <ItemGroup>
-    <AdditionalFiles Include="stylecop.json" />
-    <None Include="../nuget/README.md" Pack="true" PackagePath="\"/>
-    <None Include="../nuget/icon.png" Pack="true" PackagePath="\"/>
-  </ItemGroup>
-
 </Project>

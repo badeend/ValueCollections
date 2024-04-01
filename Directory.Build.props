@@ -1,0 +1,46 @@
+<Project>
+  <PropertyGroup>
+    <Version>0.0.5</Version>
+    <PackageValidationBaselineVersion>0.0.5</PackageValidationBaselineVersion>
+    <Authors>Dave Bakker</Authors>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://badeend.github.io/ValueCollections/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/badeend/ValueCollections</RepositoryUrl>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <IncludeSource>true</IncludeSource>
+
+    <LangVersion>12</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisMode>All</AnalysisMode>
+    <WarningsAsErrors>Nullable</WarningsAsErrors>
+    <NoWarn>NU1901;NU1902;NU1903;NU1904</NoWarn>
+    <EnablePackageValidation>true</EnablePackageValidation>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'!='Debug'">
+      <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Stylecop.Analyzers" Version="1.2.0-beta.556">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="PolySharp" Version="1.14.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="../stylecop.json" />
+    <None Include="../nuget/README.md" Pack="true" PackagePath="\"/>
+    <None Include="../nuget/icon.png" Pack="true" PackagePath="\"/>
+  </ItemGroup>
+
+</Project>
