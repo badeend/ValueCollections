@@ -28,11 +28,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Badeend.ValueCollections" Version="$(Version)" Condition="'$(ProjectReferences)' == 'Remote'" />
-    <ProjectReference Include="..\Badeend.ValueCollections\Badeend.ValueCollections.csproj" Condition="'$(ProjectReferences)' == 'Local'" />
-
-    <PackageReference Include="Badeend.ValueCollections.SystemTextJson" Version="$(Version)" Condition="'$(ProjectReferences)' == 'Remote'" />
-    <ProjectReference Include="..\Badeend.ValueCollections.SystemTextJson\Badeend.ValueCollections.SystemTextJson.csproj" Condition="'$(ProjectReferences)' == 'Local'" />
+    <ProjectReference Include="..\Badeend.ValueCollections\Badeend.ValueCollections.csproj" />
+    <ProjectReference Include="..\Badeend.ValueCollections.SystemTextJson\Badeend.ValueCollections.SystemTextJson.csproj" />
   </ItemGroup>
 
 </Project>
