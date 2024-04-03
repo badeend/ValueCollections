@@ -2,3 +2,4 @@ bin
 obj
 /docs/rendered
 /docs/api
+/private
