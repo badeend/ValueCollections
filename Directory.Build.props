@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
-    <Version>0.0.5</Version>
-    <PackageValidationBaselineVersion>0.0.5</PackageValidationBaselineVersion>
+    <Version>0.0.6</Version>
+    <PackageValidationBaselineVersion>0.0.6</PackageValidationBaselineVersion>
     <Authors>Dave Bakker</Authors>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
