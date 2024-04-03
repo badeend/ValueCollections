@@ -25,7 +25,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Badeend.ValueCollections\Badeend.ValueCollections.csproj" />
+    <PackageReference Include="Badeend.ValueCollections" Version="$(Version)" Condition="'$(ProjectReferences)' == 'Remote'" />
+    <ProjectReference Include="..\Badeend.ValueCollections\Badeend.ValueCollections.csproj" Condition="'$(ProjectReferences)' == 'Local'" />
   </ItemGroup>
 
 </Project>
