@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Badeend.ValueCollections", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Badeend.ValueCollections.Tests", "Badeend.ValueCollections.Tests\Badeend.ValueCollections.Tests.csproj", "{249F2C6C-BF5E-4D0E-81F7-320F374491DA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Badeend.ValueCollections.SystemTextJson", "Badeend.ValueCollections.SystemTextJson\Badeend.ValueCollections.SystemTextJson.csproj", "{BB54BBF9-249C-4B5B-95FE-1A1EAD2752AB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{249F2C6C-BF5E-4D0E-81F7-320F374491DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{249F2C6C-BF5E-4D0E-81F7-320F374491DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{249F2C6C-BF5E-4D0E-81F7-320F374491DA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BB54BBF9-249C-4B5B-95FE-1A1EAD2752AB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB54BBF9-249C-4B5B-95FE-1A1EAD2752AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB54BBF9-249C-4B5B-95FE-1A1EAD2752AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB54BBF9-249C-4B5B-95FE-1A1EAD2752AB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

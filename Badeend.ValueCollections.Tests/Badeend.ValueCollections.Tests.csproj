@@ -8,6 +8,9 @@
     <AnalysisMode>Minimum</AnalysisMode>
     <WarningsAsErrors></WarningsAsErrors>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+
+    <!-- Apparently .netstandard means nothing anymore... : https://andrewlock.net/stop-lying-about-netstandard-2-support/  -->
+    <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,6 +30,9 @@
   <ItemGroup>
     <PackageReference Include="Badeend.ValueCollections" Version="$(Version)" Condition="'$(ProjectReferences)' == 'Remote'" />
     <ProjectReference Include="..\Badeend.ValueCollections\Badeend.ValueCollections.csproj" Condition="'$(ProjectReferences)' == 'Local'" />
+
+    <PackageReference Include="Badeend.ValueCollections.SystemTextJson" Version="$(Version)" Condition="'$(ProjectReferences)' == 'Remote'" />
+    <ProjectReference Include="..\Badeend.ValueCollections.SystemTextJson\Badeend.ValueCollections.SystemTextJson.csproj" Condition="'$(ProjectReferences)' == 'Local'" />
   </ItemGroup>
 
 </Project>
