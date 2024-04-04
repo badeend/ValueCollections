@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Badeend.ValueCollections.SystemTextJson;
+using Badeend.ValueCollections.NewtonsoftJson;
 
 namespace Badeend.ValueCollections.Tests;
 
@@ -314,4 +315,21 @@ public class JsonTests_SystemTextJson : JsonTests
 	protected override string Serialize<T>(T obj) => System.Text.Json.JsonSerializer.Serialize(obj, options);
 
     protected override T Deserialize<T>(string json) => System.Text.Json.JsonSerializer.Deserialize<T>(json, options)!;
+}
+
+public class JsonTests_NewtonsoftJson : JsonTests
+{
+    private readonly Newtonsoft.Json.JsonSerializerSettings settings = CreateSettings();
+
+    private static Newtonsoft.Json.JsonSerializerSettings CreateSettings()
+    {
+        var settings = new Newtonsoft.Json.JsonSerializerSettings();
+        settings.Formatting = Newtonsoft.Json.Formatting.Indented;
+        settings.AddValueCollections();
+        return settings;
+    }
+
+	protected override string Serialize<T>(T obj) => Newtonsoft.Json.JsonConvert.SerializeObject(obj, settings);
+
+    protected override T Deserialize<T>(string json) => Newtonsoft.Json.JsonConvert.DeserializeObject<T>(json, settings)!;
 }
