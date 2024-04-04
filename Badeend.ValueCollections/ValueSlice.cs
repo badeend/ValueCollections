@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -215,27 +214,6 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 		}
 
 		return ValueList<T>.FromArrayUnsafe(this.ToArray());
-	}
-
-	/// <summary>
-	/// Copy the slice into a new <see cref="ImmutableArray{T}"/>.
-	/// </summary>
-	public ImmutableArray<T> ToImmutableArray()
-	{
-		if (this.items is null)
-		{
-			return ImmutableArray<T>.Empty;
-		}
-		else if (this.length == this.items.Length)
-		{
-			Debug.Assert(this.offset == 0);
-
-			return UnsafeHelpers.AsImmutableArray(this.items);
-		}
-		else
-		{
-			return ImmutableArray.Create(this.items, this.offset, this.length);
-		}
 	}
 
 	/// <summary>

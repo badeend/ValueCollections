@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
@@ -9,29 +8,6 @@ namespace Badeend.ValueCollections;
 /// </summary>
 public static class ValueCollectionExtensions
 {
-	/// <summary>
-	/// Reinterpret the <see cref="ImmutableArray{T}"/> as a <see cref="ValueSlice{T}"/>.
-	/// This does not allocate any memory.
-	/// </summary>
-	public static ValueSlice<T> AsValueSlice<T>(this ImmutableArray<T> items) => new(UnsafeHelpers.AsArray(items));
-
-	/// <summary>
-	/// Create a new <see cref="ValueList{T}"/> that reuses the backing allocation
-	/// of the <see cref="ImmutableArray{T}"/>.
-	///
-	/// This method allocates a new fixed-size ValueList instance. The items
-	/// are not copied.
-	/// </summary>
-	public static ValueList<T> AsValueList<T>(this ImmutableArray<T> items) => ValueList<T>.FromArrayUnsafe(UnsafeHelpers.AsArray(items));
-
-	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueList{T}"/>.
-	/// </summary>
-	[Obsolete("Use .AsValueList() instead.")]
-	[Browsable(false)]
-	[EditorBrowsable(EditorBrowsableState.Never)]
-	public static ValueList<T> ToValueList<T>(this ImmutableArray<T> items) => ValueList<T>.FromArrayUnsafe(items.ToArray());
-
 	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueList{T}"/>.
 	/// </summary>

@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -31,18 +30,6 @@ internal static class UnsafeHelpers
 		{
 			throw new PlatformNotSupportedException("The installed binary of ValueCollections does not support the current runtime. Reinstalling the nuget package might resolve this error.");
 		}
-	}
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal static T[] AsArray<T>(ImmutableArray<T> items)
-	{
-		return Unsafe.As<ImmutableArray<T>, T[]>(ref items);
-	}
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal static ImmutableArray<T> AsImmutableArray<T>(T[] items)
-	{
-		return Unsafe.As<T[], ImmutableArray<T>>(ref items);
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -224,11 +223,6 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	/// no items are copied and the method returns <see langword="false"/>.
 	/// </summary>
 	public bool TryCopyTo(Span<T> destination) => this.AsValueSlice().TryCopyTo(destination);
-
-	/// <summary>
-	/// Copy the list into a new <see cref="ImmutableArray{T}"/>.
-	/// </summary>
-	public ImmutableArray<T> ToImmutableArray() => this.AsValueSlice().ToImmutableArray();
 
 	/// <summary>
 	/// Create a new <see cref="ValueListBuilder{T}"/> with this list as its
