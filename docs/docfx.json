@@ -8,7 +8,9 @@
         {
           "src": "..",
           "files": [
-            "Badeend.ValueCollections/Badeend.ValueCollections.csproj"
+            "Badeend.ValueCollections/Badeend.ValueCollections.csproj",
+            "Badeend.ValueCollections.SystemTextJson/Badeend.ValueCollections.SystemTextJson.csproj",
+            "Badeend.ValueCollections.NewtonsoftJson/Badeend.ValueCollections.NewtonsoftJson.csproj"
           ]
         }
       ],

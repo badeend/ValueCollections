@@ -2,6 +2,8 @@
   href: index.md
 - name: Why & how?
   href: rationale.md
+- name: JSON
+  href: json.md
 - name: API Reference
   href: api/toc.yml
   expanded: true

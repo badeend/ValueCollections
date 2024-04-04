@@ -18,11 +18,18 @@ In general, the performance and memory usage is equivalent to the regular `Syste
 
 ## Installation
 
-[![NuGet Version](https://img.shields.io/nuget/v/Badeend.ValueCollections)](https://www.nuget.org/packages/Badeend.ValueCollections)
-
-```
+```sh
 dotnet add package Badeend.ValueCollections
+
+# Optional:
+dotnet add package Badeend.ValueCollections.SystemTextJson
+dotnet add package Badeend.ValueCollections.NewtonsoftJson
 ```
+
+Nuget packages:
+- [![NuGet Badeend.ValueCollections](https://img.shields.io/nuget/v/Badeend.ValueCollections?label=Badeend.ValueCollections)](https://www.nuget.org/packages/Badeend.ValueCollections)
+- [![NuGet Badeend.ValueCollections.SystemTextJson](https://img.shields.io/nuget/v/Badeend.ValueCollections.SystemTextJson?label=Badeend.ValueCollections.SystemTextJson)](https://www.nuget.org/packages/Badeend.ValueCollections.SystemTextJson)
+- [![NuGet Badeend.ValueCollections.NewtonsoftJson](https://img.shields.io/nuget/v/Badeend.ValueCollections.NewtonsoftJson?label=Badeend.ValueCollections.NewtonsoftJson)](https://www.nuget.org/packages/Badeend.ValueCollections.NewtonsoftJson)
 
 ## Basic example
 

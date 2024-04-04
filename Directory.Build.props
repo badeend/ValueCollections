@@ -2,8 +2,8 @@
   <PropertyGroup>
     <Version>0.0.0-dev</Version>
     <Authors>Dave Bakker</Authors>
-    <PackageIcon>icon.png</PackageIcon>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>nuget-icon.png</PackageIcon>
+    <PackageReadmeFile>nuget-readme.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://badeend.github.io/ValueCollections/</PackageProjectUrl>
     <RepositoryUrl>https://github.com/badeend/ValueCollections</RepositoryUrl>
@@ -38,8 +38,8 @@
 
   <ItemGroup>
     <AdditionalFiles Include="../stylecop.json" />
-    <None Include="../nuget/README.md" Pack="true" PackagePath="\"/>
-    <None Include="../nuget/icon.png" Pack="true" PackagePath="\"/>
+    <None Include="nuget-readme.md" Pack="true" PackagePath="\"/>
+    <None Include="../nuget-icon.png" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
 </Project>
