@@ -7,6 +7,7 @@ public abstract class JsonTests
 {
     private class MyData
     {
+        public required ValueSlice<string?> NotNullSlice { get; init; }
         public required ValueSlice<string?>? Slice { get; init; }
         public required List<string?>? SystemList { get; init; }
         public required ValueList<string?>? List { get; init; }
@@ -21,6 +22,7 @@ public abstract class JsonTests
 
     private static readonly string NullJson = Json("""
     {
+      "NotNullSlice": [],
       "Slice": null,
       "SystemList": null,
       "List": null,
@@ -39,6 +41,7 @@ public abstract class JsonTests
     {
         var data = new MyData
         {
+            NotNullSlice = default,
             Slice = null,
             SystemList = null,
             List = null,
@@ -50,7 +53,7 @@ public abstract class JsonTests
             Dictionary = null,
             DictionaryBuilder = null,
         };
-        Assert.Equal(Serialize(data), NullJson);
+        Assert.Equal(NullJson, Serialize(data));
     }
 
     [Fact]
@@ -58,6 +61,7 @@ public abstract class JsonTests
     {
         var data = Deserialize<MyData>(NullJson);
 
+        Assert.True(data.NotNullSlice == default);
         Assert.True(data.Slice is null);
         Assert.True(data.SystemList is null);
         Assert.True(data.List is null);
@@ -72,6 +76,7 @@ public abstract class JsonTests
 
     private static readonly string EmptyJson = Json("""
     {
+      "NotNullSlice": [],
       "Slice": [],
       "SystemList": [],
       "List": [],
@@ -90,6 +95,7 @@ public abstract class JsonTests
     {
         var data = new MyData
         {
+            NotNullSlice = [],
             Slice = [],
             SystemList = [],
             List = [],
@@ -107,7 +113,7 @@ public abstract class JsonTests
             {
             },
         };
-        Assert.Equal(Serialize(data), EmptyJson);
+        Assert.Equal(EmptyJson, Serialize(data));
     }
 
     [Fact]
@@ -115,6 +121,7 @@ public abstract class JsonTests
     {
         var data = Deserialize<MyData>(EmptyJson);
 
+        Assert.True(data.NotNullSlice.Length == 0);
         Assert.True(data.Slice!.Value.Length == 0);
         Assert.True(data.SystemList!.Count == 0);
         Assert.True(data.List!.Count == 0);
@@ -129,6 +136,11 @@ public abstract class JsonTests
 
     private static readonly string RegularJson = Json("""
     {
+      "NotNullSlice": [
+        "a",
+        null,
+        "b"
+      ],
       "Slice": [
         "a",
         null,
@@ -187,6 +199,7 @@ public abstract class JsonTests
     {
         var data = new MyData
         {
+            NotNullSlice = ["a", null, "b"],
             Slice = ["a", null, "b"],
             SystemList = ["a", null, "b"],
             List = ["a", null, "b"],
@@ -213,7 +226,7 @@ public abstract class JsonTests
                 ["c"] = "3",
             }
         };
-        Assert.Equal(Serialize(data), RegularJson);
+        Assert.Equal(RegularJson, Serialize(data));
     }
 
     [Fact]
@@ -221,6 +234,11 @@ public abstract class JsonTests
 	public void DeserializeRegular()
     {
         var data = Deserialize<MyData>(RegularJson);
+
+        Assert.True(data.NotNullSlice.Length == 3);
+        Assert.True(data.NotNullSlice[0] == "a");
+        Assert.True(data.NotNullSlice[1] == null);
+        Assert.True(data.NotNullSlice[2] == "b");
 
         Assert.True(data.Slice!.Value.Length == 3);
         Assert.True(data.Slice!.Value[0] == "a");
