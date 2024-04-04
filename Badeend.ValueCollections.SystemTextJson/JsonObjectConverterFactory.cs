@@ -3,17 +3,8 @@ using System.Text.Json.Serialization;
 
 namespace Badeend.ValueCollections.SystemTextJson;
 
-internal sealed class JsonObjectConverterFactory : JsonConverterFactory
+internal sealed class JsonObjectConverterFactory(Type genericCollectionType, Type genericConverterType) : JsonConverterFactory
 {
-	private readonly Type genericValueType;
-	private readonly Type genericConverterType;
-
-	internal JsonObjectConverterFactory(Type genericValueType, Type genericConverterType)
-	{
-		this.genericValueType = genericValueType;
-		this.genericConverterType = genericConverterType;
-	}
-
 	public override bool CanConvert(Type typeToConvert)
 	{
 		if (!typeToConvert.IsGenericType)
@@ -21,7 +12,7 @@ internal sealed class JsonObjectConverterFactory : JsonConverterFactory
 			return false;
 		}
 
-		return typeToConvert.GetGenericTypeDefinition() == this.genericValueType;
+		return typeToConvert.GetGenericTypeDefinition() == genericCollectionType;
 	}
 
 	public override JsonConverter CreateConverter(Type type, JsonSerializerOptions options)
@@ -30,10 +21,8 @@ internal sealed class JsonObjectConverterFactory : JsonConverterFactory
 		Type keyType = typeArguments[0];
 		Type valueType = typeArguments[1];
 
-		JsonConverter converter = (JsonConverter)Activator.CreateInstance(
-			type: this.genericConverterType.MakeGenericType([keyType, valueType]),
+		return (JsonConverter)Activator.CreateInstance(
+			type: genericConverterType.MakeGenericType([keyType, valueType]),
 			args: [options.GetConverter(keyType), options.GetConverter(valueType)])!;
-
-		return converter;
 	}
 }
