@@ -16,6 +16,7 @@ dotnet_diagnostic.CA1510.severity = none # Use ArgumentNullException throw helpe
 dotnet_diagnostic.CA1511.severity = none # Use ArgumentException throw helper
 dotnet_diagnostic.CA1512.severity = none # Use ArgumentOutOfRangeException throw helper
 dotnet_diagnostic.CA1805.severity = none # Do not initialize unnecessarily
+dotnet_diagnostic.CA1806.severity = warning # Do not ignore method results
 
 dotnet_diagnostic.SA1129.severity = none # DoNotUseDefaultValueTypeConstructor
 dotnet_diagnostic.SA1201.severity = none # ElementsMustAppearInTheCorrectOrder

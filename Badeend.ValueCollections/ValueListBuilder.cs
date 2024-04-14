@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
 namespace Badeend.ValueCollections;
@@ -43,6 +44,7 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	/// Returns <see langword="true"/> when this instance has been built and is
 	/// now read-only.
 	/// </summary>
+	[Pure]
 	public bool IsReadOnly => this.version == VersionBuilt;
 
 	/// <summary>
@@ -79,6 +81,7 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	/// If you don't need the builder anymore after this method, consider using
 	/// <see cref="Build"/> instead.
 	/// </remarks>
+	[Pure]
 	public ValueList<T> ToValueList()
 	{
 		if (this.items is List<T> list)
@@ -125,18 +128,23 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	/// <summary>
 	/// The total number of elements the internal data structure can hold without resizing.
 	/// </summary>
-	public int Capacity => this.items switch
+	public int Capacity
 	{
-		List<T> items => items.Capacity,
-		ValueList<T> items => items.Capacity,
-		_ => throw UnreachableException(),
-	};
+		[Pure]
+		get => this.items switch
+		{
+			List<T> items => items.Capacity,
+			ValueList<T> items => items.Capacity,
+			_ => throw UnreachableException(),
+		};
+	}
 
 	/// <summary>
 	/// Gets or sets the element at the specified <paramref name="index"/>.
 	/// </summary>
 	public T this[int index]
 	{
+		[Pure]
 		get => this.Read()[index];
 		set => this.Mutate()[index] = value;
 	}
@@ -144,11 +152,13 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	/// <summary>
 	/// Current length of the list.
 	/// </summary>
+	[Pure]
 	public int Count => this.Read().Count;
 
 	/// <summary>
 	/// Shortcut for <c>.Count == 0</c>.
 	/// </summary>
+	[Pure]
 	public bool IsEmpty
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -158,6 +168,7 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	/// <summary>
 	/// Construct a new empty list builder.
 	/// </summary>
+	[Pure]
 	public ValueListBuilder()
 	{
 		this.items = ValueList<T>.Empty;
@@ -169,6 +180,7 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	/// <exception cref="ArgumentOutOfRangeException">
 	///   <paramref name="capacity"/> is less than 0.
 	/// </exception>
+	[Pure]
 	public ValueListBuilder(int capacity)
 	{
 		if (capacity == 0)
@@ -587,6 +599,7 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	/// Returns <see langword="true"/> when the list contains the specified
 	/// <paramref name="item"/>.
 	/// </summary>
+	[Pure]
 	public bool Contains(T item) => this.items switch
 	{
 		List<T> items => items.Contains(item),
@@ -598,6 +611,7 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	/// Return the index of the first occurrence of <paramref name="item"/> in
 	/// the list, or <c>-1</c> if not found.
 	/// </summary>
+	[Pure]
 	public int IndexOf(T item) => this.items switch
 	{
 		List<T> items => items.IndexOf(item),
@@ -609,6 +623,7 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	/// Return the index of the last occurrence of <paramref name="item"/> in
 	/// the list, or <c>-1</c> if not found.
 	/// </summary>
+	[Pure]
 	public int LastIndexOf(T item) => this.items switch
 	{
 		List<T> items => items.LastIndexOf(item),
@@ -624,6 +639,7 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	/// index is returned. Otherwise a negative value is returned representing
 	/// the bitwise complement of the index where the item should be inserted.
 	/// </summary>
+	[Pure]
 	public int BinarySearch(T item) => this.items switch
 	{
 		List<T> items => items.BinarySearch(item),
@@ -634,6 +650,7 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	/// <summary>
 	/// Copy the contents of the list into a new array.
 	/// </summary>
+	[Pure]
 	public T[] ToArray() => this.items switch
 	{
 		List<T> items => items.ToArray(),
@@ -762,6 +779,7 @@ public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 	/// Typically, you don't need to manually call this method, but instead use
 	/// the built-in <c>foreach</c> syntax.
 	/// </summary>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public Enumerator GetEnumerator() => new Enumerator(this);
 

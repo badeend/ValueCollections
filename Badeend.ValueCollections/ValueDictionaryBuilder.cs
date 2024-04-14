@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
 namespace Badeend.ValueCollections;
@@ -49,6 +50,7 @@ public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TVa
 	/// Returns <see langword="true"/> when this instance has been built and is
 	/// now read-only.
 	/// </summary>
+	[Pure]
 	public bool IsReadOnly => this.version == VersionBuilt;
 
 	/// <summary>
@@ -85,6 +87,7 @@ public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TVa
 	/// If you don't need the builder anymore after this method, consider using
 	/// <see cref="Build"/> instead.
 	/// </remarks>
+	[Pure]
 	public ValueDictionary<TKey, TValue> ToValueDictionary()
 	{
 		if (this.items is Dictionary<TKey, TValue> dictionary)
@@ -138,11 +141,13 @@ public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TVa
 	/// <summary>
 	/// Current size of the dictionary.
 	/// </summary>
+	[Pure]
 	public int Count => this.Read().Count;
 
 	/// <summary>
 	/// Shortcut for <c>.Count == 0</c>.
 	/// </summary>
+	[Pure]
 	public bool IsEmpty
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -160,6 +165,7 @@ public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TVa
 	/// </exception>
 	public TValue this[TKey key]
 	{
+		[Pure]
 		get => this.Read()[key];
 		set => this.Mutate()[key] = value;
 	}
@@ -173,6 +179,7 @@ public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TVa
 	/// Every modification to the builder invalidates any <c>Keys</c> collection
 	/// obtained before that moment.
 	/// </remarks>
+	[Pure]
 	public IReadOnlyCollection<TKey> Keys => this.KeysInternal;
 
 	/// <inheritdoc/>
@@ -190,6 +197,7 @@ public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TVa
 	/// Every modification to the builder invalidates any <c>Values</c> collection
 	/// obtained before that moment.
 	/// </remarks>
+	[Pure]
 	public IReadOnlyCollection<TValue> Values => this.ValuesInternal;
 
 	/// <inheritdoc/>
@@ -201,6 +209,7 @@ public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TVa
 	/// <summary>
 	/// Construct a new empty dictionary builder.
 	/// </summary>
+	[Pure]
 	public ValueDictionaryBuilder()
 	{
 		this.items = ValueDictionary<TKey, TValue>.Empty;
@@ -247,6 +256,7 @@ public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TVa
 	/// <exception cref="ArgumentOutOfRangeException">
 	///   <paramref name="capacity"/> is less than 0.
 	/// </exception>
+	[Pure]
 	public ValueDictionaryBuilder(int capacity)
 	{
 		if (capacity == 0)
@@ -267,6 +277,7 @@ public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TVa
 	/// </remarks>
 	public int Capacity
 	{
+		[Pure]
 		get
 		{
 			var dictionary = this.items switch
@@ -338,11 +349,13 @@ public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TVa
 	/// <remarks>
 	/// This performs a linear scan through the dictionary.
 	/// </remarks>
+	[Pure]
 	public bool ContainsValue(TValue value) => this.ReadUnsafe().ContainsValue(value);
 
 	/// <summary>
 	/// Determines whether this dictionary contains an element with the specified key.
 	/// </summary>
+	[Pure]
 	public bool ContainsKey(TKey key) => this.Read().ContainsKey(key);
 
 	/// <inheritdoc/>
@@ -360,12 +373,14 @@ public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TVa
 	/// Attempt to get the value associated with the specified <paramref name="key"/>.
 	/// Returns <see langword="default"/> when the key was not found.
 	/// </summary>
+	[Pure]
 	public TValue? GetValueOrDefault(TKey key) => this.GetValueOrDefault(key, default!);
 
 	/// <summary>
 	/// Attempt to get the value associated with the specified <paramref name="key"/>.
 	/// Returns <paramref name="defaultValue"/> when the key was not found.
 	/// </summary>
+	[Pure]
 	public TValue GetValueOrDefault(TKey key, TValue defaultValue)
 	{
 		return this.TryGetValue(key, out var value) ? value : defaultValue;
@@ -683,6 +698,7 @@ public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TVa
 	/// Typically, you don't need to manually call this method, but instead use
 	/// the built-in <c>foreach</c> syntax.
 	/// </summary>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public Enumerator GetEnumerator() => new Enumerator(this);
 

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
 namespace Badeend.ValueCollections;
@@ -52,6 +53,7 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	/// Returns <see langword="true"/> when this instance has been built and is
 	/// now read-only.
 	/// </summary>
+	[Pure]
 	public bool IsReadOnly => this.version == VersionBuilt;
 
 	/// <summary>
@@ -88,6 +90,7 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	/// If you don't need the builder anymore after this method, consider using
 	/// <see cref="Build"/> instead.
 	/// </remarks>
+	[Pure]
 	public ValueSet<T> ToValueSet()
 	{
 		if (this.items is HashSet<T> set)
@@ -149,11 +152,13 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	/// <summary>
 	/// Current size of the set.
 	/// </summary>
+	[Pure]
 	public int Count => this.Read().Count;
 
 	/// <summary>
 	/// Shortcut for <c>.Count == 0</c>.
 	/// </summary>
+	[Pure]
 	public bool IsEmpty
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -163,6 +168,7 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	/// <summary>
 	/// Construct a new empty set builder.
 	/// </summary>
+	[Pure]
 	public ValueSetBuilder()
 	{
 		this.items = ValueSet<T>.Empty;
@@ -179,6 +185,7 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	/// <exception cref="ArgumentOutOfRangeException">
 	///   <paramref name="capacity"/> is less than 0.
 	/// </exception>
+	[Pure]
 	public ValueSetBuilder(int capacity)
 	{
 		if (capacity == 0)
@@ -199,6 +206,7 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	/// </remarks>
 	public int Capacity
 	{
+		[Pure]
 		get
 		{
 			var hashSet = this.items switch
@@ -445,6 +453,7 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	/// Returns <see langword="true"/> when the set contains the specified
 	/// <paramref name="item"/>.
 	/// </summary>
+	[Pure]
 	public bool Contains(T item) => this.items switch
 	{
 		HashSet<T> items => items.Contains(item),
@@ -455,6 +464,7 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	/// <summary>
 	/// Copy the contents of the set into a new array.
 	/// </summary>
+	[Pure]
 	public T[] ToArray() => this.items switch
 	{
 		HashSet<T> items => items.ToArray(),
@@ -676,6 +686,7 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	/// Typically, you don't need to manually call this method, but instead use
 	/// the built-in <c>foreach</c> syntax.
 	/// </summary>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public Enumerator GetEnumerator() => new Enumerator(this);
 

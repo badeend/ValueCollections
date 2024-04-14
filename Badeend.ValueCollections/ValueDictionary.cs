@@ -1,6 +1,7 @@
 using System.Collections;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -15,6 +16,7 @@ public static class ValueDictionary
 	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueSet{T}"/>.
 	/// </summary>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueDictionary<TKey, TValue> Create<TKey, TValue>(ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
 		where TKey : notnull => ValueDictionary<TKey, TValue>.FromReadOnlySpan(items);
@@ -23,6 +25,7 @@ public static class ValueDictionary
 	/// Create a new empty <see cref="ValueDictionaryBuilder{TKey, TValue}"/>. This builder can
 	/// then be used to efficiently construct an immutable <see cref="ValueDictionary{TKey, TValue}"/>.
 	/// </summary>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueDictionaryBuilder<TKey, TValue> Builder<TKey, TValue>()
 		where TKey : notnull => new();
@@ -31,6 +34,7 @@ public static class ValueDictionary
 	/// Create a new <see cref="ValueSetBuilder{T}"/> with the provided
 	/// <paramref name="items"/> as its initial content.
 	/// </summary>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueDictionaryBuilder<TKey, TValue> Builder<TKey, TValue>(ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
 		where TKey : notnull => ValueDictionaryBuilder<TKey, TValue>.FromReadOnlySpan(items);
@@ -66,6 +70,7 @@ public sealed class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
 	///
 	/// This does not allocate any memory.
 	/// </summary>
+	[Pure]
 	public static ValueDictionary<TKey, TValue> Empty { get; } = new ValueDictionary<TKey, TValue>(new Dictionary<TKey, TValue>());
 
 	private readonly Dictionary<TKey, TValue> items;
@@ -84,6 +89,7 @@ public sealed class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
 	/// <summary>
 	/// Number of items in the dictionary.
 	/// </summary>
+	[Pure]
 	public int Count
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -93,6 +99,7 @@ public sealed class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
 	/// <summary>
 	/// Shortcut for <c>.Count == 0</c>.
 	/// </summary>
+	[Pure]
 	public bool IsEmpty
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -110,6 +117,7 @@ public sealed class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
 	/// </exception>
 	public TValue this[TKey key]
 	{
+		[Pure]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		get => this.items[key];
 	}
@@ -127,6 +135,7 @@ public sealed class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
 	/// <summary>
 	/// All keys in the dictionary.
 	/// </summary>
+	[Pure]
 	public IReadOnlyCollection<TKey> Keys => this.items.Keys;
 
 	/// <inheritdoc/>
@@ -138,6 +147,7 @@ public sealed class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
 	/// <summary>
 	/// All values in the dictionary.
 	/// </summary>
+	[Pure]
 	public IReadOnlyCollection<TValue> Values => this.items.Values;
 
 	/// <inheritdoc/>
@@ -213,6 +223,7 @@ public sealed class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
 	/// dictionary as its initial content. This builder can then be used to
 	/// efficiently construct a new immutable <see cref="ValueDictionary{TKey, TValue}"/>.
 	/// </summary>
+	[Pure]
 	public ValueDictionaryBuilder<TKey, TValue> ToBuilder() => ValueDictionaryBuilder<TKey, TValue>.FromValueDictionary(this);
 
 	/// <summary>
@@ -221,11 +232,13 @@ public sealed class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
 	/// <remarks>
 	/// This performs a linear scan through the dictionary.
 	/// </remarks>
+	[Pure]
 	public bool ContainsValue(TValue value) => this.items.ContainsValue(value);
 
 	/// <summary>
 	/// Determines whether this dictionary contains an element with the specified key.
 	/// </summary>
+	[Pure]
 	public bool ContainsKey(TKey key) => this.items.ContainsKey(key);
 
 	/// <inheritdoc/>
@@ -243,12 +256,14 @@ public sealed class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
 	/// Attempt to get the value associated with the specified <paramref name="key"/>.
 	/// Returns <see langword="default"/> when the key was not found.
 	/// </summary>
+	[Pure]
 	public TValue? GetValueOrDefault(TKey key) => this.GetValueOrDefault(key, default!);
 
 	/// <summary>
 	/// Attempt to get the value associated with the specified <paramref name="key"/>.
 	/// Returns <paramref name="defaultValue"/> when the key was not found.
 	/// </summary>
+	[Pure]
 	public TValue GetValueOrDefault(TKey key, TValue defaultValue)
 	{
 		return this.TryGetValue(key, out var value) ? value : defaultValue;
@@ -258,6 +273,7 @@ public sealed class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
 	void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) => ((ICollection<KeyValuePair<TKey, TValue>>)this.items).CopyTo(array, arrayIndex);
 
 	/// <inheritdoc/>
+	[Pure]
 	public sealed override int GetHashCode()
 	{
 		var hashCode = Volatile.Read(ref this.hashCode);
@@ -299,10 +315,12 @@ public sealed class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
 	/// Returns <see langword="true"/> when the two dictionaries have identical
 	/// length and content.
 	/// </summary>
+	[Pure]
 	public bool Equals(ValueDictionary<TKey, TValue>? other) => EqualsUtil(this, other);
 
 #pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
 	/// <inheritdoc/>
+	[Pure]
 	[Obsolete("Use == instead.")]
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public sealed override bool Equals(object? obj) => obj is ValueDictionary<TKey, TValue> other && EqualsUtil(this, other);
@@ -311,11 +329,13 @@ public sealed class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
 	/// <summary>
 	/// Check for equality.
 	/// </summary>
+	[Pure]
 	public static bool operator ==(ValueDictionary<TKey, TValue>? left, ValueDictionary<TKey, TValue>? right) => EqualsUtil(left, right);
 
 	/// <summary>
 	/// Check for inequality.
 	/// </summary>
+	[Pure]
 	public static bool operator !=(ValueDictionary<TKey, TValue>? left, ValueDictionary<TKey, TValue>? right) => !EqualsUtil(left, right);
 
 	private static bool EqualsUtil(ValueDictionary<TKey, TValue>? left, ValueDictionary<TKey, TValue>? right)
@@ -352,6 +372,7 @@ public sealed class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
 	/// Typically, you don't need to manually call this method, but instead use
 	/// the built-in <c>foreach</c> syntax.
 	/// </summary>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public Enumerator GetEnumerator() => new Enumerator(this);
 
@@ -404,6 +425,7 @@ public sealed class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
 	/// Get a string representation of the collection for debugging purposes.
 	/// The format is not stable and may change without prior notice.
 	/// </summary>
+	[Pure]
 	public override string ToString()
 	{
 		if (this.Count == 0)

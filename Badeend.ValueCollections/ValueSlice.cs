@@ -1,6 +1,6 @@
 using System.Collections;
 using System.ComponentModel;
-using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -15,6 +15,7 @@ public static class ValueSlice
 	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueSlice{T}"/>.
 	/// </summary>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueSlice<T> Create<T>(ReadOnlySpan<T> items) => new(items.ToArray());
 }
@@ -54,6 +55,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	///
 	/// This does not allocate any memory.
 	/// </summary>
+	[Pure]
 	public static ValueSlice<T> Empty { get; } = default;
 
 	/// <summary>
@@ -66,6 +68,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// <summary>
 	/// Length of the slice.
 	/// </summary>
+	[Pure]
 	public int Length
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -75,6 +78,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// <summary>
 	/// Shortcut for <c>.Length == 0</c>.
 	/// </summary>
+	[Pure]
 	public bool IsEmpty
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -107,6 +111,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// <summary>
 	/// Access the slice's contents using a <see cref="ReadOnlySpan{T}"/>.
 	/// </summary>
+	[Pure]
 	public ReadOnlySpan<T> Span
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -116,6 +121,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// <summary>
 	/// Access the slice's contents using a <see cref="ReadOnlyMemory{T}"/>.
 	/// </summary>
+	[Pure]
 	public ReadOnlyMemory<T> Memory
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -127,6 +133,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// </summary>
 	public ref readonly T this[int index]
 	{
+		[Pure]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		get
 		{
@@ -152,6 +159,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	///   <paramref name="offset"/> is below <c>0</c> or greater than the
 	///   current slice's length.
 	/// </exception>
+	[Pure]
 	public ValueSlice<T> Slice(int offset)
 	{
 		if (offset < 0 || offset > this.length)
@@ -180,6 +188,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	///   <paramref name="length"/> is below <c>0</c> or would extend beyond the
 	///   current slice's length.
 	/// </exception>
+	[Pure]
 	public ValueSlice<T> Slice(int offset, int length)
 	{
 		if (offset < 0 || offset > this.length)
@@ -198,6 +207,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// <summary>
 	/// Copy the slice into a new <see cref="ValueList{T}"/>.
 	/// </summary>
+	[Pure]
 	public ValueList<T> ToValueList()
 	{
 		if (this.length == 0)
@@ -221,6 +231,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	///
 	/// Similar to <see cref="ReadOnlySpan{T}.ToArray"/>.
 	/// </summary>
+	[Pure]
 	public T[] ToArray() => this.Span.ToArray();
 
 	/// <summary>
@@ -246,6 +257,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// Return the index of the first occurrence of <paramref name="item"/> in
 	/// <c>this</c>, or <c>-1</c> if not found.
 	/// </summary>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int IndexOf(T item)
 	{
@@ -261,6 +273,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// Return the index of the last occurrence of <paramref name="item"/> in
 	/// <c>this</c>, or <c>-1</c> if not found.
 	/// </summary>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int LastIndexOf(T item)
 	{
@@ -276,6 +289,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// Returns <see langword="true"/> when the <c>this</c> slice
 	/// contains the specified <paramref name="item"/>.
 	/// </summary>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool Contains(T item) => this.IndexOf(item) >= 0;
 
@@ -287,6 +301,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// index is returned. Otherwise a negative value is returned representing
 	/// the bitwise complement of the index where the item should be inserted.
 	/// </summary>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int BinarySearch(T item)
 	{
@@ -304,6 +319,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// Typically, you don't need to manually call this method, but instead use
 	/// the built-in <c>foreach</c> syntax.
 	/// </summary>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public Enumerator GetEnumerator() => new Enumerator(this);
 
@@ -344,6 +360,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 #pragma warning restore CA1034 // Nested types should not be visible
 
 	/// <inheritdoc/>
+	[Pure]
 	public override int GetHashCode()
 	{
 		var hasher = new HashCode();
@@ -362,10 +379,12 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// Returns <see langword="true"/> when the two slices have identical length
 	/// and content.
 	/// </summary>
+	[Pure]
 	public bool Equals(ValueSlice<T> other) => SequenceEqual(this, other);
 
 #pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
 	/// <inheritdoc/>
+	[Pure]
 	[Obsolete("Avoid boxing. Use == instead.")]
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public override bool Equals(object? obj) => obj is ValueSlice<T> slice && SequenceEqual(this, slice);
@@ -374,21 +393,25 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// <summary>
 	/// Check for equality.
 	/// </summary>
+	[Pure]
 	public static bool operator ==(ValueSlice<T> left, ValueSlice<T> right) => SequenceEqual(left, right);
 
 	/// <summary>
 	/// Check for equality.
 	/// </summary>
+	[Pure]
 	public static bool operator ==(ValueSlice<T>? left, ValueSlice<T>? right) => SequenceEqualNullable(left, right);
 
 	/// <summary>
 	/// Check for inequality.
 	/// </summary>
+	[Pure]
 	public static bool operator !=(ValueSlice<T> left, ValueSlice<T> right) => !SequenceEqual(left, right);
 
 	/// <summary>
 	/// Check for inequality.
 	/// </summary>
+	[Pure]
 	public static bool operator !=(ValueSlice<T>? left, ValueSlice<T>? right) => !SequenceEqualNullable(left, right);
 
 	/// <summary>
@@ -397,6 +420,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// This method allocates a new fixed-size IEnumerable instance. The items
 	/// are not copied.
 	/// </summary>
+	[Pure]
 	public IEnumerable<T> AsEnumerable() => new Reader(this);
 
 	/// <summary>
@@ -405,6 +429,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// This method allocates a new fixed-size IReadOnlyList instance. The items
 	/// are not copied.
 	/// </summary>
+	[Pure]
 	public IReadOnlyList<T> AsReadOnlyList() => new Reader(this);
 
 	private sealed class Reader : IEnumerable<T>, IReadOnlyList<T>
@@ -477,6 +502,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// Get a string representation of the collection for debugging purposes.
 	/// The format is not stable and may change without prior notice.
 	/// </summary>
+	[Pure]
 	public override string ToString()
 	{
 		if (this.Length == 0)

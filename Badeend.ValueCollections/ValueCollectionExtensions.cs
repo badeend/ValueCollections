@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
 namespace Badeend.ValueCollections;
@@ -29,6 +30,7 @@ public static class ValueCollectionExtensions
 	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueListBuilder{T}"/>.
 	/// </summary>
+	[Pure]
 	[Obsolete("Use .ToBuilder() instead.")]
 	[Browsable(false)]
 	[EditorBrowsable(EditorBrowsableState.Never)]
@@ -102,6 +104,7 @@ public static class ValueCollectionExtensions
 	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueSetBuilder{T}"/>.
 	/// </summary>
+	[Pure]
 	[Obsolete("Use .ToBuilder() instead.")]
 	[Browsable(false)]
 	[EditorBrowsable(EditorBrowsableState.Never)]

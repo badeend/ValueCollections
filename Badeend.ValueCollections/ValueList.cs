@@ -1,5 +1,6 @@
 using System.Collections;
 using System.ComponentModel;
+using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -13,6 +14,7 @@ public static class ValueList
 	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueList{T}"/>.
 	/// </summary>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueList<T> Create<T>(ReadOnlySpan<T> items) => ValueList<T>.FromArrayUnsafe(items.ToArray());
 
@@ -20,6 +22,7 @@ public static class ValueList
 	/// Create a new empty <see cref="ValueListBuilder{T}"/>. This builder can
 	/// then be used to efficiently construct an immutable <see cref="ValueList{T}"/>.
 	/// </summary>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueListBuilder<T> Builder<T>() => new ValueListBuilder<T>();
 
@@ -27,6 +30,7 @@ public static class ValueList
 	/// Create a new <see cref="ValueListBuilder{T}"/> with the provided
 	/// <paramref name="items"/> as its initial content.
 	/// </summary>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueListBuilder<T> Builder<T>(ReadOnlySpan<T> items)
 	{
@@ -63,6 +67,7 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	///
 	/// This does not allocate any memory.
 	/// </summary>
+	[Pure]
 	public static ValueList<T> Empty { get; } = new ValueList<T>(Array.Empty<T>(), 0);
 
 	/// <summary>
@@ -91,6 +96,7 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	/// <summary>
 	/// Length of the list.
 	/// </summary>
+	[Pure]
 	public int Count
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -100,6 +106,7 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	/// <summary>
 	/// Shortcut for <c>.Count == 0</c>.
 	/// </summary>
+	[Pure]
 	public bool IsEmpty
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -114,6 +121,7 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	/// </summary>
 	public ref readonly T this[int index]
 	{
+		[Pure]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		get
 		{
@@ -157,18 +165,21 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	/// <summary>
 	/// Access the list's contents using a <see cref="ValueSlice{T}"/>.
 	/// </summary>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public ValueSlice<T> AsValueSlice() => new ValueSlice<T>(this.items, 0, this.count);
 
 	/// <summary>
 	/// Access the list's contents using a <see cref="ReadOnlySpan{T}"/>.
 	/// </summary>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public ReadOnlySpan<T> AsSpan() => this.AsValueSlice().Span;
 
 	/// <summary>
 	/// Access the list's contents using a <see cref="ReadOnlyMemory{T}"/>.
 	/// </summary>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public ReadOnlyMemory<T> AsMemory() => this.AsValueSlice().Memory;
 
@@ -182,6 +193,7 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	///   <paramref name="offset"/> is below <c>0</c> or greater than the
 	///   current list's length.
 	/// </exception>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public ValueSlice<T> Slice(int offset) => this.AsValueSlice().Slice(offset);
 
@@ -201,12 +213,14 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	///   <paramref name="length"/> is below <c>0</c> or would extend beyond the
 	///   current list's length.
 	/// </exception>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public ValueSlice<T> Slice(int offset, int length) => this.AsValueSlice().Slice(offset, length);
 
 	/// <summary>
 	/// Copy the contents of the list into a new array.
 	/// </summary>
+	[Pure]
 	public T[] ToArray() => this.AsValueSlice().ToArray();
 
 	/// <summary>
@@ -229,12 +243,14 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	/// initial content. This builder can then be used to efficiently construct
 	/// a new immutable <see cref="ValueList{T}"/>.
 	/// </summary>
+	[Pure]
 	public ValueListBuilder<T> ToBuilder() => ValueListBuilder<T>.FromValueList(this);
 
 	/// <summary>
 	/// Return the index of the first occurrence of <paramref name="item"/> in
 	/// the list, or <c>-1</c> if not found.
 	/// </summary>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int IndexOf(T item) => this.AsValueSlice().IndexOf(item);
 
@@ -242,6 +258,7 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	/// Return the index of the last occurrence of <paramref name="item"/> in
 	/// the list, or <c>-1</c> if not found.
 	/// </summary>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int LastIndexOf(T item) => this.AsValueSlice().LastIndexOf(item);
 
@@ -249,6 +266,7 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	/// Returns <see langword="true"/> when the list contains the specified
 	/// <paramref name="item"/>.
 	/// </summary>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool Contains(T item) => this.AsValueSlice().Contains(item);
 
@@ -260,6 +278,7 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	/// index is returned. Otherwise a negative value is returned representing
 	/// the bitwise complement of the index where the item should be inserted.
 	/// </summary>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public int BinarySearch(T item) => this.AsValueSlice().BinarySearch(item);
 
@@ -281,6 +300,7 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	}
 
 	/// <inheritdoc/>
+	[Pure]
 	public sealed override int GetHashCode()
 	{
 		var hashCode = Volatile.Read(ref this.hashCode);
@@ -319,10 +339,12 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	/// Returns <see langword="true"/> when the two lists have identical length
 	/// and content.
 	/// </summary>
+	[Pure]
 	public bool Equals(ValueList<T>? other) => other is null ? false : this.AsValueSlice() == other.AsValueSlice();
 
 #pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
 	/// <inheritdoc/>
+	[Pure]
 	[Obsolete("Use == instead.")]
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public sealed override bool Equals(object? obj) => obj is ValueList<T> other && EqualsUtil(this, other);
@@ -331,11 +353,13 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	/// <summary>
 	/// Check for equality.
 	/// </summary>
+	[Pure]
 	public static bool operator ==(ValueList<T>? left, ValueList<T>? right) => EqualsUtil(left, right);
 
 	/// <summary>
 	/// Check for inequality.
 	/// </summary>
+	[Pure]
 	public static bool operator !=(ValueList<T>? left, ValueList<T>? right) => !EqualsUtil(left, right);
 
 	private static bool EqualsUtil(ValueList<T>? left, ValueList<T>? right)
@@ -352,6 +376,7 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	/// <summary>
 	/// Convert list to slice.
 	/// </summary>
+	[Pure]
 	public static implicit operator ValueSlice<T>(ValueList<T> list) => list.AsValueSlice();
 #pragma warning restore CA2225 // Operator overloads have named alternates
 
@@ -361,6 +386,7 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	/// Typically, you don't need to manually call this method, but instead use
 	/// the built-in <c>foreach</c> syntax.
 	/// </summary>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public Enumerator GetEnumerator() => new Enumerator(this);
 
@@ -420,6 +446,7 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	/// Get a string representation of the collection for debugging purposes.
 	/// The format is not stable and may change without prior notice.
 	/// </summary>
+	[Pure]
 	public override string ToString()
 	{
 		if (this.Count == 0)

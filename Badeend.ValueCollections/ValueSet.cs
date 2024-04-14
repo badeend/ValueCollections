@@ -1,5 +1,6 @@
 using System.Collections;
 using System.ComponentModel;
+using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -13,6 +14,7 @@ public static class ValueSet
 	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueSet{T}"/>.
 	/// </summary>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueSet<T> Create<T>(ReadOnlySpan<T> items) => ValueSet<T>.FromReadOnlySpan(items);
 
@@ -20,6 +22,7 @@ public static class ValueSet
 	/// Create a new empty <see cref="ValueSetBuilder{T}"/>. This builder can
 	/// then be used to efficiently construct an immutable <see cref="ValueSet{T}"/>.
 	/// </summary>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueSetBuilder<T> Builder<T>() => new();
 
@@ -27,6 +30,7 @@ public static class ValueSet
 	/// Create a new <see cref="ValueSetBuilder{T}"/> with the provided
 	/// <paramref name="items"/> as its initial content.
 	/// </summary>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueSetBuilder<T> Builder<T>(ReadOnlySpan<T> items) => ValueSetBuilder<T>.FromReadOnlySpan(items);
 }
@@ -62,6 +66,7 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 	///
 	/// This does not allocate any memory.
 	/// </summary>
+	[Pure]
 	public static ValueSet<T> Empty { get; } = new ValueSet<T>(new HashSet<T>());
 
 	private readonly HashSet<T> items;
@@ -80,6 +85,7 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 	/// <summary>
 	/// Number of items in the set.
 	/// </summary>
+	[Pure]
 	public int Count
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -89,6 +95,7 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 	/// <summary>
 	/// Shortcut for <c>.Count == 0</c>.
 	/// </summary>
+	[Pure]
 	public bool IsEmpty
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -158,11 +165,13 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 	/// initial content. This builder can then be used to efficiently construct
 	/// a new immutable <see cref="ValueSet{T}"/>.
 	/// </summary>
+	[Pure]
 	public ValueSetBuilder<T> ToBuilder() => ValueSetBuilder<T>.FromValueSet(this);
 
 	/// <summary>
 	/// Copy the contents of the set into a new array.
 	/// </summary>
+	[Pure]
 	public T[] ToArray()
 	{
 		var array = new T[this.Count];
@@ -227,6 +236,7 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 	/// Returns <see langword="true"/> when the set contains the specified
 	/// <paramref name="item"/>.
 	/// </summary>
+	[Pure]
 	public bool Contains(T item) => this.items.Contains(item);
 
 	/// <inheritdoc/>
@@ -296,6 +306,7 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 	}
 
 	/// <inheritdoc/>
+	[Pure]
 	public sealed override int GetHashCode()
 	{
 		var hashCode = Volatile.Read(ref this.hashCode);
@@ -337,10 +348,12 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 	/// Returns <see langword="true"/> when the two sets have identical length
 	/// and content.
 	/// </summary>
+	[Pure]
 	public bool Equals(ValueSet<T>? other) => EqualsUtil(this, other);
 
 #pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
 	/// <inheritdoc/>
+	[Pure]
 	[Obsolete("Use == instead.")]
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public sealed override bool Equals(object? obj) => obj is ValueSet<T> other && EqualsUtil(this, other);
@@ -349,11 +362,13 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 	/// <summary>
 	/// Check for equality.
 	/// </summary>
+	[Pure]
 	public static bool operator ==(ValueSet<T>? left, ValueSet<T>? right) => EqualsUtil(left, right);
 
 	/// <summary>
 	/// Check for inequality.
 	/// </summary>
+	[Pure]
 	public static bool operator !=(ValueSet<T>? left, ValueSet<T>? right) => !EqualsUtil(left, right);
 
 	private static bool EqualsUtil(ValueSet<T>? left, ValueSet<T>? right)
@@ -390,6 +405,7 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 	/// Typically, you don't need to manually call this method, but instead use
 	/// the built-in <c>foreach</c> syntax.
 	/// </summary>
+	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public Enumerator GetEnumerator() => new Enumerator(this);
 
@@ -442,6 +458,7 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 	/// Get a string representation of the collection for debugging purposes.
 	/// The format is not stable and may change without prior notice.
 	/// </summary>
+	[Pure]
 	public override string ToString()
 	{
 		if (this.Count == 0)
