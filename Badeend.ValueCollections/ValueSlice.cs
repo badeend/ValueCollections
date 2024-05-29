@@ -286,7 +286,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	}
 
 	/// <summary>
-	/// Returns <see langword="true"/> when the <c>this</c> slice
+	/// Returns <see langword="true"/> when <c>this</c> slice
 	/// contains the specified <paramref name="item"/>.
 	/// </summary>
 	[Pure]

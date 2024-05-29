@@ -95,7 +95,7 @@ var newList = existingList.ToBuilder()
     .Add(4)
     .Add(5)
     .Add(6)
-    .Remove()
+    .RemoveFirst(4)
     .Build();
 ```
 
