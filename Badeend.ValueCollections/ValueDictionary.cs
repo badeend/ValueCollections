@@ -223,6 +223,10 @@ public sealed class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
 	/// dictionary as its initial content. This builder can then be used to
 	/// efficiently construct a new immutable <see cref="ValueDictionary{TKey, TValue}"/>.
 	/// </summary>
+	/// <remarks>
+	/// The capacity of the returned builder may be larger than the size of this
+	/// dictionary. How much larger exactly is undefined.
+	/// </remarks>
 	[Pure]
 	public ValueDictionaryBuilder<TKey, TValue> ToBuilder() => ValueDictionaryBuilder<TKey, TValue>.FromValueDictionary(this);
 

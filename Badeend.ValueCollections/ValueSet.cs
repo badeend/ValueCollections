@@ -165,6 +165,10 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 	/// initial content. This builder can then be used to efficiently construct
 	/// a new immutable <see cref="ValueSet{T}"/>.
 	/// </summary>
+	/// <remarks>
+	/// The capacity of the returned builder may be larger than the size of this
+	/// set. How much larger exactly is undefined.
+	/// </remarks>
 	[Pure]
 	public ValueSetBuilder<T> ToBuilder() => ValueSetBuilder<T>.FromValueSet(this);
 

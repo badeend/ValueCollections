@@ -39,6 +39,10 @@ public static class ValueCollectionExtensions
 	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueListBuilder{T}"/>.
 	/// </summary>
+	/// <remarks>
+	/// The capacity of the returned builder may be larger than the size of the
+	/// input collection. How much larger exactly is undefined.
+	/// </remarks>
 	public static ValueListBuilder<T> ToValueListBuilder<T>(this IEnumerable<T> items)
 	{
 		if (items is ValueList<T> list)
@@ -113,6 +117,10 @@ public static class ValueCollectionExtensions
 	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueSetBuilder{T}"/>.
 	/// </summary>
+	/// <remarks>
+	/// The capacity of the returned builder may be larger than the size of the
+	/// input collection. How much larger exactly is undefined.
+	/// </remarks>
 	public static ValueSetBuilder<T> ToValueSetBuilder<T>(this IEnumerable<T> items)
 	{
 		if (items is ValueSet<T> set)
@@ -220,6 +228,10 @@ public static class ValueCollectionExtensions
 	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueDictionaryBuilder{TKey, TValue}"/>.
 	/// </summary>
+	/// <remarks>
+	/// The capacity of the returned builder may be larger than the size of the
+	/// input collection. How much larger exactly is undefined.
+	/// </remarks>
 	public static ValueDictionaryBuilder<TKey, TValue> ToValueDictionaryBuilder<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> items)
 		where TKey : notnull
 	{
