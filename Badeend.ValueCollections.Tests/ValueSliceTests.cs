@@ -12,13 +12,15 @@ public class ValueSliceTests
     public void ValueSemantics()
     {
         ValueSlice<int> a = [1, 2, 3];
-        ValueSlice<int> b = [1, 2, 3];
+        ValueSlice<int>? b = [1, 2, 3];
         ValueSlice<int> c = [3, 2, 1];
+        ValueSlice<int>? d = null;
 
         Assert.True(a == b);
         Assert.True(b == a);
         Assert.True(a != c);
         Assert.True(b != c);
+        Assert.True(a != d);
     }
 
     [Fact]

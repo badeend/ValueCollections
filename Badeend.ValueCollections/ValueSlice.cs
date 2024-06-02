@@ -397,22 +397,10 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	public static bool operator ==(ValueSlice<T> left, ValueSlice<T> right) => SequenceEqual(left, right);
 
 	/// <summary>
-	/// Check for equality.
-	/// </summary>
-	[Pure]
-	public static bool operator ==(ValueSlice<T>? left, ValueSlice<T>? right) => SequenceEqualNullable(left, right);
-
-	/// <summary>
 	/// Check for inequality.
 	/// </summary>
 	[Pure]
 	public static bool operator !=(ValueSlice<T> left, ValueSlice<T> right) => !SequenceEqual(left, right);
-
-	/// <summary>
-	/// Check for inequality.
-	/// </summary>
-	[Pure]
-	public static bool operator !=(ValueSlice<T>? left, ValueSlice<T>? right) => !SequenceEqualNullable(left, right);
 
 	/// <summary>
 	/// Create a new <see cref="IEnumerable{T}"/> view over the slice.
@@ -481,21 +469,6 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 
 		return true;
 #endif
-	}
-
-	private static bool SequenceEqualNullable(ValueSlice<T>? left, ValueSlice<T>? right)
-	{
-		if (left is null)
-		{
-			return right is null;
-		}
-
-		if (right is null)
-		{
-			return false;
-		}
-
-		return SequenceEqual(left.Value, right.Value);
 	}
 
 	/// <summary>
