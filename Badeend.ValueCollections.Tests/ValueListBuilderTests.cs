@@ -200,6 +200,19 @@ public class ValueListBuilderTests
     }
 
     [Fact]
+    public void ToBuilderWithCapacity()
+    {
+        ValueList<int> list = [1, 2, 3];
+
+        Assert.True(list.ToBuilder().Capacity >= 3);
+        Assert.True(list.ToBuilder(0).Capacity >= 3);
+        Assert.True(list.ToBuilder(3).Capacity >= 3);
+        Assert.True(list.ToBuilder(100).Capacity >= 100);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => list.ToBuilder(-1));
+    }
+
+    [Fact]
     public void SetCount()
     {
         var builder = new ValueListBuilder<int>()

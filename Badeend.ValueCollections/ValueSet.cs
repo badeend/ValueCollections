@@ -172,6 +172,44 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 	[Pure]
 	public ValueSetBuilder<T> ToBuilder() => ValueSetBuilder<T>.FromValueSet(this);
 
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
+	/// <summary>
+	/// Create a new <see cref="ValueSetBuilder{T}"/> with a capacity of at
+	/// least <paramref name="minimumCapacity"/> and with this set as its
+	/// initial content. This builder can then be used to efficiently construct
+	/// a new immutable <see cref="ValueSet{T}"/>.
+	/// </summary>
+	/// <exception cref="ArgumentOutOfRangeException">
+	///   <paramref name="minimumCapacity"/> is less than 0.
+	/// </exception>
+	/// <remarks>
+	/// This is functionally equivalent to:
+	/// <code>
+	/// set.ToBuilder().EnsureCapacity(minimumCapacity)
+	/// </code>
+	/// but without unnecessary intermediate copies.
+	///
+	/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
+	/// </remarks>
+	[Pure]
+	public ValueSetBuilder<T> ToBuilder(int minimumCapacity)
+	{
+		if (minimumCapacity < 0)
+		{
+			throw new ArgumentOutOfRangeException(nameof(minimumCapacity));
+		}
+
+		if (minimumCapacity <= this.Count)
+		{
+			return ValueSetBuilder<T>.FromValueSet(this);
+		}
+		else
+		{
+			return new ValueSetBuilder<T>(minimumCapacity).UnionWith(this);
+		}
+	}
+#endif
+
 	/// <summary>
 	/// Copy the contents of the set into a new array.
 	/// </summary>

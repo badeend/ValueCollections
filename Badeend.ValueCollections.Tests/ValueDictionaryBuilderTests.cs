@@ -290,5 +290,24 @@ public class ValueDictionaryBuilderTests
         Assert.Throws<InvalidOperationException>(() => builder.Build());
     }
 
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
+    [Fact]
+    public void ToBuilderWithCapacity()
+    {
+        ValueDictionary<string, int> dictionary = ValueDictionary.Create([
+            Entry("a", 1),
+            Entry("b", 2),
+            Entry("c", 3),
+        ]);
+
+        Assert.True(dictionary.ToBuilder().Capacity >= 3);
+        Assert.True(dictionary.ToBuilder(0).Capacity >= 3);
+        Assert.True(dictionary.ToBuilder(3).Capacity >= 3);
+        Assert.True(dictionary.ToBuilder(100).Capacity >= 100);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => dictionary.ToBuilder(-1));
+    }
+#endif
+
     private static KeyValuePair<TKey, TValue> Entry<TKey, TValue>(TKey key, TValue value) => new KeyValuePair<TKey, TValue>(key, value);
 }

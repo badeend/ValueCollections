@@ -230,6 +230,44 @@ public sealed class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
 	[Pure]
 	public ValueDictionaryBuilder<TKey, TValue> ToBuilder() => ValueDictionaryBuilder<TKey, TValue>.FromValueDictionary(this);
 
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
+	/// <summary>
+	/// Create a new <see cref="ValueDictionaryBuilder{TKey,TValue}"/> with a capacity of at
+	/// least <paramref name="minimumCapacity"/> and with this dictionary as its
+	/// initial content. This builder can then be used to efficiently construct
+	/// a new immutable <see cref="ValueDictionary{TKey,TValue}"/>.
+	/// </summary>
+	/// <exception cref="ArgumentOutOfRangeException">
+	///   <paramref name="minimumCapacity"/> is less than 0.
+	/// </exception>
+	/// <remarks>
+	/// This is functionally equivalent to:
+	/// <code>
+	/// dictionary.ToBuilder().EnsureCapacity(minimumCapacity)
+	/// </code>
+	/// but without unnecessary intermediate copies.
+	///
+	/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
+	/// </remarks>
+	[Pure]
+	public ValueDictionaryBuilder<TKey, TValue> ToBuilder(int minimumCapacity)
+	{
+		if (minimumCapacity < 0)
+		{
+			throw new ArgumentOutOfRangeException(nameof(minimumCapacity));
+		}
+
+		if (minimumCapacity <= this.Count)
+		{
+			return ValueDictionaryBuilder<TKey, TValue>.FromValueDictionary(this);
+		}
+		else
+		{
+			return new ValueDictionaryBuilder<TKey, TValue>(minimumCapacity).AddRange(this);
+		}
+	}
+#endif
+
 	/// <summary>
 	/// Determines whether this dictionary contains an element with the specified value.
 	/// </summary>

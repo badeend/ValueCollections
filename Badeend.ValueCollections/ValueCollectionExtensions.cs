@@ -54,6 +54,35 @@ public static class ValueCollectionExtensions
 	}
 
 	/// <summary>
+	/// Copy the <paramref name="items"/> into a new <see cref="ValueListBuilder{T}"/>
+	/// with a minimum capacity of <paramref name="minimumCapacity"/>.
+	/// </summary>
+	/// <exception cref="ArgumentOutOfRangeException">
+	///   <paramref name="minimumCapacity"/> is less than 0.
+	/// </exception>
+	/// <remarks>
+	/// This is functionally equivalent to:
+	/// <code>
+	/// items.ToValueListBuilder().EnsureCapacity(minimumCapacity)
+	/// </code>
+	/// but without unnecessary intermediate copies.
+	/// </remarks>
+	public static ValueListBuilder<T> ToValueListBuilder<T>(this IEnumerable<T> items, int minimumCapacity)
+	{
+		if (items is ValueList<T> list)
+		{
+			return list.ToBuilder(minimumCapacity);
+		}
+
+		if (minimumCapacity < 0)
+		{
+			throw new ArgumentOutOfRangeException(nameof(minimumCapacity));
+		}
+
+		return new ValueListBuilder<T>(minimumCapacity).AddRange(items);
+	}
+
+	/// <summary>
 	/// Add the <paramref name="items"/> to the end of the list.
 	/// </summary>
 	/// <remarks>
@@ -130,6 +159,39 @@ public static class ValueCollectionExtensions
 
 		return ValueSetBuilder<T>.FromHashSetUnsafe(new HashSet<T>(items));
 	}
+
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
+	/// <summary>
+	/// Copy the <paramref name="items"/> into a new <see cref="ValueSetBuilder{T}"/>
+	/// with a minimum capacity of <paramref name="minimumCapacity"/>.
+	/// </summary>
+	/// <exception cref="ArgumentOutOfRangeException">
+	///   <paramref name="minimumCapacity"/> is less than 0.
+	/// </exception>
+	/// <remarks>
+	/// This is functionally equivalent to:
+	/// <code>
+	/// items.ToValueSetBuilder().EnsureCapacity(minimumCapacity)
+	/// </code>
+	/// but without unnecessary intermediate copies.
+	///
+	/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
+	/// </remarks>
+	public static ValueSetBuilder<T> ToValueSetBuilder<T>(this IEnumerable<T> items, int minimumCapacity)
+	{
+		if (items is ValueSet<T> list)
+		{
+			return list.ToBuilder(minimumCapacity);
+		}
+
+		if (minimumCapacity < 0)
+		{
+			throw new ArgumentOutOfRangeException(nameof(minimumCapacity));
+		}
+
+		return new ValueSetBuilder<T>(minimumCapacity).UnionWith(items);
+	}
+#endif
 
 	/// <summary>
 	/// Add the <paramref name="items"/> to the set.
@@ -244,6 +306,40 @@ public static class ValueCollectionExtensions
 
 		return ValueDictionaryBuilder<TKey, TValue>.FromDictionaryUnsafe(inner);
 	}
+
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
+	/// <summary>
+	/// Copy the <paramref name="items"/> into a new <see cref="ValueDictionaryBuilder{TKey,TValue}"/>
+	/// with a minimum capacity of <paramref name="minimumCapacity"/>.
+	/// </summary>
+	/// <exception cref="ArgumentOutOfRangeException">
+	///   <paramref name="minimumCapacity"/> is less than 0.
+	/// </exception>
+	/// <remarks>
+	/// This is functionally equivalent to:
+	/// <code>
+	/// items.ToValueDictionaryBuilder().EnsureCapacity(minimumCapacity)
+	/// </code>
+	/// but without unnecessary intermediate copies.
+	///
+	/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
+	/// </remarks>
+	public static ValueDictionaryBuilder<TKey, TValue> ToValueDictionaryBuilder<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> items, int minimumCapacity)
+		where TKey : notnull
+	{
+		if (items is ValueDictionary<TKey, TValue> list)
+		{
+			return list.ToBuilder(minimumCapacity);
+		}
+
+		if (minimumCapacity < 0)
+		{
+			throw new ArgumentOutOfRangeException(nameof(minimumCapacity));
+		}
+
+		return new ValueDictionaryBuilder<TKey, TValue>(minimumCapacity).AddRange(items);
+	}
+#endif
 
 	/// <summary>
 	/// Add multiple entries to the dictionary.

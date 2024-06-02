@@ -251,6 +251,40 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	public ValueListBuilder<T> ToBuilder() => ValueListBuilder<T>.FromValueList(this);
 
 	/// <summary>
+	/// Create a new <see cref="ValueListBuilder{T}"/> with a capacity of at
+	/// least <paramref name="minimumCapacity"/> and with this list as its
+	/// initial content. This builder can then be used to efficiently construct
+	/// a new immutable <see cref="ValueList{T}"/>.
+	/// </summary>
+	/// <exception cref="ArgumentOutOfRangeException">
+	///   <paramref name="minimumCapacity"/> is less than 0.
+	/// </exception>
+	/// <remarks>
+	/// This is functionally equivalent to:
+	/// <code>
+	/// list.ToBuilder().EnsureCapacity(minimumCapacity)
+	/// </code>
+	/// but without unnecessary intermediate copies.
+	/// </remarks>
+	[Pure]
+	public ValueListBuilder<T> ToBuilder(int minimumCapacity)
+	{
+		if (minimumCapacity < 0)
+		{
+			throw new ArgumentOutOfRangeException(nameof(minimumCapacity));
+		}
+
+		if (minimumCapacity <= this.Count)
+		{
+			return ValueListBuilder<T>.FromValueList(this);
+		}
+		else
+		{
+			return new ValueListBuilder<T>(minimumCapacity).AddRangeSpan(this.AsSpan());
+		}
+	}
+
+	/// <summary>
 	/// Return the index of the first occurrence of <paramref name="item"/> in
 	/// the list, or <c>-1</c> if not found.
 	/// </summary>
