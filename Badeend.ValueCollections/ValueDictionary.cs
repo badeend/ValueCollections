@@ -14,7 +14,7 @@ namespace Badeend.ValueCollections;
 public static class ValueDictionary
 {
 	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueSet{T}"/>.
+	/// Copy the <paramref name="items"/> into a new <see cref="ValueDictionary{TKey,TValue}"/>.
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -31,7 +31,7 @@ public static class ValueDictionary
 		where TKey : notnull => new();
 
 	/// <summary>
-	/// Create a new <see cref="ValueSetBuilder{T}"/> with the provided
+	/// Create a new <see cref="ValueDictionaryBuilder{TKey,TValue}"/> with the provided
 	/// <paramref name="items"/> as its initial content.
 	/// </summary>
 	[Pure]
@@ -56,7 +56,7 @@ public static class ValueDictionary
 ///
 /// ValueDictionaries have "structural equality". This means that two dictionaries
 /// are considered equal only when their contents are equal. As long as a key or
-/// a value is present in a ValueSet, its hash code may not change.
+/// a value is present in a ValueDictionary, its hash code may not change.
 /// </summary>
 /// <typeparam name="TKey">The type of keys in the dictionary.</typeparam>
 /// <typeparam name="TValue">The type of values in the dictionary.</typeparam>
