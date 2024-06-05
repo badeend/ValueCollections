@@ -136,6 +136,18 @@ b.Sort();
 
 [Full API reference](https://badeend.github.io/ValueCollections/api/Badeend.ValueCollections.html)
 
+## Enumeration order
+
+`System.Collections.Generic.HashSet<T>` & `Dictionary<TKey,TValue>` _usually_ preserve the order in which the elements were inserted. Except when they don't...
+
+This behavior is documented, but it's just a single sentence buried in a [huge page](https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2):
+
+> The order in which the items are returned is undefined.
+
+Speaking from experience, this is exactly the kind of sneaky caveat that is easy to miss during development and is only discovered "the hard way" when inexplicable things start happening in production.
+
+To raise developer awareness, the [`ValueSet`](xref:Badeend.ValueCollections.ValueSet`1) & [`ValueDictionary`](xref:Badeend.ValueCollections.ValueDictionary`2) types and their respective Builders deliberately **randomize** the enumeration order. If your code breaks because of this, feel free to [buy me a coffee](https://github.com/sponsors/badeend) as I just helped you discover a bug in your code :upside_down_face:
+
 ## Other features & omissions
 
 - All immutable types are thread safe. (Pretty much by definition, but still.. :) )
