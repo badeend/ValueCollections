@@ -144,11 +144,11 @@ public class ValueSetTests
             return list.ToArray();
         });
 
-        // CopyTo
+        // ICollection<T>.CopyTo
         AssertEnumerationOrder(input, s =>
         {
             var a = new int[s.Count];
-            s.CopyTo(a.AsSpan());
+            (s as ICollection<int>).CopyTo(a, 0);
             return a;
         });
 

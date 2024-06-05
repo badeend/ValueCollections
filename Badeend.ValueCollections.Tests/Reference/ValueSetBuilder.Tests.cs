@@ -145,7 +145,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             set.Add(obj);
             set.Remove(obj);
             foreach (object o in set) { }
-            set.CopyTo(array.AsSpan(0, 2));
+            (set as ICollection<object>).CopyTo(array, 0);
             set.RemoveWhere((element) => { return false; });
         }
 

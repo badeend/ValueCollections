@@ -211,18 +211,6 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 	}
 #endif
 
-	/// <summary>
-	/// Copy the contents of the set into a new array. The order in which the
-	/// elements appear in the array is undefined.
-	/// </summary>
-	[Pure]
-	public T[] ToArray()
-	{
-		var array = new T[this.Count];
-		this.CopyToUnchecked(array);
-		return array;
-	}
-
 	/// <inheritdoc/>
 	void ICollection<T>.CopyTo(T[] array, int arrayIndex)
 	{
@@ -231,49 +219,20 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 			throw new ArgumentNullException(nameof(array));
 		}
 
-		this.CopyTo(array.AsSpan().Slice(arrayIndex));
-	}
-
-	/// <summary>
-	/// Copy the contents of the set into an existing <see cref="Span{T}"/>. The
-	/// order in which the elements are copied is undefined.
-	/// </summary>
-	/// <exception cref="ArgumentException">
-	///   <paramref name="destination"/> is shorter than the source set.
-	/// </exception>
-	public void CopyTo(Span<T> destination)
-	{
-		if (destination.Length < this.Count)
+		if (arrayIndex < 0 || arrayIndex > array.Length)
 		{
-			throw new ArgumentException("Destination too short", nameof(destination));
+			throw new ArgumentOutOfRangeException(nameof(arrayIndex));
 		}
 
-		this.CopyToUnchecked(destination);
-	}
-
-	/// <summary>
-	/// Attempt to copy the contents of the set into an existing
-	/// <see cref="Span{T}"/>. The order in which the elements are copied is
-	/// undefined. If the <paramref name="destination"/> is too short,
-	/// no items are copied and the method returns <see langword="false"/>.
-	/// </summary>
-	public bool TryCopyTo(Span<T> destination)
-	{
-		if (destination.Length < this.Count)
+		if (array.Length - arrayIndex < this.Count)
 		{
-			return false;
+			throw new ArgumentException("Destination too short", nameof(arrayIndex));
 		}
 
-		this.CopyToUnchecked(destination);
-		return true;
-	}
-
-	private void CopyToUnchecked(Span<T> destination)
-	{
-		var index = 0;
+		var index = arrayIndex;
 		foreach (var item in this)
 		{
-			destination[index] = item;
+			array[index] = item;
 			index++;
 		}
 	}

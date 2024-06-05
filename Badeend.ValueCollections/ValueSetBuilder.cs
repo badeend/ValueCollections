@@ -463,62 +463,6 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 		_ => throw UnreachableException(),
 	};
 
-	/// <summary>
-	/// Copy the contents of the set into a new array. The order in which the
-	/// elements appear in the array is undefined.
-	/// </summary>
-	[Pure]
-	public T[] ToArray()
-	{
-		var array = new T[this.Count];
-		this.CopyToUnchecked(array);
-		return array;
-	}
-
-	/// <summary>
-	/// Copy the contents of the set into an existing <see cref="Span{T}"/>. The
-	/// order in which the elements are copied is undefined.
-	/// </summary>
-	/// <exception cref="ArgumentException">
-	///   <paramref name="destination"/> is shorter than the source set.
-	/// </exception>
-	public void CopyTo(Span<T> destination)
-	{
-		if (destination.Length < this.Count)
-		{
-			throw new ArgumentException("Destination too short", nameof(destination));
-		}
-
-		this.CopyToUnchecked(destination);
-	}
-
-	/// <summary>
-	/// Attempt to copy the contents of the set into an existing
-	/// <see cref="Span{T}"/>. The order in which the elements are copied is
-	/// undefined. If the <paramref name="destination"/> is too short,
-	/// no items are copied and the method returns <see langword="false"/>.
-	/// </summary>
-	public bool TryCopyTo(Span<T> destination)
-	{
-		if (destination.Length < this.Count)
-		{
-			return false;
-		}
-
-		this.CopyToUnchecked(destination);
-		return true;
-	}
-
-	private void CopyToUnchecked(Span<T> destination)
-	{
-		var index = 0;
-		foreach (var item in this)
-		{
-			destination[index] = item;
-			index++;
-		}
-	}
-
 	/// <inheritdoc/>
 	void ICollection<T>.CopyTo(T[] array, int arrayIndex)
 	{
@@ -527,7 +471,22 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 			throw new ArgumentNullException(nameof(array));
 		}
 
-		this.CopyTo(array.AsSpan(arrayIndex));
+		if (arrayIndex < 0 || arrayIndex > array.Length)
+		{
+			throw new ArgumentOutOfRangeException(nameof(arrayIndex));
+		}
+
+		if (array.Length - arrayIndex < this.Count)
+		{
+			throw new ArgumentException("Destination too short", nameof(arrayIndex));
+		}
+
+		var index = arrayIndex;
+		foreach (var item in this)
+		{
+			array[index] = item;
+			index++;
+		}
 	}
 
 	/// <inheritdoc/>
