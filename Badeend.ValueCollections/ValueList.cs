@@ -42,7 +42,8 @@ public static class ValueList
 
 /// <summary>
 /// An immutable, thread-safe list with value semantics.
-///
+/// </summary>
+/// <remarks>
 /// Constructing new instances can be done using
 /// <see cref="ValueList.Builder{T}()"/> or <see cref="ValueList{T}.ToBuilder()"/>.
 /// For creating ValueLists, <see cref="ValueListBuilder{T}"/> is generally more
@@ -55,7 +56,7 @@ public static class ValueList
 /// Taking a subslice with <see cref="ValueList{T}.Slice(int)"/> and
 /// <see cref="ValueList{T}.Slice(int, int)"/> is very cheap as it reuses the
 /// same allocation.
-/// </summary>
+/// </remarks>
 /// <typeparam name="T">The type of items in the list.</typeparam>
 [CollectionBuilder(typeof(ValueList), nameof(ValueList.Create))]
 public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueList<T>>

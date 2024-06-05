@@ -6,7 +6,8 @@ namespace Badeend.ValueCollections;
 
 /// <summary>
 /// A mutable list that can be used to efficiently construct new immutable lists.
-///
+/// </summary>
+/// <remarks>
 /// Most mutating methods on this class return `this`, allowing the caller to
 /// chain multiple mutations in a row.
 ///
@@ -20,7 +21,7 @@ namespace Badeend.ValueCollections;
 /// <em>always</em> performs a full copy.
 ///
 /// Unlike ValueList, ValueListBuilder is <em>not</em> thread-safe.
-/// </summary>
+/// </remarks>
 /// <typeparam name="T">The type of items in the list.</typeparam>
 [CollectionBuilder(typeof(ValueList), nameof(ValueList.Builder))]
 public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>

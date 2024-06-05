@@ -7,7 +7,8 @@ namespace Badeend.ValueCollections;
 
 /// <summary>
 /// A mutable set that can be used to efficiently construct new immutable sets.
-///
+/// </summary>
+/// <remarks>
 /// Most mutating methods on this class return `this`, allowing the caller to
 /// chain multiple mutations in a row. The boolean-returning
 /// <see cref="HashSet{T}.Add(T)">HashSet.Add</see> and
@@ -26,7 +27,7 @@ namespace Badeend.ValueCollections;
 /// The order in which the elements are enumerated is undefined.
 ///
 /// Unlike ValueSet, ValueSetBuilder is <em>not</em> thread-safe.
-/// </summary>
+/// </remarks>
 /// <typeparam name="T">The type of items in the set.</typeparam>
 [CollectionBuilder(typeof(ValueSet), nameof(ValueSet.Builder))]
 [SuppressMessage("Naming", "CA1710:Identifiers should have correct suffix", Justification = "Not applicable for Builder type.")]

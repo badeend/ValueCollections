@@ -42,7 +42,8 @@ public static class ValueDictionary
 
 /// <summary>
 /// An immutable, thread-safe dictionary with value semantics.
-///
+/// </summary>
+/// <remarks>
 /// A dictionary provides a mapping from a set of keys to a set of values,
 /// contains no duplicate keys, and stores its elements in no particular order.
 ///
@@ -57,7 +58,7 @@ public static class ValueDictionary
 /// a value is present in a ValueDictionary, its hash code may not change.
 ///
 /// The order in which the entries are enumerated is undefined.
-/// </summary>
+/// </remarks>
 /// <typeparam name="TKey">The type of keys in the dictionary.</typeparam>
 /// <typeparam name="TValue">The type of values in the dictionary.</typeparam>
 public sealed class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>, IEquatable<ValueDictionary<TKey, TValue>>

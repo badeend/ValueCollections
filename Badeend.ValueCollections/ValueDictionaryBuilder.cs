@@ -8,7 +8,8 @@ namespace Badeend.ValueCollections;
 /// <summary>
 /// A mutable dictionary that can be used to efficiently construct new immutable
 /// dictionaries.
-///
+/// </summary>
+/// <remarks>
 /// Most mutating methods on this class return `this`, allowing the caller to
 /// chain multiple mutations in a row.
 ///
@@ -25,7 +26,7 @@ namespace Badeend.ValueCollections;
 /// The order in which the entries are enumerated is undefined.
 ///
 /// Unlike ValueDictionary, ValueDictionaryBuilder is <em>not</em> thread-safe.
-/// </summary>
+/// </remarks>
 /// <typeparam name="TKey">The type of keys in the dictionary.</typeparam>
 /// <typeparam name="TValue">The type of values in the dictionary.</typeparam>
 [CollectionBuilder(typeof(ValueDictionary), nameof(ValueDictionary.Builder))]

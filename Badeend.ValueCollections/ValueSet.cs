@@ -37,7 +37,8 @@ public static class ValueSet
 
 /// <summary>
 /// An immutable, thread-safe set with value semantics.
-///
+/// </summary>
+/// <remarks>
 /// A set is a collection of unique elements (i.e. no duplicates) in no
 /// particular order.
 ///
@@ -51,7 +52,7 @@ public static class ValueSet
 /// is present in a ValueSet, its hash code may not change.
 ///
 /// The order in which the elements are enumerated is undefined.
-/// </summary>
+/// </remarks>
 /// <typeparam name="T">The type of items in the set.</typeparam>
 [CollectionBuilder(typeof(ValueSet), nameof(ValueSet.Create))]
 #if NET5_0_OR_GREATER

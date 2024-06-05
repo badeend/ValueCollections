@@ -22,7 +22,8 @@ public static class ValueSlice
 
 /// <summary>
 /// An immutable, thread-safe span with value semantics.
-///
+/// </summary>
+/// <remarks>
 /// This type is similar to <see cref="ReadOnlySpan{T}"/> and
 /// <see cref="ReadOnlyMemory{T}"/> in that this too is just a view
 /// into an existing allocation at a specified offset+length. Taking a subslice
@@ -44,7 +45,7 @@ public static class ValueSlice
 /// <see cref="ValueSlice{T}.AsReadOnlyList"/> instead.
 ///
 /// The <c>default</c> value of every ValueSlice is an empty slice.
-/// </summary>
+/// </remarks>
 /// <typeparam name="T">The type of items in the slice.</typeparam>
 [StructLayout(LayoutKind.Auto)]
 [CollectionBuilder(typeof(ValueSlice), nameof(ValueSlice.Create))]
