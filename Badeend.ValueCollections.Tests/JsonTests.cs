@@ -6,330 +6,200 @@ namespace Badeend.ValueCollections.Tests;
 
 public abstract class JsonTests
 {
-    private class MyData
-    {
-        public required ValueSlice<string?> NotNullSlice { get; init; }
-        public required ValueSlice<string?>? Slice { get; init; }
-        public required List<string?>? SystemList { get; init; }
-        public required ValueList<string?>? List { get; init; }
-        public required ValueListBuilder<string?>? ListBuilder { get; init; }
-        public required HashSet<string?>? SystemSet { get; init; }
-        public required ValueSet<string?>? Set { get; init; }
-        public required ValueSetBuilder<string?>? SetBuilder { get; init; }
-        public required Dictionary<string, string?>? SystemDictionary { get; init; }
-        public required ValueDictionary<string, string?>? Dictionary { get; init; }
-        public required ValueDictionaryBuilder<string, string?>? DictionaryBuilder { get; init; }
-    }
+	[Fact]
+	public void SerializeNulls()
+	{
+		Assert.Equal("null", Serialize<ValueSlice<string>?>(null));
+		Assert.Equal("null", Serialize<List<string?>?>(null));
+		Assert.Equal("null", Serialize<ValueList<string?>?>(null));
+		Assert.Equal("null", Serialize<ValueListBuilder<string?>?>(null));
+		Assert.Equal("null", Serialize<HashSet<string?>?>(null));
+		Assert.Equal("null", Serialize<ValueSet<string?>?>(null));
+		Assert.Equal("null", Serialize<ValueSetBuilder<string?>?>(null));
+		Assert.Equal("null", Serialize<Dictionary<string, string?>?>(null));
+		Assert.Equal("null", Serialize<ValueDictionary<string, string?>?>(null));
+		Assert.Equal("null", Serialize<ValueDictionaryBuilder<string, string?>?>(null));
 
-    private static readonly string NullJson = Json("""
-    {
-      "NotNullSlice": [],
-      "Slice": null,
-      "SystemList": null,
-      "List": null,
-      "ListBuilder": null,
-      "SystemSet": null,
-      "Set": null,
-      "SetBuilder": null,
-      "SystemDictionary": null,
-      "Dictionary": null,
-      "DictionaryBuilder": null
-    }
-    """);
+		Assert.Null(Deserialize<ValueSlice<string>?>("null"));
+		Assert.Null(Deserialize<List<string?>?>("null"));
+		Assert.Null(Deserialize<ValueList<string?>?>("null"));
+		Assert.Null(Deserialize<ValueListBuilder<string?>?>("null"));
+		Assert.Null(Deserialize<HashSet<string?>?>("null"));
+		Assert.Null(Deserialize<ValueSet<string?>?>("null"));
+		Assert.Null(Deserialize<ValueSetBuilder<string?>?>("null"));
+		Assert.Null(Deserialize<Dictionary<string, string?>?>("null"));
+		Assert.Null(Deserialize<ValueDictionary<string, string?>?>("null"));
+		Assert.Null(Deserialize<ValueDictionaryBuilder<string, string?>?>("null"));
+	}
 
-    [Fact]
-    public void SerializeNulls()
-    {
-        var data = new MyData
-        {
-            NotNullSlice = default,
-            Slice = null,
-            SystemList = null,
-            List = null,
-            ListBuilder = null,
-            SystemSet = null,
-            Set = null,
-            SetBuilder = null,
-            SystemDictionary = null,
-            Dictionary = null,
-            DictionaryBuilder = null,
-        };
-        Assert.Equal(NullJson, Serialize(data));
-    }
+	[Fact]
+	public void SerializeEmpty()
+	{
+		Assert.Equal("[]", Serialize<ValueSlice<string>>([]));
+		Assert.Equal("[]", Serialize<ValueSlice<string>?>([]));
+		Assert.Equal("[]", Serialize<List<string?>?>([]));
+		Assert.Equal("[]", Serialize<ValueList<string?>?>([]));
+		Assert.Equal("[]", Serialize<ValueListBuilder<string?>?>([]));
+		Assert.Equal("[]", Serialize<HashSet<string?>?>([]));
+		Assert.Equal("[]", Serialize<ValueSet<string?>?>([]));
+		Assert.Equal("[]", Serialize<ValueSetBuilder<string?>?>([]));
+		Assert.Equal("{}", Serialize<Dictionary<string, string?>?>([]));
+		Assert.Equal("{}", Serialize<ValueDictionary<string, string?>?>(ValueDictionary.Create<string, string?>([])));
+		Assert.Equal("{}", Serialize<ValueDictionaryBuilder<string, string?>?>([]));
 
-    [Fact]
-    public void DeserializeNull()
-    {
-        var data = Deserialize<MyData>(NullJson);
+		Assert.Equal(0, Deserialize<ValueSlice<string>>("[]").Length);
+		Assert.Equal(0, Deserialize<ValueSlice<string>?>("[]")!.Value.Length);
+		Assert.Empty(Deserialize<List<string?>?>("[]")!);
+		Assert.Empty(Deserialize<ValueList<string?>?>("[]")!);
+		Assert.Empty(Deserialize<ValueListBuilder<string?>?>("[]")!);
+		Assert.Empty(Deserialize<HashSet<string?>?>("[]")!);
+		Assert.Empty(Deserialize<ValueSet<string?>?>("[]")!);
+		Assert.Empty(Deserialize<ValueSetBuilder<string?>?>("[]")!);
+		Assert.Empty(Deserialize<Dictionary<string, string?>?>("{}")!);
+		Assert.Empty(Deserialize<ValueDictionary<string, string?>?>("{}")!);
+		Assert.Empty(Deserialize<ValueDictionaryBuilder<string, string?>?>("{}")!);
+	}
 
-        Assert.True(data.NotNullSlice == default);
-        Assert.True(data.Slice is null);
-        Assert.True(data.SystemList is null);
-        Assert.True(data.List is null);
-        Assert.True(data.ListBuilder is null);
-        Assert.True(data.SystemSet is null);
-        Assert.True(data.Set is null);
-        Assert.True(data.SetBuilder is null);
-        Assert.True(data.SystemDictionary is null);
-        Assert.True(data.Dictionary is null);
-        Assert.True(data.DictionaryBuilder is null);
-    }
+	[Fact]
+	public void SerializeRegular()
+	{
+		string listJson = "[\"a\",null,\"b\"]";
+		string[] setJsons = [
+			"[\"a\",null,\"b\"]",
+			"[\"a\",\"b\",null]",
+			"[\"b\",null,\"a\"]",
+			"[\"b\",\"a\",null]",
+			"[null,\"a\",\"b\"]",
+			"[null,\"b\",\"a\"]",
+		];
+		string[] dictionaryJsons = [
+			"{\"a\":\"1\",\"b\":null,\"c\":\"3\"}",
+			"{\"a\":\"1\",\"c\":\"3\",\"b\":null}",
+			"{\"b\":null,\"a\":\"1\",\"c\":\"3\"}",
+			"{\"b\":null,\"c\":\"3\",\"a\":\"1\"}",
+			"{\"c\":\"3\",\"a\":\"1\",\"b\":null}",
+			"{\"c\":\"3\",\"b\":null,\"a\":\"1\"}",
+		];
 
-    private static readonly string EmptyJson = Json("""
-    {
-      "NotNullSlice": [],
-      "Slice": [],
-      "SystemList": [],
-      "List": [],
-      "ListBuilder": [],
-      "SystemSet": [],
-      "Set": [],
-      "SetBuilder": [],
-      "SystemDictionary": {},
-      "Dictionary": {},
-      "DictionaryBuilder": {}
-    }
-    """);
+		Assert.Equal(listJson, Serialize<ValueSlice<string?>>(["a", null, "b"]));
+		Assert.Equal(listJson, Serialize<ValueSlice<string?>?>(["a", null, "b"]));
+		Assert.Equal(listJson, Serialize<List<string?>?>(["a", null, "b"]));
+		Assert.Equal(listJson, Serialize<ValueList<string?>?>(["a", null, "b"]));
+		Assert.Equal(listJson, Serialize<ValueListBuilder<string?>?>(["a", null, "b"]));
+		Assert.Contains(Serialize<HashSet<string?>?>(["a", null, "b"]), setJsons);
+		Assert.Contains(Serialize<ValueSet<string?>?>(["a", null, "b"]), setJsons);
+		Assert.Contains(Serialize<ValueSetBuilder<string?>?>(["a", null, "b"]), setJsons);
+		Assert.Contains(Serialize<Dictionary<string, string?>?>(new Dictionary<string, string?> { ["a"] = "1", ["b"] = null, ["c"] = "3" }), dictionaryJsons);
+		Assert.Contains(Serialize<ValueDictionary<string, string?>?>(new ValueDictionaryBuilder<string, string?> { ["a"] = "1", ["b"] = null, ["c"] = "3" }.Build()), dictionaryJsons);
+		Assert.Contains(Serialize<ValueDictionaryBuilder<string, string?>?>(new ValueDictionaryBuilder<string, string?> { ["a"] = "1", ["b"] = null, ["c"] = "3" }), dictionaryJsons);
+	}
 
-    [Fact]
-    public void SerializeEmpty()
-    {
-        var data = new MyData
-        {
-            NotNullSlice = [],
-            Slice = [],
-            SystemList = [],
-            List = [],
-            ListBuilder = [],
-            SystemSet = [],
-            Set = [],
-            SetBuilder = [],
-            SystemDictionary = new Dictionary<string, string?>
-            {
-            },
-            Dictionary = new ValueDictionaryBuilder<string, string?>
-            {
-            }.Build(),
-            DictionaryBuilder = new ValueDictionaryBuilder<string, string?>
-            {
-            },
-        };
-        Assert.Equal(EmptyJson, Serialize(data));
-    }
-
-    [Fact]
-    public void DeserializeEmpty()
-    {
-        var data = Deserialize<MyData>(EmptyJson);
-
-        Assert.True(data.NotNullSlice.Length == 0);
-        Assert.True(data.Slice!.Value.Length == 0);
-        Assert.True(data.SystemList!.Count == 0);
-        Assert.True(data.List!.Count == 0);
-        Assert.True(data.ListBuilder!.Count == 0);
-        Assert.True(data.SystemSet!.Count == 0);
-        Assert.True(data.Set!.Count == 0);
-        Assert.True(data.SetBuilder!.Count == 0);
-        Assert.True(data.SystemDictionary!.Count == 0);
-        Assert.True(data.Dictionary!.Count == 0);
-        Assert.True(data.DictionaryBuilder!.Count == 0);
-    }
-
-    private static readonly string RegularJson = Json("""
-    {
-      "NotNullSlice": [
-        "a",
-        null,
-        "b"
-      ],
-      "Slice": [
-        "a",
-        null,
-        "b"
-      ],
-      "SystemList": [
-        "a",
-        null,
-        "b"
-      ],
-      "List": [
-        "a",
-        null,
-        "b"
-      ],
-      "ListBuilder": [
-        "a",
-        null,
-        "b"
-      ],
-      "SystemSet": [
-        "a",
-        null,
-        "b"
-      ],
-      "Set": [
-        "a",
-        null,
-        "b"
-      ],
-      "SetBuilder": [
-        "a",
-        null,
-        "b"
-      ],
-      "SystemDictionary": {
-        "a": "1",
-        "b": null,
-        "c": "3"
-      },
-      "Dictionary": {
-        "a": "1",
-        "b": null,
-        "c": "3"
-      },
-      "DictionaryBuilder": {
-        "a": "1",
-        "b": null,
-        "c": "3"
-      }
-    }
-    """);
-
-    [Fact]
-    public void SerializeRegular()
-    {
-        var data = new MyData
-        {
-            NotNullSlice = ["a", null, "b"],
-            Slice = ["a", null, "b"],
-            SystemList = ["a", null, "b"],
-            List = ["a", null, "b"],
-            ListBuilder = ["a", null, "b"],
-            SystemSet = ["a", null, "b"],
-            Set = ["a", null, "b"],
-            SetBuilder = ["a", null, "b"],
-            SystemDictionary = new Dictionary<string, string?>
-            {
-                ["a"] = "1",
-                ["b"] = null,
-                ["c"] = "3",
-            },
-            Dictionary = new ValueDictionaryBuilder<string, string?>
-            {
-                ["a"] = "1",
-                ["b"] = null,
-                ["c"] = "3",
-            }.Build(),
-            DictionaryBuilder = new ValueDictionaryBuilder<string, string?>
-            {
-                ["a"] = "1",
-                ["b"] = null,
-                ["c"] = "3",
-            }
-        };
-        Assert.Equal(RegularJson, Serialize(data));
-    }
-
-    [Fact]
+	[Fact]
 	[SuppressMessage("Assertions", "xUnit2017:Do not use Contains() to check if a value exists in a collection")]
 	public void DeserializeRegular()
-    {
-        var data = Deserialize<MyData>(RegularJson);
+	{
+		var arrayJson = "[\"a\",null,\"b\"]";
+		var objectJson = "{\"a\":\"1\",\"b\":null,\"c\":\"3\"}";
 
-        Assert.True(data.NotNullSlice.Length == 3);
-        Assert.True(data.NotNullSlice[0] == "a");
-        Assert.True(data.NotNullSlice[1] == null);
-        Assert.True(data.NotNullSlice[2] == "b");
+		var notNullSlice = Deserialize<ValueSlice<string>>(arrayJson);
+		Assert.True(notNullSlice.Length == 3);
+		Assert.True(notNullSlice[0] == "a");
+		Assert.True(notNullSlice[1] == null);
+		Assert.True(notNullSlice[2] == "b");
 
-        Assert.True(data.Slice!.Value.Length == 3);
-        Assert.True(data.Slice!.Value[0] == "a");
-        Assert.True(data.Slice!.Value[1] == null);
-        Assert.True(data.Slice!.Value[2] == "b");
+		var slice = Deserialize<ValueSlice<string>?>(arrayJson)!.Value;
+		Assert.True(slice.Length == 3);
+		Assert.True(slice[0] == "a");
+		Assert.True(slice[1] == null);
+		Assert.True(slice[2] == "b");
 
-        Assert.True(data.SystemList!.Count == 3);
-        Assert.True(data.SystemList![0] == "a");
-        Assert.True(data.SystemList![1] == null);
-        Assert.True(data.SystemList![2] == "b");
+		var systemList = Deserialize<List<string?>?>(arrayJson)!;
+		Assert.True(systemList!.Count == 3);
+		Assert.True(systemList![0] == "a");
+		Assert.True(systemList![1] == null);
+		Assert.True(systemList![2] == "b");
 
-        Assert.True(data.List!.Count == 3);
-        Assert.True(data.List![0] == "a");
-        Assert.True(data.List![1] == null);
-        Assert.True(data.List![2] == "b");
+		var list = Deserialize<ValueList<string?>?>(arrayJson)!;
+		Assert.True(list!.Count == 3);
+		Assert.True(list![0] == "a");
+		Assert.True(list![1] == null);
+		Assert.True(list![2] == "b");
 
-        Assert.True(data.ListBuilder!.Count == 3);
-        Assert.True(data.ListBuilder![0] == "a");
-        Assert.True(data.ListBuilder![1] == null);
-        Assert.True(data.ListBuilder![2] == "b");
+		var listBuilder = Deserialize<ValueListBuilder<string?>?>(arrayJson)!;
+		Assert.True(listBuilder!.Count == 3);
+		Assert.True(listBuilder![0] == "a");
+		Assert.True(listBuilder![1] == null);
+		Assert.True(listBuilder![2] == "b");
 
-        Assert.True(data.SystemSet!.Count == 3);
-        Assert.True(data.SystemSet!.Contains("a"));
-        Assert.True(data.SystemSet!.Contains(null));
-        Assert.True(data.SystemSet!.Contains("b"));
+		var systemSet = Deserialize<HashSet<string?>?>(arrayJson)!;
+		Assert.True(systemSet!.Count == 3);
+		Assert.True(systemSet!.Contains("a"));
+		Assert.True(systemSet!.Contains(null));
+		Assert.True(systemSet!.Contains("b"));
 
-        Assert.True(data.Set!.Count == 3);
-        Assert.True(data.Set!.Contains("a"));
-        Assert.True(data.Set!.Contains(null));
-        Assert.True(data.Set!.Contains("b"));
+		var set = Deserialize<ValueSet<string?>?>(arrayJson)!;
+		Assert.True(set!.Count == 3);
+		Assert.True(set!.Contains("a"));
+		Assert.True(set!.Contains(null));
+		Assert.True(set!.Contains("b"));
 
-        Assert.True(data.SetBuilder!.Count == 3);
-        Assert.True(data.SetBuilder!.Contains("a"));
-        Assert.True(data.SetBuilder!.Contains(null));
-        Assert.True(data.SetBuilder!.Contains("b"));
+		var setBuilder = Deserialize<ValueSetBuilder<string?>?>(arrayJson)!;
+		Assert.True(setBuilder!.Count == 3);
+		Assert.True(setBuilder!.Contains("a"));
+		Assert.True(setBuilder!.Contains(null));
+		Assert.True(setBuilder!.Contains("b"));
 
-        Assert.True(data.SystemDictionary!.Count == 3);
-        Assert.True(data.SystemDictionary["a"] == "1");
-        Assert.True(data.SystemDictionary["b"] == null);
-        Assert.True(data.SystemDictionary["c"] == "3");
+		var systemDictionary = Deserialize<Dictionary<string, string?>?>(objectJson)!;
+		Assert.True(systemDictionary!.Count == 3);
+		Assert.True(systemDictionary["a"] == "1");
+		Assert.True(systemDictionary["b"] == null);
+		Assert.True(systemDictionary["c"] == "3");
 
-        Assert.True(data.Dictionary!.Count == 3);
-        Assert.True(data.Dictionary["a"] == "1");
-        Assert.True(data.Dictionary["b"] == null);
-        Assert.True(data.Dictionary["c"] == "3");
+		var dictionary = Deserialize<ValueDictionary<string, string?>?>(objectJson)!;
+		Assert.True(dictionary!.Count == 3);
+		Assert.True(dictionary["a"] == "1");
+		Assert.True(dictionary["b"] == null);
+		Assert.True(dictionary["c"] == "3");
 
-        Assert.True(data.DictionaryBuilder!.Count == 3);
-        Assert.True(data.DictionaryBuilder["a"] == "1");
-        Assert.True(data.DictionaryBuilder["b"] == null);
-        Assert.True(data.DictionaryBuilder["c"] == "3");
-    }
+		var dictionaryBuilder = Deserialize<ValueDictionaryBuilder<string, string?>?>(objectJson)!;
+		Assert.True(dictionaryBuilder!.Count == 3);
+		Assert.True(dictionaryBuilder["a"] == "1");
+		Assert.True(dictionaryBuilder["b"] == null);
+		Assert.True(dictionaryBuilder["c"] == "3");
+	}
 
-    protected abstract string Serialize<T>(T obj);
-    protected abstract T Deserialize<T>(string json);
-
-    protected static string Json([StringSyntax(StringSyntaxAttribute.Json)] string json) => json
-      .Replace("\r\n", System.Environment.NewLine)
-      .Replace("\n", System.Environment.NewLine);
+	protected abstract string Serialize<T>(T obj);
+	protected abstract T Deserialize<T>(string json);
 }
 
 public class JsonTests_SystemTextJson : JsonTests
 {
-    private readonly System.Text.Json.JsonSerializerOptions options = CreateOptions();
+	private readonly System.Text.Json.JsonSerializerOptions options = CreateOptions();
 
-    private static System.Text.Json.JsonSerializerOptions CreateOptions()
-    {
-        var options = new System.Text.Json.JsonSerializerOptions();
-        options.WriteIndented = true;
-        options.AddValueCollections();
-        return options;
-    }
+	private static System.Text.Json.JsonSerializerOptions CreateOptions()
+	{
+		var options = new System.Text.Json.JsonSerializerOptions();
+		options.AddValueCollections();
+		return options;
+	}
 
 	protected override string Serialize<T>(T obj) => System.Text.Json.JsonSerializer.Serialize(obj, options);
 
-    protected override T Deserialize<T>(string json) => System.Text.Json.JsonSerializer.Deserialize<T>(json, options)!;
+	protected override T Deserialize<T>(string json) => System.Text.Json.JsonSerializer.Deserialize<T>(json, options)!;
 }
 
 public class JsonTests_NewtonsoftJson : JsonTests
 {
-    private readonly Newtonsoft.Json.JsonSerializerSettings settings = CreateSettings();
+	private readonly Newtonsoft.Json.JsonSerializerSettings settings = CreateSettings();
 
-    private static Newtonsoft.Json.JsonSerializerSettings CreateSettings()
-    {
-        var settings = new Newtonsoft.Json.JsonSerializerSettings();
-        settings.Formatting = Newtonsoft.Json.Formatting.Indented;
-        settings.AddValueCollections();
-        return settings;
-    }
+	private static Newtonsoft.Json.JsonSerializerSettings CreateSettings()
+	{
+		var settings = new Newtonsoft.Json.JsonSerializerSettings();
+		settings.AddValueCollections();
+		return settings;
+	}
 
 	protected override string Serialize<T>(T obj) => Newtonsoft.Json.JsonConvert.SerializeObject(obj, settings);
 
-    protected override T Deserialize<T>(string json) => Newtonsoft.Json.JsonConvert.DeserializeObject<T>(json, settings)!;
+	protected override T Deserialize<T>(string json) => Newtonsoft.Json.JsonConvert.DeserializeObject<T>(json, settings)!;
 }
