@@ -45,8 +45,6 @@ public static class ValueDictionary
 ///
 /// A dictionary provides a mapping from a set of keys to a set of values,
 /// contains no duplicate keys, and stores its elements in no particular order.
-/// Enumerating a dictionary returns its contents in undefined order and the may
-/// even be different on each iteration.
 ///
 /// Constructing new instances can be done using
 /// <see cref="ValueDictionary.Builder{TKey, TValue}()"/> or
@@ -57,6 +55,8 @@ public static class ValueDictionary
 /// ValueDictionaries have "structural equality". This means that two dictionaries
 /// are considered equal only when their contents are equal. As long as a key or
 /// a value is present in a ValueDictionary, its hash code may not change.
+///
+/// The order in which the entries are enumerated is undefined.
 /// </summary>
 /// <typeparam name="TKey">The type of keys in the dictionary.</typeparam>
 /// <typeparam name="TValue">The type of values in the dictionary.</typeparam>
@@ -133,7 +133,7 @@ public sealed class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
 	bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => true;
 
 	/// <summary>
-	/// All keys in the dictionary.
+	/// All keys in the dictionary in no particular order.
 	/// </summary>
 	[Pure]
 	public IReadOnlyCollection<TKey> Keys => this.items.Keys;
@@ -145,7 +145,7 @@ public sealed class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
 	IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => this.items.Keys;
 
 	/// <summary>
-	/// All values in the dictionary.
+	/// All values in the dictionary in no particular order.
 	/// </summary>
 	[Pure]
 	public IReadOnlyCollection<TValue> Values => this.items.Values;
@@ -312,7 +312,30 @@ public sealed class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
 	}
 
 	/// <inheritdoc/>
-	void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) => ((ICollection<KeyValuePair<TKey, TValue>>)this.items).CopyTo(array, arrayIndex);
+	void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
+	{
+		if (array is null)
+		{
+			throw new ArgumentNullException(nameof(array));
+		}
+
+		if (arrayIndex < 0 || arrayIndex > array.Length)
+		{
+			throw new ArgumentOutOfRangeException(nameof(arrayIndex));
+		}
+
+		if (array.Length - arrayIndex < this.Count)
+		{
+			throw new ArgumentException("Destination too short", nameof(arrayIndex));
+		}
+
+		var index = arrayIndex;
+		foreach (var item in this)
+		{
+			array[index] = item;
+			index++;
+		}
+	}
 
 	/// <inheritdoc/>
 	[Pure]
@@ -441,12 +464,12 @@ public sealed class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
 #pragma warning disable CA1815 // Override equals and operator equals on value types
 	public struct Enumerator : IEnumeratorLike<KeyValuePair<TKey, TValue>>
 	{
-		private Dictionary<TKey, TValue>.Enumerator inner;
+		private ShufflingDictionaryEnumerator<TKey, TValue> inner;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal Enumerator(ValueDictionary<TKey, TValue> dictionary)
 		{
-			this.inner = dictionary.items.GetEnumerator();
+			this.inner = new(dictionary.items, initialSeed: 0);
 		}
 
 		/// <inheritdoc/>

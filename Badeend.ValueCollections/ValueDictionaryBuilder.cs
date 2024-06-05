@@ -22,6 +22,8 @@ namespace Badeend.ValueCollections;
 /// a regular <see cref="Dictionary{TKey, TValue}"/> <em>always</em> performs a
 /// full copy.
 ///
+/// The order in which the entries are enumerated is undefined.
+///
 /// Unlike ValueDictionary, ValueDictionaryBuilder is <em>not</em> thread-safe.
 /// </summary>
 /// <typeparam name="TKey">The type of keys in the dictionary.</typeparam>
@@ -170,17 +172,25 @@ public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TVa
 		set => this.Mutate()[key] = value;
 	}
 
-	private KeyCollection KeysInternal => new KeyCollection(this, this.version);
+	private KeyCollection KeysInternal
+	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		get => new KeyCollection(this, this.version);
+	}
 
 	/// <summary>
-	/// All keys in the dictionary.
+	/// All keys in the dictionary in no particular order.
 	/// </summary>
 	/// <remarks>
 	/// Every modification to the builder invalidates any <c>Keys</c> collection
 	/// obtained before that moment.
 	/// </remarks>
 	[Pure]
-	public IReadOnlyCollection<TKey> Keys => this.KeysInternal;
+	public IReadOnlyCollection<TKey> Keys
+	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		get => this.KeysInternal;
+	}
 
 	/// <inheritdoc/>
 	ICollection<TKey> IDictionary<TKey, TValue>.Keys => this.KeysInternal;
@@ -188,17 +198,25 @@ public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TVa
 	/// <inheritdoc/>
 	IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => this.KeysInternal;
 
-	private ValueCollection ValuesInternal => new ValueCollection(this, this.version);
+	private ValueCollection ValuesInternal
+	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		get => new ValueCollection(this, this.version);
+	}
 
 	/// <summary>
-	/// All values in the dictionary.
+	/// All values in the dictionary in no particular order.
 	/// </summary>
 	/// <remarks>
 	/// Every modification to the builder invalidates any <c>Values</c> collection
 	/// obtained before that moment.
 	/// </remarks>
 	[Pure]
-	public IReadOnlyCollection<TValue> Values => this.ValuesInternal;
+	public IReadOnlyCollection<TValue> Values
+	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		get => this.ValuesInternal;
+	}
 
 	/// <inheritdoc/>
 	ICollection<TValue> IDictionary<TKey, TValue>.Values => this.ValuesInternal;
@@ -387,7 +405,30 @@ public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TVa
 	}
 
 	/// <inheritdoc/>
-	void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) => ((ICollection<KeyValuePair<TKey, TValue>>)this.ReadUnsafe()).CopyTo(array, arrayIndex);
+	void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
+	{
+		if (array is null)
+		{
+			throw new ArgumentNullException(nameof(array));
+		}
+
+		if (arrayIndex < 0 || arrayIndex > array.Length)
+		{
+			throw new ArgumentOutOfRangeException(nameof(arrayIndex));
+		}
+
+		if (array.Length - arrayIndex < this.Count)
+		{
+			throw new ArgumentException("Destination too short", nameof(arrayIndex));
+		}
+
+		var index = arrayIndex;
+		foreach (var item in this)
+		{
+			array[index] = item;
+			index++;
+		}
+	}
 
 	/// <summary>
 	/// Attempt to add the <paramref name="key"/> and <paramref name="value"/>
@@ -711,19 +752,21 @@ public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TVa
 	{
 		private readonly ValueDictionaryBuilder<TKey, TValue> builder;
 		private readonly int version;
-		private Dictionary<TKey, TValue>.Enumerator enumerator;
+		private ShufflingDictionaryEnumerator<TKey, TValue> enumerator;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal Enumerator(ValueDictionaryBuilder<TKey, TValue> builder)
 		{
-			this.builder = builder;
-			this.version = builder.version;
-			this.enumerator = builder.items switch
+			var innerDictionary = builder.items switch
 			{
-				Dictionary<TKey, TValue> items => items.GetEnumerator(),
-				ValueDictionary<TKey, TValue> items => items.Items.GetEnumerator(),
+				Dictionary<TKey, TValue> items => items,
+				ValueDictionary<TKey, TValue> items => items.Items,
 				_ => throw UnreachableException(),
 			};
+
+			this.builder = builder;
+			this.version = builder.version;
+			this.enumerator = new(innerDictionary, initialSeed: builder.version);
 		}
 
 		/// <inheritdoc/>

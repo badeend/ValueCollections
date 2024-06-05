@@ -177,5 +177,94 @@ public class ValueDictionaryTests
         Assert.True(d.ToString().StartsWith("ValueDictionary(Count: 3) { "));
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(10)]
+    [InlineData(32)]
+    [InlineData(100)]
+    public void EnumerationOrder(int length)
+    {
+        var input = Enumerable.Range(1, length).Select(i => new KeyValuePair<int, int>(i, i)).ToArray();
+
+        // ToArray
+        AssertEnumerationOrder(input, s => s.ToArray());
+
+        // IEnumerable.GetEnumerator
+        AssertEnumerationOrder(input, s => s.Select(x => x).ToArray());
+
+        // GetEnumerator
+        AssertEnumerationOrder(input, s =>
+        {
+            var list = new List<KeyValuePair<int, int>>();
+            foreach (var item in s)
+            {
+                list.Add(item);
+            }
+            return list.ToArray();
+        });
+
+        // ICollection<T>.CopyTo
+        AssertEnumerationOrder(input, s =>
+        {
+            var a = new KeyValuePair<int, int>[s.Count];
+            (s as ICollection<KeyValuePair<int, int>>).CopyTo(a, 0);
+            return a;
+        });
+
+        static void AssertEnumerationOrder(KeyValuePair<int, int>[] input, Func<ValueDictionary<int, int>, KeyValuePair<int, int>[]> transform)
+        {
+            var referenceDictionary = input.ToValueDictionary();
+            var referenceOrder = referenceDictionary.ToArray();
+            var changeCounter = 0;
+
+            // Because we're dealing with randomness, run the tests a few times to reduce false positives.
+            for (int i = 0; i < 20; i++)
+            {
+                var o1 = transform(referenceDictionary);
+                var o2 = transform(input.ToValueDictionary());
+
+                if (input.Length != o1.Length)
+                {
+                    throw new Exception("Length must remain the same");
+                }
+
+                if (input.Length != o2.Length)
+                {
+                    throw new Exception("Length must remain the same");
+                }
+
+                foreach (var item in input)
+                {
+                    if (!o1.Contains(item))
+                    {
+                        throw new Exception("Content must remain the same");
+                    }
+
+                    if (!o2.Contains(item))
+                    {
+                        throw new Exception("Content must remain the same");
+                    }
+                }
+
+                if (!Enumerable.SequenceEqual(referenceOrder, o1))
+                {
+                    throw new Exception("Order of the exact same set instance shouldn't change between enumerations.");
+                }
+
+                if (!Enumerable.SequenceEqual(input, o2))
+                {
+                    changeCounter++;
+                }
+            }
+
+            if (input.Length > 1 && changeCounter == 0)
+            {
+                throw new Exception("Expected enumeration to change the order");
+            }
+        }
+    }
+
     private static KeyValuePair<TKey, TValue> Entry<TKey, TValue>(TKey key, TValue value) => new KeyValuePair<TKey, TValue>(key, value);
 }
