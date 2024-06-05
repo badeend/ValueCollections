@@ -23,6 +23,8 @@ namespace Badeend.ValueCollections;
 /// calling <c>.ToValueSet()</c> on a regular <see cref="HashSet{T}"/>
 /// <em>always</em> performs a full copy.
 ///
+/// The order in which the elements are enumerated is undefined.
+///
 /// Unlike ValueSet, ValueSetBuilder is <em>not</em> thread-safe.
 /// </summary>
 /// <typeparam name="T">The type of items in the set.</typeparam>
@@ -462,18 +464,20 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	};
 
 	/// <summary>
-	/// Copy the contents of the set into a new array.
+	/// Copy the contents of the set into a new array. The order in which the
+	/// elements appear in the array is undefined.
 	/// </summary>
 	[Pure]
-	public T[] ToArray() => this.items switch
+	public T[] ToArray()
 	{
-		HashSet<T> items => items.ToArray(),
-		ValueSet<T> items => items.ToArray(),
-		_ => throw UnreachableException(),
-	};
+		var array = new T[this.Count];
+		this.CopyToUnchecked(array);
+		return array;
+	}
 
 	/// <summary>
-	/// Copy the contents of the set into an existing <see cref="Span{T}"/>.
+	/// Copy the contents of the set into an existing <see cref="Span{T}"/>. The
+	/// order in which the elements are copied is undefined.
 	/// </summary>
 	/// <exception cref="ArgumentException">
 	///   <paramref name="destination"/> is shorter than the source set.
@@ -490,7 +494,8 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 
 	/// <summary>
 	/// Attempt to copy the contents of the set into an existing
-	/// <see cref="Span{T}"/>. If the <paramref name="destination"/> is too short,
+	/// <see cref="Span{T}"/>. The order in which the elements are copied is
+	/// undefined. If the <paramref name="destination"/> is too short,
 	/// no items are copied and the method returns <see langword="false"/>.
 	/// </summary>
 	public bool TryCopyTo(Span<T> destination)
@@ -699,19 +704,21 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	{
 		private readonly ValueSetBuilder<T> builder;
 		private readonly int version;
-		private HashSet<T>.Enumerator enumerator;
+		private ShufflingHashSetEnumerator<T> enumerator;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal Enumerator(ValueSetBuilder<T> builder)
 		{
-			this.builder = builder;
-			this.version = builder.version;
-			this.enumerator = builder.items switch
+			var innerHashSet = builder.items switch
 			{
-				HashSet<T> items => items.GetEnumerator(),
-				ValueSet<T> items => items.Items.GetEnumerator(),
+				HashSet<T> items => items,
+				ValueSet<T> items => items.Items,
 				_ => throw UnreachableException(),
 			};
+
+			this.builder = builder;
+			this.version = builder.version;
+			this.enumerator = new(innerHashSet, initialSeed: builder.version);
 		}
 
 		/// <inheritdoc/>

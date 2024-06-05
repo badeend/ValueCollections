@@ -115,4 +115,93 @@ public class ValueSetTests
         Assert.True(b.ToString() == "ValueSet(Count: 1) { 42 }");
         Assert.True(c.ToString().StartsWith("ValueSet(Count: 3) { "));
     }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(10)]
+    [InlineData(32)]
+    [InlineData(100)]
+    public void EnumerationOrder(int length)
+    {
+        var input = Enumerable.Range(1, length).ToArray();
+
+        // ToArray
+        AssertEnumerationOrder(input, s => s.ToArray());
+
+        // IEnumerable.GetEnumerator
+        AssertEnumerationOrder(input, s => s.Select(x => x).ToArray());
+
+        // GetEnumerator
+        AssertEnumerationOrder(input, s =>
+        {
+            var list = new List<int>();
+            foreach (var item in s)
+            {
+                list.Add(item);
+            }
+            return list.ToArray();
+        });
+
+        // CopyTo
+        AssertEnumerationOrder(input, s =>
+        {
+            var a = new int[s.Count];
+            s.CopyTo(a.AsSpan());
+            return a;
+        });
+
+        static void AssertEnumerationOrder(int[] input, Func<ValueSet<int>, int[]> transform)
+        {
+            var referenceSet = input.ToValueSet();
+            var referenceOrder = referenceSet.ToArray();
+            var changeCounter = 0;
+
+            // Because we're dealing with randomness, run the tests a few times to reduce false positives.
+            for (int i = 0; i < 20; i++)
+            {
+                var o1 = transform(referenceSet);
+                var o2 = transform(input.ToValueSet());
+
+                if (input.Length != o1.Length)
+                {
+                    throw new Exception("Length must remain the same");
+                }
+
+                if (input.Length != o2.Length)
+                {
+                    throw new Exception("Length must remain the same");
+                }
+
+                foreach (var item in input)
+                {
+                    if (!o1.Contains(item))
+                    {
+                        throw new Exception("Content must remain the same");
+                    }
+
+                    if (!o2.Contains(item))
+                    {
+                        throw new Exception("Content must remain the same");
+                    }
+                }
+
+                if (!Enumerable.SequenceEqual(referenceOrder, o1))
+                {
+                    throw new Exception("Order of the exact same set instance shouldn't change between enumerations.");
+                }
+
+                if (!Enumerable.SequenceEqual(input, o2))
+                {
+                    changeCounter++;
+                }
+            }
+
+            if (input.Length > 1 && changeCounter == 0)
+            {
+                throw new Exception("Expected enumeration to change the order");
+            }
+        }
+    }
 }

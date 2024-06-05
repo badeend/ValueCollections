@@ -38,9 +38,8 @@ public static class ValueSet
 /// <summary>
 /// An immutable, thread-safe set with value semantics.
 ///
-/// A set is a collection that contains no duplicate elements, and whose elements
-/// are in no particular order. Enumerating a set returns its contents in
-/// undefined order and the may even be different on each iteration.
+/// A set is a collection of unique elements (i.e. no duplicates) in no
+/// particular order.
 ///
 /// Constructing new instances can be done using
 /// <see cref="ValueSet.Builder{T}()"/> or <see cref="ValueSet{T}.ToBuilder()"/>.
@@ -50,6 +49,8 @@ public static class ValueSet
 /// ValueSets have "structural equality". This means that two sets
 /// are considered equal only when their contents are equal. As long as a value
 /// is present in a ValueSet, its hash code may not change.
+///
+/// The order in which the elements are enumerated is undefined.
 /// </summary>
 /// <typeparam name="T">The type of items in the set.</typeparam>
 [CollectionBuilder(typeof(ValueSet), nameof(ValueSet.Create))]
@@ -211,7 +212,8 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 #endif
 
 	/// <summary>
-	/// Copy the contents of the set into a new array.
+	/// Copy the contents of the set into a new array. The order in which the
+	/// elements appear in the array is undefined.
 	/// </summary>
 	[Pure]
 	public T[] ToArray()
@@ -233,7 +235,8 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 	}
 
 	/// <summary>
-	/// Copy the contents of the set into an existing <see cref="Span{T}"/>.
+	/// Copy the contents of the set into an existing <see cref="Span{T}"/>. The
+	/// order in which the elements are copied is undefined.
 	/// </summary>
 	/// <exception cref="ArgumentException">
 	///   <paramref name="destination"/> is shorter than the source set.
@@ -250,7 +253,8 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 
 	/// <summary>
 	/// Attempt to copy the contents of the set into an existing
-	/// <see cref="Span{T}"/>. If the <paramref name="destination"/> is too short,
+	/// <see cref="Span{T}"/>. The order in which the elements are copied is
+	/// undefined. If the <paramref name="destination"/> is too short,
 	/// no items are copied and the method returns <see langword="false"/>.
 	/// </summary>
 	public bool TryCopyTo(Span<T> destination)
@@ -474,12 +478,12 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 #pragma warning disable CA1815 // Override equals and operator equals on value types
 	public struct Enumerator : IEnumeratorLike<T>
 	{
-		private HashSet<T>.Enumerator inner;
+		private ShufflingHashSetEnumerator<T> inner;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal Enumerator(ValueSet<T> set)
 		{
-			this.inner = set.items.GetEnumerator();
+			this.inner = new(set.items, initialSeed: 0);
 		}
 
 		/// <inheritdoc/>
