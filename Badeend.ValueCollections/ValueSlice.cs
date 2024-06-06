@@ -405,23 +405,29 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 
 	/// <summary>
 	/// Create a new <see cref="IEnumerable{T}"/> view over the slice.
-	///
-	/// This method allocates a new fixed-size IEnumerable instance. The items
-	/// are not copied.
 	/// </summary>
+	/// <remarks>
+	/// This method is an <c>O(1)</c> operation and allocates a new fixed-size
+	/// IEnumerable instance. The items are not copied.
+	/// </remarks>
 	[Pure]
 	public IEnumerable<T> AsEnumerable() => new Reader(this);
 
 	/// <summary>
 	/// Create a new <see cref="IReadOnlyList{T}"/> view over the slice.
-	///
-	/// This method allocates a new fixed-size IReadOnlyList instance. The items
-	/// are not copied.
 	/// </summary>
+	/// <remarks>
+	/// This method is an <c>O(1)</c> operation and allocates a new fixed-size
+	/// IReadOnlyList instance. The items are not copied.
+	/// </remarks>
 	[Pure]
 	public IReadOnlyList<T> AsReadOnlyList() => new Reader(this);
 
-	private sealed class Reader : IEnumerable<T>, IReadOnlyList<T>
+	// The ICollection<T> and IList<T> implementations are not directly exposed
+	// by this package but are implemented anyways. Because, behind the scenes,
+	// many methods in the BCL perform runtime typechecks on those interfaces to
+	// performs various kinds of optimizations.
+	private sealed class Reader : IEnumerable<T>, IReadOnlyList<T>, IList<T>, ICollection<T>
 	{
 		private readonly ValueSlice<T> slice;
 
@@ -432,7 +438,29 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 
 		public T this[int index] => this.slice[index];
 
+		T IList<T>.this[int index]
+		{
+			get => this.slice[index];
+			set => throw ImmutableException();
+		}
+
 		public int Count => this.slice.Length;
+
+		public bool IsReadOnly => true;
+
+		public int IndexOf(T item) => this.slice.IndexOf(item);
+
+		public bool Contains(T item) => this.slice.Contains(item);
+
+		public void CopyTo(T[] array, int arrayIndex)
+		{
+			if (array is null)
+			{
+				throw new ArgumentNullException(nameof(array));
+			}
+
+			this.slice.CopyTo(array.AsSpan(arrayIndex));
+		}
 
 		public IEnumerator<T> GetEnumerator()
 		{
@@ -443,6 +471,18 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 		}
 
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+
+		public void Add(T item) => throw ImmutableException();
+
+		public void Clear() => throw ImmutableException();
+
+		public bool Remove(T item) => throw ImmutableException();
+
+		public void Insert(int index, T item) => throw ImmutableException();
+
+		public void RemoveAt(int index) => throw ImmutableException();
+
+		private static NotSupportedException ImmutableException() => new("Collection is immutable");
 	}
 
 	private static bool SequenceEqual(ValueSlice<T> left, ValueSlice<T> right)
