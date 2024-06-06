@@ -14,13 +14,14 @@ namespace Badeend.ValueCollections.Tests.Reference
     /// </summary>
     public abstract class ValueDictionaryBuilder_Tests<TKey, TValue> : IDictionary_Generic_Tests<TKey, TValue>
     {
+        protected override bool ResetImplemented => false;
         protected override bool Enumerator_Empty_UsesSingletonInstance => true;
+        protected override bool Enumerator_Current_UndefinedOperation_Throws => true;
         protected override bool Enumerator_Empty_Current_UndefinedOperation_Throws => true;
         protected override bool Enumerator_Empty_ModifiedDuringEnumeration_ThrowsInvalidOperationException => false;
+        protected override bool Enumerator_ModifiedDuringEnumeration_ThrowsInvalidOperationException => true;
+        protected override bool IDictionary_Generic_Keys_Values_ModifyingTheDictionaryUpdatesTheCollection => false;
 
-        protected override ModifyOperation ModifyEnumeratorThrows => ModifyOperation.Add | ModifyOperation.Insert;
-
-        protected override ModifyOperation ModifyEnumeratorAllowed => ModifyOperation.Overwrite | ModifyOperation.Remove | ModifyOperation.Clear;
 
         #region IDictionary<TKey, TValue Helper Methods
 
@@ -38,7 +39,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         {
             IDictionary<TKey, TValue> source = GenericIDictionaryFactory(count);
             IDictionary<TKey, TValue> copied = new ValueDictionaryBuilder<TKey, TValue>(source);
-            Assert.Equal(source, copied);
+            Assert.True(source.EqualsUnordered(copied));
         }
 
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
@@ -225,7 +226,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         }
 
         [Fact]
-        public void ValueDictionaryBuilder_Remove_RemoveFirstEnumerationContinues()
+        public void ValueDictionaryBuilder_Remove_RemoveFirstEnumerationThrows()
         {
             ValueDictionaryBuilder<TKey,TValue> dict = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(3);
             var enumerator = dict.GetEnumerator();
@@ -233,24 +234,22 @@ namespace Badeend.ValueCollections.Tests.Reference
             TKey key = enumerator.Current.Key;
             enumerator.MoveNext();
             dict.Remove(key);
-            Assert.True(enumerator.MoveNext());
-            Assert.False(enumerator.MoveNext());
+            Assert.Throws<InvalidOperationException>(() => enumerator.MoveNext());
         }
 
         [Fact]
-        public void ValueDictionaryBuilder_Remove_RemoveCurrentEnumerationContinues()
+        public void ValueDictionaryBuilder_Remove_RemoveCurrentEnumerationThrows()
         {
             ValueDictionaryBuilder<TKey, TValue> dict = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(3);
             var enumerator = dict.GetEnumerator();
             enumerator.MoveNext();
             enumerator.MoveNext();
             dict.Remove(enumerator.Current.Key);
-            Assert.True(enumerator.MoveNext());
-            Assert.False(enumerator.MoveNext());
+            Assert.Throws<InvalidOperationException>(() => enumerator.MoveNext());
         }
 
         [Fact]
-        public void ValueDictionaryBuilder_Remove_RemoveLastEnumerationFinishes()
+        public void ValueDictionaryBuilder_Remove_RemoveLastEnumerationThrows()
         {
             ValueDictionaryBuilder<TKey, TValue> dict = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(3);
             TKey key = default;
@@ -266,7 +265,7 @@ namespace Badeend.ValueCollections.Tests.Reference
                 enumerator.MoveNext();
                 enumerator.MoveNext();
                 dict.Remove(key);
-                Assert.False(enumerator.MoveNext());
+                Assert.Throws<InvalidOperationException>(() => enumerator.MoveNext());
             }
         }
 

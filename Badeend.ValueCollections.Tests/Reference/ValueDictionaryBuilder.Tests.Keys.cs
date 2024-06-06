@@ -9,11 +9,16 @@ namespace Badeend.ValueCollections.Tests.Reference
 {
     public class ValueDictionaryBuilder_Tests_Keys : ICollection_Generic_Tests<string>
     {
-        protected override bool Enumerator_Empty_UsesSingletonInstance => true;
-        protected override bool Enumerator_Empty_Current_UndefinedOperation_Throws => true;
         protected override bool DefaultValueAllowed => false;
         protected override bool DuplicateValuesAllowed => false;
         protected override bool IsReadOnly => true;
+        protected override bool ResetImplemented => false;
+        protected override bool Enumerator_Empty_UsesSingletonInstance => true;
+        protected override bool Enumerator_Current_UndefinedOperation_Throws => true;
+        protected override bool Enumerator_Empty_Current_UndefinedOperation_Throws => true;
+        protected override bool Enumerator_Empty_ModifiedDuringEnumeration_ThrowsInvalidOperationException => false;
+        protected override bool Enumerator_ModifiedDuringEnumeration_ThrowsInvalidOperationException => true;
+
         protected override IEnumerable<ModifyEnumerable> GetModifyEnumerables(ModifyOperation operations) => new List<ModifyEnumerable>();
         protected override ICollection<string> GenericICollectionFactory()
         {

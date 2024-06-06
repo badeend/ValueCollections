@@ -405,6 +405,10 @@ namespace Badeend.ValueCollections.Tests.Reference
                 {
                     Assert.Empty(keys);
                 }
+                else if (IDictionary_Generic_Keys_Values_Enumeration_ThrowsInvalidOperation_WhenParentModified)
+                {
+                    Assert.Throws<InvalidOperationException>(() => keys.Count);
+                }
                 else
                 {
                     Assert.Equal(previousCount, keys.Count);
@@ -425,7 +429,15 @@ namespace Badeend.ValueCollections.Tests.Reference
                 if (count == 0 ? Enumerator_Empty_ModifiedDuringEnumeration_ThrowsInvalidOperationException : IDictionary_Generic_Keys_Values_Enumeration_ThrowsInvalidOperation_WhenParentModified)
                 {
                     Assert.Throws<InvalidOperationException>(() => keysEnum.MoveNext());
-                    Assert.Throws<InvalidOperationException>(() => keysEnum.Reset());
+
+                    if (IDictionary_Generic_Keys_Values_Enumeration_ResetImplemented)
+                    {
+                        Assert.Throws<InvalidOperationException>(() => keysEnum.Reset());
+                    }
+                    else
+                    {
+                        Assert.Throws<NotSupportedException>(() => keysEnum.Reset());
+                    }
                 }
                 else
                 {
@@ -433,7 +445,15 @@ namespace Badeend.ValueCollections.Tests.Reference
                     {
                         _ = keysEnum.Current;
                     }
-                    keysEnum.Reset();
+
+                    if (IDictionary_Generic_Keys_Values_Enumeration_ResetImplemented)
+                    {
+                        keysEnum.Reset();
+                    }
+                    else
+                    {
+                        Assert.Throws<NotSupportedException>(() => keysEnum.Reset());
+                    }
                 }
             }
         }
@@ -512,6 +532,10 @@ namespace Badeend.ValueCollections.Tests.Reference
                 {
                     Assert.Empty(values);
                 }
+                else if (IDictionary_Generic_Keys_Values_Enumeration_ThrowsInvalidOperation_WhenParentModified)
+                {
+                    Assert.Throws<InvalidOperationException>(() => values.Count);
+                }
                 else
                 {
                     Assert.Equal(previousCount, values.Count);
@@ -532,7 +556,15 @@ namespace Badeend.ValueCollections.Tests.Reference
                 if (count == 0 ? Enumerator_Empty_ModifiedDuringEnumeration_ThrowsInvalidOperationException : IDictionary_Generic_Keys_Values_Enumeration_ThrowsInvalidOperation_WhenParentModified)
                 {
                     Assert.Throws<InvalidOperationException>(() => valuesEnum.MoveNext());
-                    Assert.Throws<InvalidOperationException>(() => valuesEnum.Reset());
+
+                    if (IDictionary_Generic_Keys_Values_Enumeration_ResetImplemented)
+                    {
+                        Assert.Throws<InvalidOperationException>(() => valuesEnum.Reset());
+                    }
+                    else
+                    {
+                        Assert.Throws<NotSupportedException>(() => valuesEnum.Reset());
+                    }
                 }
                 else
                 {
@@ -540,7 +572,15 @@ namespace Badeend.ValueCollections.Tests.Reference
                     {
                         _ = valuesEnum.Current;
                     }
-                    valuesEnum.Reset();
+
+                    if (IDictionary_Generic_Keys_Values_Enumeration_ResetImplemented)
+                    {
+                        valuesEnum.Reset();
+                    }
+                    else
+                    {
+                        Assert.Throws<NotSupportedException>(() => valuesEnum.Reset());
+                    }
                 }
             }
         }
@@ -1021,19 +1061,6 @@ namespace Badeend.ValueCollections.Tests.Reference
         #endregion
 
         #region ICollection
-
-        [Theory]
-        [MemberData(nameof(ValidCollectionSizes))]
-        public void ICollection_NonGeneric_CopyTo(int count)
-        {
-            IDictionary<TKey, TValue> dictionary = GenericIDictionaryFactory(count);
-            KeyValuePair<TKey, TValue>[] array = new KeyValuePair<TKey, TValue>[count];
-            object[] objarray = new object[count];
-            dictionary.CopyTo(array, 0);
-            ((ICollection)dictionary).CopyTo(objarray, 0);
-            for (int i = 0; i < count; i++)
-                Assert.Equal(array[i], (KeyValuePair<TKey, TValue>)(objarray[i]));
-        }
 
         [Theory]
         [MemberData(nameof(ValidCollectionSizes))]

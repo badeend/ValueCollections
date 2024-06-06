@@ -846,14 +846,43 @@ public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TVa
 		public IEnumerator<TKey> GetEnumerator()
 		{
 			var builder = this.Read();
-
-			foreach (var entry in builder)
+			if (builder.Count == 0)
 			{
-				yield return entry.Key;
+				return EnumeratorLike.Empty<TKey>();
+			}
+			else
+			{
+				return EnumeratorLike.AsIEnumerator<TKey, Enumerator>(new Enumerator(builder.GetEnumerator()));
 			}
 		}
 
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+
+#pragma warning disable CA1034 // Nested types should not be visible
+#pragma warning disable CA1815 // Override equals and operator equals on value types
+		private struct Enumerator : IEnumeratorLike<TKey>
+		{
+			private ValueDictionaryBuilder<TKey, TValue>.Enumerator inner;
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			internal Enumerator(ValueDictionaryBuilder<TKey, TValue>.Enumerator inner)
+			{
+				this.inner = inner;
+			}
+
+			/// <inheritdoc/>
+			public readonly TKey Current
+			{
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
+				get => this.inner.Current.Key;
+			}
+
+			/// <inheritdoc/>
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			public bool MoveNext() => this.inner.MoveNext();
+		}
+#pragma warning restore CA1815 // Override equals and operator equals on value types
+#pragma warning restore CA1034 // Nested types should not be visible
 
 		public void Add(TKey item) => throw ImmutableException();
 
@@ -917,14 +946,43 @@ public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TVa
 		public IEnumerator<TValue> GetEnumerator()
 		{
 			var builder = this.Read();
-
-			foreach (var entry in builder)
+			if (builder.Count == 0)
 			{
-				yield return entry.Value;
+				return EnumeratorLike.Empty<TValue>();
+			}
+			else
+			{
+				return EnumeratorLike.AsIEnumerator<TValue, Enumerator>(new Enumerator(builder.GetEnumerator()));
 			}
 		}
 
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+
+#pragma warning disable CA1034 // Nested types should not be visible
+#pragma warning disable CA1815 // Override equals and operator equals on value types
+		private struct Enumerator : IEnumeratorLike<TValue>
+		{
+			private ValueDictionaryBuilder<TKey, TValue>.Enumerator inner;
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			internal Enumerator(ValueDictionaryBuilder<TKey, TValue>.Enumerator inner)
+			{
+				this.inner = inner;
+			}
+
+			/// <inheritdoc/>
+			public readonly TValue Current
+			{
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
+				get => this.inner.Current.Value;
+			}
+
+			/// <inheritdoc/>
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			public bool MoveNext() => this.inner.MoveNext();
+		}
+#pragma warning restore CA1815 // Override equals and operator equals on value types
+#pragma warning restore CA1034 // Nested types should not be visible
 
 		public void Add(TValue item) => throw ImmutableException();
 
