@@ -26,9 +26,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
         protected override IDictionary<TKey, TValue> GenericIDictionaryFactory() => new ValueDictionaryBuilder<TKey, TValue>();
 
-        protected override IDictionary<TKey, TValue> GenericIDictionaryFactory(IEqualityComparer<TKey> comparer) => new ValueDictionaryBuilder<TKey, TValue>(comparer);
-
-        protected override Type ICollection_Generic_CopyTo_IndexLargerThanArrayCount_ThrowType => typeof(ArgumentOutOfRangeException);
+        protected override IDictionary<TKey, TValue> GenericIDictionaryFactory(IEqualityComparer<TKey> comparer) => null;
 
         #endregion
 
@@ -43,44 +41,13 @@ namespace Badeend.ValueCollections.Tests.Reference
             Assert.Equal(source, copied);
         }
 
-        [Theory]
-        [MemberData(nameof(ValidCollectionSizes))]
-        public void ValueDictionaryBuilder_Constructor_IDictionary_IEqualityComparer(int count)
-        {
-            IEqualityComparer<TKey> comparer = GetKeyIEqualityComparer();
-            IDictionary<TKey, TValue> source = GenericIDictionaryFactory(count);
-            ValueDictionaryBuilder<TKey, TValue> copied = new ValueDictionaryBuilder<TKey, TValue>(source, comparer);
-            Assert.Equal(source, copied);
-            Assert.Equal(comparer, copied.Comparer);
-        }
-
-        [Theory]
-        [MemberData(nameof(ValidCollectionSizes))]
-        public void ValueDictionaryBuilder_Constructor_IEqualityComparer(int count)
-        {
-            IEqualityComparer<TKey> comparer = GetKeyIEqualityComparer();
-            IDictionary<TKey, TValue> source = GenericIDictionaryFactory(count);
-            ValueDictionaryBuilder<TKey, TValue> copied = new ValueDictionaryBuilder<TKey, TValue>(source, comparer);
-            Assert.Equal(source, copied);
-            Assert.Equal(comparer, copied.Comparer);
-        }
-
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
         [Theory]
         [MemberData(nameof(ValidCollectionSizes))]
         public void ValueDictionaryBuilder_Constructor_int(int count)
         {
             IDictionary<TKey, TValue> dictionary = new ValueDictionaryBuilder<TKey, TValue>(count);
             Assert.Equal(0, dictionary.Count);
-        }
-
-        [Theory]
-        [MemberData(nameof(ValidCollectionSizes))]
-        public void ValueDictionaryBuilder_Constructor_int_IEqualityComparer(int count)
-        {
-            IEqualityComparer<TKey> comparer = GetKeyIEqualityComparer();
-            ValueDictionaryBuilder<TKey, TValue> dictionary = new ValueDictionaryBuilder<TKey, TValue>(count, comparer);
-            Assert.Equal(0, dictionary.Count);
-            Assert.Equal(comparer, dictionary.Comparer);
         }
 
         [Theory]
@@ -91,11 +58,11 @@ namespace Badeend.ValueCollections.Tests.Reference
             ValueDictionaryBuilder<TKey, TValue> dict = new ValueDictionaryBuilder<TKey, TValue>(capacity);
             Assert.True(capacity <= dict.Capacity);
         }
-
+#endif
         #endregion
 
         #region Properties
-
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
         public void DictResized_CapacityChanged()
         {
             var dict = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(1);
@@ -111,7 +78,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             Assert.True(afterCapacity > initialCapacity);
         }
-
+#endif
         #endregion
         #region ContainsValue
 
@@ -163,25 +130,25 @@ namespace Badeend.ValueCollections.Tests.Reference
 
         #endregion
 
-        #region IReadOnlyValueDictionaryBuilder<TKey, TValue>.Keys
+        #region IReadOnlyDictionary<TKey, TValue>.Keys
 
         [Theory]
         [MemberData(nameof(ValidCollectionSizes))]
-        public void IReadOnlyValueDictionaryBuilder_Keys_ContainsAllCorrectKeys(int count)
+        public void IReadOnlyDictionary_Keys_ContainsAllCorrectKeys(int count)
         {
             IDictionary<TKey, TValue> dictionary = GenericIDictionaryFactory(count);
             IEnumerable<TKey> expected = dictionary.Select((pair) => pair.Key);
-            IEnumerable<TKey> keys = ((IReadOnlyValueDictionaryBuilder<TKey, TValue>)dictionary).Keys;
+            IEnumerable<TKey> keys = ((IReadOnlyDictionary<TKey, TValue>)dictionary).Keys;
             Assert.True(expected.SequenceEqual(keys));
         }
 
         [Theory]
         [MemberData(nameof(ValidCollectionSizes))]
-        public void IReadOnlyValueDictionaryBuilder_Values_ContainsAllCorrectValues(int count)
+        public void IReadOnlyDictionary_Values_ContainsAllCorrectValues(int count)
         {
             IDictionary<TKey, TValue> dictionary = GenericIDictionaryFactory(count);
             IEnumerable<TValue> expected = dictionary.Select((pair) => pair.Value);
-            IEnumerable<TValue> values = ((IReadOnlyValueDictionaryBuilder<TKey, TValue>)dictionary).Values;
+            IEnumerable<TValue> values = ((IReadOnlyDictionary<TKey, TValue>)dictionary).Values;
             Assert.True(expected.SequenceEqual(values));
         }
 
@@ -197,7 +164,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             TValue value;
             TKey missingKey = GetNewKey(dictionary);
 
-            Assert.False(dictionary.Remove(missingKey, out value));
+            Assert.False(dictionary.TryRemove(missingKey, out value));
             Assert.Equal(count, dictionary.Count);
             Assert.Equal(default(TValue), value);
         }
@@ -212,7 +179,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             TValue inValue = CreateTValue(count);
 
             dictionary.Add(missingKey, inValue);
-            Assert.True(dictionary.Remove(missingKey, out outValue));
+            Assert.True(dictionary.TryRemove(missingKey, out outValue));
             Assert.Equal(count, dictionary.Count);
             Assert.Equal(inValue, outValue);
             Assert.False(dictionary.TryGetValue(missingKey, out outValue));
@@ -230,14 +197,14 @@ namespace Badeend.ValueCollections.Tests.Reference
                 TKey missingKey = default(TKey);
                 while (dictionary.ContainsKey(missingKey))
                     dictionary.Remove(missingKey);
-                Assert.False(dictionary.Remove(missingKey, out outValue));
+                Assert.False(dictionary.TryRemove(missingKey, out outValue));
                 Assert.Equal(default(TValue), outValue);
             }
             else
             {
                 TValue initValue = CreateTValue(count);
                 outValue = initValue;
-                Assert.Throws<ArgumentNullException>(() => dictionary.Remove(default(TKey), out outValue));
+                Assert.Throws<ArgumentNullException>(() => dictionary.TryRemove(default(TKey), out outValue));
                 Assert.Equal(initValue, outValue);
             }
         }
@@ -253,7 +220,7 @@ namespace Badeend.ValueCollections.Tests.Reference
                 TValue value;
 
                 dictionary.TryAdd(missingKey, default(TValue));
-                Assert.True(dictionary.Remove(missingKey, out value));
+                Assert.True(dictionary.TryRemove(missingKey, out value));
             }
         }
 
@@ -261,29 +228,25 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void ValueDictionaryBuilder_Remove_RemoveFirstEnumerationContinues()
         {
             ValueDictionaryBuilder<TKey,TValue> dict = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(3);
-            using (var enumerator = dict.GetEnumerator())
-            {
-                enumerator.MoveNext();
-                TKey key = enumerator.Current.Key;
-                enumerator.MoveNext();
-                dict.Remove(key);
-                Assert.True(enumerator.MoveNext());
-                Assert.False(enumerator.MoveNext());
-            }
+            var enumerator = dict.GetEnumerator();
+            enumerator.MoveNext();
+            TKey key = enumerator.Current.Key;
+            enumerator.MoveNext();
+            dict.Remove(key);
+            Assert.True(enumerator.MoveNext());
+            Assert.False(enumerator.MoveNext());
         }
 
         [Fact]
         public void ValueDictionaryBuilder_Remove_RemoveCurrentEnumerationContinues()
         {
             ValueDictionaryBuilder<TKey, TValue> dict = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(3);
-            using (var enumerator = dict.GetEnumerator())
-            {
-                enumerator.MoveNext();
-                enumerator.MoveNext();
-                dict.Remove(enumerator.Current.Key);
-                Assert.True(enumerator.MoveNext());
-                Assert.False(enumerator.MoveNext());
-            }
+            var enumerator = dict.GetEnumerator();
+            enumerator.MoveNext();
+            enumerator.MoveNext();
+            dict.Remove(enumerator.Current.Key);
+            Assert.True(enumerator.MoveNext());
+            Assert.False(enumerator.MoveNext());
         }
 
         [Fact]
@@ -291,15 +254,15 @@ namespace Badeend.ValueCollections.Tests.Reference
         {
             ValueDictionaryBuilder<TKey, TValue> dict = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(3);
             TKey key = default;
-            using (var enumerator = dict.GetEnumerator())
             {
+                var enumerator = dict.GetEnumerator();
                 while (enumerator.MoveNext())
                 {
                     key = enumerator.Current.Key;
                 }
             }
-            using (var enumerator = dict.GetEnumerator())
             {
+                var enumerator = dict.GetEnumerator();
                 enumerator.MoveNext();
                 enumerator.MoveNext();
                 dict.Remove(key);
@@ -308,7 +271,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         }
 
         #endregion
-
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
         #region EnsureCapacity
 
         [Theory]
@@ -319,7 +282,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             var capacity = dictionary.EnsureCapacity(0);
             var enumerator = dictionary.GetEnumerator();
 
-            dictionary.EnsureCapacity(capacity + 1); // Verify EnsureCapacity does invalidate enumeration
+            dictionary.EnsureCapacity(dictionary.Capacity + 1); // Verify EnsureCapacity does invalidate enumeration
 
             Assert.Throws<InvalidOperationException>(() => enumerator.MoveNext());
         }
@@ -335,7 +298,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void EnsureCapacity_Generic_DictionaryNotInitialized_RequestedZero_ReturnsZero()
         {
             var dictionary = new ValueDictionaryBuilder<TKey, TValue>();
-            Assert.Equal(0, dictionary.EnsureCapacity(0));
+            dictionary.EnsureCapacity(0);
+            Assert.Equal(0, dictionary.Capacity);
         }
 
         [Theory]
@@ -346,7 +310,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void EnsureCapacity_Generic_DictionaryNotInitialized_RequestedNonZero_CapacityIsSetToAtLeastTheRequested(int requestedCapacity)
         {
             var dictionary = new ValueDictionaryBuilder<TKey, TValue>();
-            Assert.InRange(dictionary.EnsureCapacity(requestedCapacity), requestedCapacity, int.MaxValue);
+            dictionary.EnsureCapacity(requestedCapacity);
+            Assert.InRange(dictionary.Capacity, requestedCapacity, int.MaxValue);
         }
 
         [Theory]
@@ -360,7 +325,8 @@ namespace Badeend.ValueCollections.Tests.Reference
             for (int i = 0; i <= currentCapacity; i++)
             {
                 dictionary = new ValueDictionaryBuilder<TKey, TValue>(currentCapacity);
-                Assert.Equal(currentCapacity, dictionary.EnsureCapacity(i));
+                dictionary.EnsureCapacity(i);
+                Assert.Equal(currentCapacity, dictionary.Capacity);
             }
         }
 
@@ -369,31 +335,12 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void EnsureCapacity_Generic_ExistingCapacityRequested_SameValueReturned(int capacity)
         {
             var dictionary = new ValueDictionaryBuilder<TKey, TValue>(capacity);
-            Assert.Equal(capacity, dictionary.EnsureCapacity(capacity));
+            dictionary.EnsureCapacity(capacity);
+            Assert.Equal(capacity, dictionary.Capacity);
 
             dictionary = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(capacity);
-            Assert.Equal(capacity, dictionary.EnsureCapacity(capacity));
-        }
-
-        [Theory]
-        [InlineData(0)]
-        [InlineData(1)]
-        [InlineData(2)]
-        [InlineData(3)]
-        [InlineData(4)]
-        public void EnsureCapacity_Generic_EnsureCapacityCalledTwice_ReturnsSameValue(int count)
-        {
-            var dictionary = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(count);
-            int capacity = dictionary.EnsureCapacity(0);
-            Assert.Equal(capacity, dictionary.EnsureCapacity(0));
-
-            dictionary = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(count);
-            capacity = dictionary.EnsureCapacity(count);
-            Assert.Equal(capacity, dictionary.EnsureCapacity(count));
-
-            dictionary = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(count);
-            capacity = dictionary.EnsureCapacity(count + 1);
-            Assert.Equal(capacity, dictionary.EnsureCapacity(count + 1));
+            dictionary.EnsureCapacity(capacity);
+            Assert.Equal(capacity, dictionary.Capacity);
         }
 
         [Theory]
@@ -403,7 +350,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void EnsureCapacity_Generic_DictionaryNotEmpty_RequestedSmallerThanCount_ReturnsAtLeastSizeOfCount(int count)
         {
             var dictionary = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(count);
-            Assert.InRange(dictionary.EnsureCapacity(count - 1), count, int.MaxValue);
+            dictionary.EnsureCapacity(count - 1);
+            Assert.InRange(dictionary.Capacity, count, int.MaxValue);
         }
 
         [Theory]
@@ -414,10 +362,11 @@ namespace Badeend.ValueCollections.Tests.Reference
             var dictionary = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(count);
 
             // get current capacity
-            int currentCapacity = dictionary.EnsureCapacity(0);
+            int currentCapacity = dictionary.Capacity;
 
             // assert we can update to a larger capacity
-            int newCapacity = dictionary.EnsureCapacity(currentCapacity * 2);
+            dictionary.EnsureCapacity(currentCapacity * 2);
+            int newCapacity = dictionary.Capacity;
             Assert.InRange(newCapacity, currentCapacity * 2, int.MaxValue);
         }
 
@@ -425,13 +374,16 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void EnsureCapacity_Generic_CapacityIsSetToPrimeNumberLargerOrEqualToRequested()
         {
             var dictionary = new ValueDictionaryBuilder<TKey, TValue>();
-            Assert.Equal(17, dictionary.EnsureCapacity(17));
+            dictionary.EnsureCapacity(17);
+            Assert.Equal(17, dictionary.Capacity);
 
             dictionary = new ValueDictionaryBuilder<TKey, TValue>();
-            Assert.Equal(17, dictionary.EnsureCapacity(15));
+            dictionary.EnsureCapacity(15);
+            Assert.Equal(17, dictionary.Capacity);
 
             dictionary = new ValueDictionaryBuilder<TKey, TValue>();
-            Assert.Equal(17, dictionary.EnsureCapacity(13));
+            dictionary.EnsureCapacity(13);
+            Assert.Equal(17, dictionary.Capacity);
         }
 
         #endregion
@@ -464,7 +416,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         {
             var dictionary = new ValueDictionaryBuilder<TKey, TValue>(20);
             dictionary.TrimExcess(7);
-            Assert.Equal(7, dictionary.EnsureCapacity(0));
+            Assert.Equal(7, dictionary.Capacity);
         }
 
         [Theory]
@@ -473,23 +425,23 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void TrimExcess_Generic_TrimToLargerThanExistingCapacity_DoesNothing(int suggestedCapacity)
         {
             var dictionary = new ValueDictionaryBuilder<TKey, TValue>();
-            int capacity = dictionary.EnsureCapacity(0);
+            int capacity = dictionary.Capacity;
             dictionary.TrimExcess(suggestedCapacity);
-            Assert.Equal(capacity, dictionary.EnsureCapacity(0));
+            Assert.Equal(capacity, dictionary.Capacity);
 
             dictionary = new ValueDictionaryBuilder<TKey, TValue>(suggestedCapacity/2);
-            capacity = dictionary.EnsureCapacity(0);
+            capacity = dictionary.Capacity;
             dictionary.TrimExcess(suggestedCapacity);
-            Assert.Equal(capacity, dictionary.EnsureCapacity(0));
+            Assert.Equal(capacity, dictionary.Capacity);
         }
 
         [Fact]
         public void TrimExcess_Generic_DictionaryNotInitialized_CapacityRemainsAsMinPossible()
         {
             var dictionary = new ValueDictionaryBuilder<TKey, TValue>();
-            Assert.Equal(0, dictionary.EnsureCapacity(0));
+            Assert.Equal(0, dictionary.Capacity);
             dictionary.TrimExcess();
-            Assert.Equal(0, dictionary.EnsureCapacity(0));
+            Assert.Equal(0, dictionary.Capacity);
         }
 
         [Theory]
@@ -503,7 +455,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             // The smallest possible capacity size after clearing a dictionary is 3
             dictionary.Clear();
             dictionary.TrimExcess();
-            Assert.Equal(3, dictionary.EnsureCapacity(0));
+            Assert.Equal(3, dictionary.Capacity);
         }
 
         [Theory]
@@ -517,7 +469,7 @@ namespace Badeend.ValueCollections.Tests.Reference
                 dictionary.Add(i, 0);
             }
             dictionary.TrimExcess();
-            Assert.InRange(dictionary.EnsureCapacity(0), count, int.MaxValue);
+            Assert.InRange(dictionary.Capacity, count, int.MaxValue);
         }
 
         [Theory]
@@ -528,7 +480,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             const int InitToFinalRatio = 10;
             int initialCount = InitToFinalRatio * finalCount;
             var dictionary = new ValueDictionaryBuilder<int, int>(initialCount);
-            Assert.InRange(dictionary.EnsureCapacity(0), initialCount, int.MaxValue);
+            Assert.InRange(dictionary.Capacity, initialCount, int.MaxValue);
             for (int i = 0; i < initialCount; i++)
             {
                 dictionary.Add(i, 0);
@@ -540,7 +492,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             for (int i = InitToFinalRatio; i > 0; i--)
             {
                 dictionary.TrimExcess(i * finalCount);
-                Assert.InRange(dictionary.EnsureCapacity(0), i * finalCount, int.MaxValue);
+                Assert.InRange(dictionary.Capacity, i * finalCount, int.MaxValue);
             }
         }
 
@@ -555,7 +507,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             Random random = new Random(32);
             var dictionary = new ValueDictionaryBuilder<int, int>();
             dictionary.TrimExcess();
-            Assert.InRange(dictionary.EnsureCapacity(0), dictionary.Count, int.MaxValue);
+            Assert.InRange(dictionary.Capacity, dictionary.Count, int.MaxValue);
 
             var initialKeys = new int[initialCount];
             for (int i = 0; i < initialCount; i++)
@@ -568,7 +520,7 @@ namespace Badeend.ValueCollections.Tests.Reference
                 dictionary.Add(key, 0);
             }
             dictionary.TrimExcess();
-            Assert.InRange(dictionary.EnsureCapacity(0), dictionary.Count, int.MaxValue);
+            Assert.InRange(dictionary.Capacity, dictionary.Count, int.MaxValue);
 
             random.Shuffle(initialKeys);
             for (int i = 0; i < numRemove; i++)
@@ -576,7 +528,7 @@ namespace Badeend.ValueCollections.Tests.Reference
                 dictionary.Remove(initialKeys[i]);
             }
             dictionary.TrimExcess();
-            Assert.InRange(dictionary.EnsureCapacity(0), dictionary.Count, int.MaxValue);
+            Assert.InRange(dictionary.Capacity, dictionary.Count, int.MaxValue);
 
             var moreKeys = new int[numAdd];
             for (int i = 0; i < numAdd; i++)
@@ -590,7 +542,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             }
             int currentCount = dictionary.Count;
             dictionary.TrimExcess();
-            Assert.InRange(dictionary.EnsureCapacity(0), currentCount, int.MaxValue);
+            Assert.InRange(dictionary.Capacity, currentCount, int.MaxValue);
 
             int[] existingKeys = new int[currentCount];
             Array.Copy(initialKeys, numRemove, existingKeys, 0, initialCount - numRemove);
@@ -601,7 +553,7 @@ namespace Badeend.ValueCollections.Tests.Reference
                 dictionary.Remove(existingKeys[i]);
             }
             dictionary.TrimExcess();
-            int finalCapacity = dictionary.EnsureCapacity(0);
+            int finalCapacity = dictionary.Capacity;
             Assert.InRange(finalCapacity, newCount, initialCount);
             Assert.Equal(newCapacity, finalCapacity);
         }
@@ -642,37 +594,6 @@ namespace Badeend.ValueCollections.Tests.Reference
         }
 
         #endregion
-
-        #region Non-randomized comparers
-        [Fact]
-        public void Dictionary_Comparer_NonRandomizedStringComparers()
-        {
-            RunTest(null);
-            RunTest(EqualityComparer<string>.Default);
-            RunTest(StringComparer.Ordinal);
-            RunTest(StringComparer.OrdinalIgnoreCase);
-            RunTest(StringComparer.InvariantCulture);
-            RunTest(StringComparer.InvariantCultureIgnoreCase);
-            RunTest(StringComparer.Create(CultureInfo.InvariantCulture, ignoreCase: false));
-            RunTest(StringComparer.Create(CultureInfo.InvariantCulture, ignoreCase: true));
-
-            void RunTest(IEqualityComparer<string> comparer)
-            {
-                // First, instantiate the dictionary and check its Comparer property
-
-                ValueDictionaryBuilder<string, object> dict = new ValueDictionaryBuilder<string, object>(comparer);
-                object expected = comparer ?? EqualityComparer<string>.Default;
-
-                Assert.Same(expected, dict.Comparer);
-
-                // Then pretend to serialize the dictionary and check the stored Comparer instance
-
-                SerializationInfo si = new SerializationInfo(typeof(ValueDictionaryBuilder<string, object>), new FormatterConverter());
-                dict.GetObjectData(si, new StreamingContext(StreamingContextStates.All));
-
-                Assert.Same(expected, si.GetValue("Comparer", typeof(IEqualityComparer<string>)));
-            }
-        }
-        #endregion
+#endif
     }
 }
