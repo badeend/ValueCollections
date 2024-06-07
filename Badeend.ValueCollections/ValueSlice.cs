@@ -403,6 +403,8 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	[Pure]
 	public static bool operator !=(ValueSlice<T> left, ValueSlice<T> right) => !SequenceEqual(left, right);
 
+	private static readonly Reader EmptyReader = new([]);
+
 	/// <summary>
 	/// Create a new <see cref="IEnumerable{T}"/> view over the slice.
 	/// </summary>
@@ -411,7 +413,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// IEnumerable instance. The items are not copied.
 	/// </remarks>
 	[Pure]
-	public IEnumerable<T> AsEnumerable() => new Reader(this);
+	public IEnumerable<T> AsEnumerable() => this.Length == 0 ? EmptyReader : new Reader(this);
 
 	/// <summary>
 	/// Create a new <see cref="IReadOnlyList{T}"/> view over the slice.
@@ -421,7 +423,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// IReadOnlyList instance. The items are not copied.
 	/// </remarks>
 	[Pure]
-	public IReadOnlyList<T> AsReadOnlyList() => new Reader(this);
+	public IReadOnlyList<T> AsReadOnlyList() => this.Length == 0 ? EmptyReader : new Reader(this);
 
 	// The ICollection<T> and IList<T> implementations are not directly exposed
 	// by this package but are implemented anyways. Because, behind the scenes,

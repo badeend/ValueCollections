@@ -195,4 +195,14 @@ public class ValueSliceTests
         Assert.True(b.ToString() == "ValueSlice(Length: 1) { 42 }");
         Assert.True(c.ToString() == "ValueSlice(Length: 3) { A, null, B }");
     }
+
+    [Fact]
+    public void AsEmptyCollection()
+    {
+        ValueSlice<int> a = [];
+        ValueSlice<int> b = [1];
+
+        Assert.Same(a.AsEnumerable(), a.AsEnumerable());
+        Assert.NotSame(b.AsEnumerable(), b.AsEnumerable());
+    }
 }
