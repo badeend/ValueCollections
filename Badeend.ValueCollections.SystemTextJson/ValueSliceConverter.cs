@@ -18,6 +18,6 @@ internal sealed class ValueSliceConverter<T>(JsonConverter<T> valueConverter) : 
 
 	public override void Write(Utf8JsonWriter writer, ValueSlice<T> slice, JsonSerializerOptions options)
 	{
-		this.inner.Write(writer, slice.AsEnumerable(), options);
+		this.inner.Write(writer, slice.AsCollection(), options);
 	}
 }

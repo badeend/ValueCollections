@@ -41,8 +41,7 @@ public static class ValueSlice
 /// To prevent accidental boxing, ValueSlice does not implement commonly used
 /// interfaces such as <see cref="IEnumerable{T}"/> and
 /// <see cref="IReadOnlyList{T}"/>. You can still use these interfaces by
-/// manually calling <see cref="ValueSlice{T}.AsEnumerable"/> or
-/// <see cref="ValueSlice{T}.AsReadOnlyList"/> instead.
+/// manually calling <see cref="ValueSlice{T}.AsCollection"/> instead.
 ///
 /// The <c>default</c> value of every ValueSlice is an empty slice.
 /// </remarks>
@@ -403,58 +402,62 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	[Pure]
 	public static bool operator !=(ValueSlice<T> left, ValueSlice<T> right) => !SequenceEqual(left, right);
 
-	private static readonly Reader EmptyReader = new([]);
+	private static readonly Collection EmptyCollection = new([]);
 
 	/// <summary>
-	/// Create a new <see cref="IEnumerable{T}"/> view over the slice.
+	/// Create a new heap-allocated view over the slice.
 	/// </summary>
 	/// <remarks>
 	/// This method is an <c>O(1)</c> operation and allocates a new fixed-size
-	/// IEnumerable instance. The items are not copied.
+	/// collection instance. The items are not copied.
 	/// </remarks>
 	[Pure]
-	public IEnumerable<T> AsEnumerable() => this.Length == 0 ? EmptyReader : new Reader(this);
+	public Collection AsCollection() => this.IsEmpty ? EmptyCollection : new Collection(this);
 
 	/// <summary>
-	/// Create a new <see cref="IReadOnlyList{T}"/> view over the slice.
+	/// A heap-allocated read-only view over a slice.
 	/// </summary>
 	/// <remarks>
-	/// This method is an <c>O(1)</c> operation and allocates a new fixed-size
-	/// IReadOnlyList instance. The items are not copied.
+	/// This type only exists for the interfaces it implements.
 	/// </remarks>
-	[Pure]
-	public IReadOnlyList<T> AsReadOnlyList() => this.Length == 0 ? EmptyReader : new Reader(this);
-
-	// The ICollection<T> and IList<T> implementations are not directly exposed
-	// by this package but are implemented anyways. Because, behind the scenes,
-	// many methods in the BCL perform runtime typechecks on those interfaces to
-	// performs various kinds of optimizations.
-	private sealed class Reader : IEnumerable<T>, IReadOnlyList<T>, IList<T>, ICollection<T>
+#pragma warning disable CA1034 // Nested types should not be visible
+#pragma warning disable CA1815 // Override equals and operator equals on value types
+	public sealed class Collection : IEnumerable<T>, IReadOnlyList<T>, IList<T>
 	{
 		private readonly ValueSlice<T> slice;
 
-		internal Reader(ValueSlice<T> slice)
+		internal Collection(ValueSlice<T> slice)
 		{
 			this.slice = slice;
 		}
 
-		public T this[int index] => this.slice[index];
+		/// <inheritdoc/>
+		T IReadOnlyList<T>.this[int index] => this.slice[index];
 
+		/// <inheritdoc/>
 		T IList<T>.this[int index]
 		{
 			get => this.slice[index];
 			set => throw ImmutableException();
 		}
 
-		public int Count => this.slice.Length;
+		/// <inheritdoc/>
+		int IReadOnlyCollection<T>.Count => this.slice.Length;
 
-		public bool IsReadOnly => true;
+		/// <inheritdoc/>
+		int ICollection<T>.Count => this.slice.Length;
 
-		public int IndexOf(T item) => this.slice.IndexOf(item);
+		/// <inheritdoc/>
+		bool ICollection<T>.IsReadOnly => true;
 
-		public bool Contains(T item) => this.slice.Contains(item);
+		/// <inheritdoc/>
+		int IList<T>.IndexOf(T item) => this.slice.IndexOf(item);
 
-		public void CopyTo(T[] array, int arrayIndex)
+		/// <inheritdoc/>
+		bool ICollection<T>.Contains(T item) => this.slice.Contains(item);
+
+		/// <inheritdoc/>
+		void ICollection<T>.CopyTo(T[] array, int arrayIndex)
 		{
 			if (array is null)
 			{
@@ -464,7 +467,8 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 			this.slice.CopyTo(array.AsSpan(arrayIndex));
 		}
 
-		public IEnumerator<T> GetEnumerator()
+		/// <inheritdoc/>
+		IEnumerator<T> IEnumerable<T>.GetEnumerator()
 		{
 			foreach (var value in this.slice)
 			{
@@ -472,20 +476,28 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 			}
 		}
 
-		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		/// <inheritdoc/>
+		IEnumerator IEnumerable.GetEnumerator() => (this as IEnumerable<T>).GetEnumerator();
 
-		public void Add(T item) => throw ImmutableException();
+		/// <inheritdoc/>
+		void ICollection<T>.Add(T item) => throw ImmutableException();
 
-		public void Clear() => throw ImmutableException();
+		/// <inheritdoc/>
+		void ICollection<T>.Clear() => throw ImmutableException();
 
-		public bool Remove(T item) => throw ImmutableException();
+		/// <inheritdoc/>
+		bool ICollection<T>.Remove(T item) => throw ImmutableException();
 
-		public void Insert(int index, T item) => throw ImmutableException();
+		/// <inheritdoc/>
+		void IList<T>.Insert(int index, T item) => throw ImmutableException();
 
-		public void RemoveAt(int index) => throw ImmutableException();
+		/// <inheritdoc/>
+		void IList<T>.RemoveAt(int index) => throw ImmutableException();
 
 		private static NotSupportedException ImmutableException() => new("Collection is immutable");
 	}
+#pragma warning restore CA1034 // Nested types should not be visible
+#pragma warning restore CA1815 // Override equals and operator equals on value types
 
 	private static bool SequenceEqual(ValueSlice<T> left, ValueSlice<T> right)
 	{

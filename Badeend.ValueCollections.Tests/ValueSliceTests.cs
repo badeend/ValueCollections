@@ -202,7 +202,7 @@ public class ValueSliceTests
         ValueSlice<int> a = [];
         ValueSlice<int> b = [1];
 
-        Assert.Same(a.AsEnumerable(), a.AsEnumerable());
-        Assert.NotSame(b.AsEnumerable(), b.AsEnumerable());
+        Assert.Same(a.AsCollection(), a.AsCollection());
+        Assert.NotSame(b.AsCollection(), b.AsCollection());
     }
 }
