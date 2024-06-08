@@ -2,6 +2,7 @@ using System.Collections;
 using System.ComponentModel;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Badeend.ValueCollections;
@@ -450,6 +451,7 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	/// </summary>
 #pragma warning disable CA1034 // Nested types should not be visible
 #pragma warning disable CA1815 // Override equals and operator equals on value types
+	[StructLayout(LayoutKind.Auto)]
 	public struct Enumerator : IRefEnumeratorLike<T>
 	{
 		private readonly T[] items;

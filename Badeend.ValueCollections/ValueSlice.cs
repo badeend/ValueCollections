@@ -328,6 +328,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// </summary>
 #pragma warning disable CA1034 // Nested types should not be visible
 #pragma warning disable CA1815 // Override equals and operator equals on value types
+	[StructLayout(LayoutKind.Auto)]
 	public struct Enumerator : IRefEnumeratorLike<T>
 	{
 		private readonly T[]? items;

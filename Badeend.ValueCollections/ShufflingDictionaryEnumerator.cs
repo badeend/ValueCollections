@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Badeend.ValueCollections;
 
@@ -10,6 +11,7 @@ namespace Badeend.ValueCollections;
 /// At the moment, this is done by first skipping a small semi-random amount of
 /// elements from the inner enumerator at the start and then appending those at the end.
 /// </summary>
+[StructLayout(LayoutKind.Auto)]
 internal struct ShufflingDictionaryEnumerator<TKey, TValue> : IEnumeratorLike<KeyValuePair<TKey, TValue>>
 	where TKey : notnull
 {

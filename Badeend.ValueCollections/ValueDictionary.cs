@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Badeend.ValueCollections;
@@ -463,6 +464,7 @@ public sealed class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
 	/// </summary>
 #pragma warning disable CA1034 // Nested types should not be visible
 #pragma warning disable CA1815 // Override equals and operator equals on value types
+	[StructLayout(LayoutKind.Auto)]
 	public struct Enumerator : IEnumeratorLike<KeyValuePair<TKey, TValue>>
 	{
 		private ShufflingDictionaryEnumerator<TKey, TValue> inner;

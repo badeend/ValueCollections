@@ -2,6 +2,7 @@ using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Badeend.ValueCollections;
@@ -749,6 +750,7 @@ public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TVa
 	/// </summary>
 #pragma warning disable CA1034 // Nested types should not be visible
 #pragma warning disable CA1815 // Override equals and operator equals on value types
+	[StructLayout(LayoutKind.Auto)]
 	public struct Enumerator : IEnumeratorLike<KeyValuePair<TKey, TValue>>
 	{
 		private readonly ValueDictionaryBuilder<TKey, TValue> builder;
@@ -960,6 +962,7 @@ public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TVa
 
 #pragma warning disable CA1034 // Nested types should not be visible
 #pragma warning disable CA1815 // Override equals and operator equals on value types
+		[StructLayout(LayoutKind.Auto)]
 		private struct Enumerator : IEnumeratorLike<TValue>
 		{
 			private ValueDictionaryBuilder<TKey, TValue>.Enumerator inner;
