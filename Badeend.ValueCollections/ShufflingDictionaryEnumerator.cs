@@ -15,6 +15,8 @@ namespace Badeend.ValueCollections;
 internal struct ShufflingDictionaryEnumerator<TKey, TValue> : IEnumeratorLike<KeyValuePair<TKey, TValue>>
 	where TKey : notnull
 {
+	private readonly Dictionary<TKey, TValue> dictionary;
+	private readonly int initialSeed;
 	private Dictionary<TKey, TValue>.Enumerator inner;
 	private EnumeratorState state;
 	private KeyValuePair<TKey, TValue> current;
@@ -23,37 +25,10 @@ internal struct ShufflingDictionaryEnumerator<TKey, TValue> : IEnumeratorLike<Ke
 
 	internal ShufflingDictionaryEnumerator(Dictionary<TKey, TValue> dictionary, int initialSeed)
 	{
+		this.dictionary = dictionary;
+		this.initialSeed = initialSeed;
 		this.inner = dictionary.GetEnumerator();
-		this.state = EnumeratorState.Bulk;
-		this.current = default!;
-		this.stashIndex = InlineArray32<KeyValuePair<TKey, TValue>>.Length - 1;
-
-		var dictionarySize = dictionary.Count;
-		if (dictionarySize > 1)
-		{
-			// Use the hashcode of the Dictionary as a semi-random seed.
-			// All we care about is educating developers that the order can't be
-			// trusted. It doesn't have to cryptographically secure.
-			// The hashcode doesn't change over the lifetime of the Dictionary,
-			// so enumerating the exact same instance multiple times yields
-			// the same results.
-			var seed = unchecked(initialSeed + RuntimeHelpers.GetHashCode(dictionary));
-
-			var maxStashSize = Math.Min(dictionarySize, InlineArray32<KeyValuePair<TKey, TValue>>.Length);
-			var stashSize = unchecked((int)((uint)seed % (uint)maxStashSize));
-
-			Debug.Assert(stashSize >= 0);
-			Debug.Assert(stashSize <= dictionarySize);
-			Debug.Assert(stashSize <= InlineArray32<KeyValuePair<TKey, TValue>>.Length);
-
-			for (int i = 0; i < stashSize; i++)
-			{
-				this.inner.MoveNext();
-
-				// Stash them in reverse order, just for fun and giggles.
-				this.stash[this.stashIndex--] = this.inner.Current;
-			}
-		}
+		this.state = EnumeratorState.Uninitialized;
 	}
 
 	/// <inheritdoc/>
@@ -66,6 +41,40 @@ internal struct ShufflingDictionaryEnumerator<TKey, TValue> : IEnumeratorLike<Ke
 	/// <inheritdoc/>
 	public bool MoveNext()
 	{
+		if (this.state == EnumeratorState.Uninitialized)
+		{
+			this.stashIndex = InlineArray32<KeyValuePair<TKey, TValue>>.Length - 1;
+
+			var dictionarySize = this.dictionary.Count;
+			if (dictionarySize > 1)
+			{
+				// Use the hashcode of the Dictionary as a semi-random seed.
+				// All we care about is educating developers that the order can't be
+				// trusted. It doesn't have to cryptographically secure.
+				// The hashcode doesn't change over the lifetime of the Dictionary,
+				// so enumerating the exact same instance multiple times yields
+				// the same results.
+				var seed = unchecked(this.initialSeed + RuntimeHelpers.GetHashCode(this.dictionary));
+
+				var maxStashSize = Math.Min(dictionarySize, InlineArray32<KeyValuePair<TKey, TValue>>.Length);
+				var stashSize = unchecked((int)((uint)seed % (uint)maxStashSize));
+
+				Debug.Assert(stashSize >= 0);
+				Debug.Assert(stashSize <= dictionarySize);
+				Debug.Assert(stashSize <= InlineArray32<KeyValuePair<TKey, TValue>>.Length);
+
+				for (int i = 0; i < stashSize; i++)
+				{
+					this.inner.MoveNext();
+
+					// Stash them in reverse order, just for fun and giggles.
+					this.stash[this.stashIndex--] = this.inner.Current;
+				}
+			}
+
+			this.state = EnumeratorState.Bulk;
+		}
+
 		if (this.state == EnumeratorState.Bulk && this.inner.MoveNext())
 		{
 			this.current = this.inner.Current;
@@ -87,6 +96,7 @@ internal struct ShufflingDictionaryEnumerator<TKey, TValue> : IEnumeratorLike<Ke
 
 	private enum EnumeratorState
 	{
+		Uninitialized,
 		Bulk,
 		Stash,
 		Finished,

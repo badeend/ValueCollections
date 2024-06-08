@@ -14,6 +14,8 @@ namespace Badeend.ValueCollections;
 [StructLayout(LayoutKind.Auto)]
 internal struct ShufflingHashSetEnumerator<T> : IEnumeratorLike<T>
 {
+	private readonly HashSet<T> set;
+	private readonly int initialSeed;
 	private HashSet<T>.Enumerator inner;
 	private EnumeratorState state;
 	private T current;
@@ -22,37 +24,11 @@ internal struct ShufflingHashSetEnumerator<T> : IEnumeratorLike<T>
 
 	internal ShufflingHashSetEnumerator(HashSet<T> set, int initialSeed)
 	{
+		this.set = set;
+		this.initialSeed = initialSeed;
 		this.inner = set.GetEnumerator();
-		this.state = EnumeratorState.Bulk;
+		this.state = EnumeratorState.Uninitialized;
 		this.current = default!;
-		this.stashIndex = InlineArray32<T>.Length - 1;
-
-		var setSize = set.Count;
-		if (setSize > 1)
-		{
-			// Use the hashcode of the HashSet as a semi-random seed.
-			// All we care about is educating developers that the order can't be
-			// trusted. It doesn't have to cryptographically secure.
-			// The hashcode doesn't change over the lifetime of the HashSet,
-			// so enumerating the exact same instance multiple times yields
-			// the same results.
-			var seed = unchecked(initialSeed + RuntimeHelpers.GetHashCode(set));
-
-			var maxStashSize = Math.Min(setSize, InlineArray32<T>.Length);
-			var stashSize = unchecked((int)((uint)seed % (uint)maxStashSize));
-
-			Debug.Assert(stashSize >= 0);
-			Debug.Assert(stashSize <= setSize);
-			Debug.Assert(stashSize <= InlineArray32<T>.Length);
-
-			for (int i = 0; i < stashSize; i++)
-			{
-				this.inner.MoveNext();
-
-				// Stash them in reverse order, just for fun and giggles.
-				this.stash[this.stashIndex--] = this.inner.Current;
-			}
-		}
 	}
 
 	/// <inheritdoc/>
@@ -65,6 +41,40 @@ internal struct ShufflingHashSetEnumerator<T> : IEnumeratorLike<T>
 	/// <inheritdoc/>
 	public bool MoveNext()
 	{
+		if (this.state == EnumeratorState.Uninitialized)
+		{
+			this.stashIndex = InlineArray32<T>.Length - 1;
+
+			var setSize = this.set.Count;
+			if (setSize > 1)
+			{
+				// Use the hashcode of the HashSet as a semi-random seed.
+				// All we care about is educating developers that the order can't be
+				// trusted. It doesn't have to cryptographically secure.
+				// The hashcode doesn't change over the lifetime of the HashSet,
+				// so enumerating the exact same instance multiple times yields
+				// the same results.
+				var seed = unchecked(this.initialSeed + RuntimeHelpers.GetHashCode(this.set));
+
+				var maxStashSize = Math.Min(setSize, InlineArray32<T>.Length);
+				var stashSize = unchecked((int)((uint)seed % (uint)maxStashSize));
+
+				Debug.Assert(stashSize >= 0);
+				Debug.Assert(stashSize <= setSize);
+				Debug.Assert(stashSize <= InlineArray32<T>.Length);
+
+				for (int i = 0; i < stashSize; i++)
+				{
+					this.inner.MoveNext();
+
+					// Stash them in reverse order, just for fun and giggles.
+					this.stash[this.stashIndex--] = this.inner.Current;
+				}
+			}
+
+			this.state = EnumeratorState.Bulk;
+		}
+
 		if (this.state == EnumeratorState.Bulk && this.inner.MoveNext())
 		{
 			this.current = this.inner.Current;
@@ -86,6 +96,7 @@ internal struct ShufflingHashSetEnumerator<T> : IEnumeratorLike<T>
 
 	private enum EnumeratorState
 	{
+		Uninitialized,
 		Bulk,
 		Stash,
 		Finished,
