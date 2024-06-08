@@ -123,6 +123,24 @@ public class ValueSetBuilderTests
     }
 #endif
 
+    [Fact]
+    public void SerializeToString()
+    {
+        ValueSetBuilder<int> a = [];
+        ValueSetBuilder<int> b = [42];
+        ValueSetBuilder<string?> c = ["A", null, "B"];
+
+        Assert.Equal("[]", a.ToString());
+        Assert.Equal("[42]", b.ToString());
+        Assert.Contains(c.ToString(), [
+            "[A, B, null]",
+            "[A, null, B]",
+            "[B, A, null]",
+            "[B, null, A]",
+            "[null, A, B]",
+            "[null, B, A]",
+        ]);
+    }
 
     [Theory]
     [InlineData(0)]

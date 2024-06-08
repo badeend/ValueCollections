@@ -2,6 +2,7 @@ using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace Badeend.ValueCollections;
 
@@ -701,6 +702,39 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	}
 #pragma warning restore CA1815 // Override equals and operator equals on value types
 #pragma warning restore CA1034 // Nested types should not be visible
+
+	/// <summary>
+	/// Get a string representation of the collection for debugging purposes.
+	/// The format is not stable and may change without prior notice.
+	/// </summary>
+	[Pure]
+	public override string ToString()
+	{
+		if (this.Count == 0)
+		{
+			return "[]";
+		}
+
+		var builder = new StringBuilder();
+		builder.Append('[');
+
+		var index = 0;
+		foreach (var item in this)
+		{
+			if (index > 0)
+			{
+				builder.Append(", ");
+			}
+
+			var itemString = item?.ToString() ?? "null";
+			builder.Append(itemString);
+
+			index++;
+		}
+
+		builder.Append(']');
+		return builder.ToString();
+	}
 
 	private static InvalidOperationException UnreachableException() => new("Unreachable");
 

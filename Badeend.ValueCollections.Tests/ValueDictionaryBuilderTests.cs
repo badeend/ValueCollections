@@ -309,6 +309,36 @@ public class ValueDictionaryBuilderTests
     }
 #endif
 
+    [Fact]
+    public void SerializeToString()
+    {
+        var a = new ValueDictionaryBuilder<string, int>();
+        var b = ValueDictionary.Builder([
+            Entry("abc", 42),
+        ]);
+        var c = ValueDictionary.Builder([
+            Entry("abc", (string?)null),
+        ]);
+        var d = ValueDictionary.Builder([
+            Entry("a", 1),
+            Entry("b", 2),
+            Entry("c", 3),
+        ]);
+
+
+        Assert.Equal("[]", a.ToString());
+        Assert.Equal("[abc: 42]", b.ToString());
+        Assert.Equal("[abc: null]", c.ToString());
+        Assert.Contains(d.ToString(), [
+            "[a: 1, b: 2, c: 3]",
+            "[a: 1, c: 3, b: 2]",
+            "[b: 2, a: 1, c: 3]",
+            "[b: 2, c: 3, a: 1]",
+            "[c: 3, a: 1, b: 2]",
+            "[c: 3, b: 2, a: 1]",
+        ]);
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(1)]

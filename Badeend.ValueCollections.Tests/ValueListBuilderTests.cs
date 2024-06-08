@@ -239,4 +239,16 @@ public class ValueListBuilderTests
         // The contents of newly available indexes is undefined.
 
     }
+
+    [Fact]
+    public void SerializeToString()
+    {
+        ValueListBuilder<int> a = [];
+        ValueListBuilder<int> b = [42];
+        ValueListBuilder<string?> c = ["A", null, "B"];
+
+        Assert.Equal("[]", a.ToString());
+        Assert.Equal("[42]", b.ToString());
+        Assert.Equal("[A, null, B]", c.ToString());
+    }
 }

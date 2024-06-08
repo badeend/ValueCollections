@@ -2,6 +2,7 @@ using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace Badeend.ValueCollections;
 
@@ -989,6 +990,42 @@ public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TVa
 		public bool Remove(TValue item) => throw ImmutableException();
 
 		public void Clear() => throw ImmutableException();
+	}
+
+	/// <summary>
+	/// Get a string representation of the collection for debugging purposes.
+	/// The format is not stable and may change without prior notice.
+	/// </summary>
+	[Pure]
+	public override string ToString()
+	{
+		if (this.Count == 0)
+		{
+			return "[]";
+		}
+
+		var builder = new StringBuilder();
+		builder.Append('[');
+
+		var index = 0;
+		foreach (var entry in this)
+		{
+			if (index > 0)
+			{
+				builder.Append(", ");
+			}
+
+			var keyString = entry.Key?.ToString() ?? "null";
+			var valueString = entry.Value?.ToString() ?? "null";
+			builder.Append(keyString);
+			builder.Append(": ");
+			builder.Append(valueString);
+
+			index++;
+		}
+
+		builder.Append(']');
+		return builder.ToString();
 	}
 
 	private static InvalidOperationException UnreachableException() => new("Unreachable");
