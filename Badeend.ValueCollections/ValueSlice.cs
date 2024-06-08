@@ -507,6 +507,11 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 #if NET6_0_OR_GREATER
 		return System.MemoryExtensions.SequenceEqual(leftSpan, rightSpan);
 #else
+		if (leftSpan == rightSpan)
+		{
+			return true;
+		}
+
 		if (leftSpan.Length != rightSpan.Length)
 		{
 			return false;
