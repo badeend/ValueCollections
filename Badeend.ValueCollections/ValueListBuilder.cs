@@ -24,7 +24,6 @@ namespace Badeend.ValueCollections;
 /// Unlike ValueList, ValueListBuilder is <em>not</em> thread-safe.
 /// </remarks>
 /// <typeparam name="T">The type of items in the list.</typeparam>
-[CollectionBuilder(typeof(ValueList), nameof(ValueList.Builder))]
 public sealed class ValueListBuilder<T> : IList<T>, IReadOnlyList<T>
 {
 	private const int VersionBuilt = -1;

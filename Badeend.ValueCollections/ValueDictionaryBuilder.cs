@@ -30,7 +30,6 @@ namespace Badeend.ValueCollections;
 /// </remarks>
 /// <typeparam name="TKey">The type of keys in the dictionary.</typeparam>
 /// <typeparam name="TValue">The type of values in the dictionary.</typeparam>
-[CollectionBuilder(typeof(ValueDictionary), nameof(ValueDictionary.Builder))]
 [SuppressMessage("Naming", "CA1710:Identifiers should have correct suffix", Justification = "Not applicable for Builder type.")]
 public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>
 	where TKey : notnull

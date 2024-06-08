@@ -30,7 +30,6 @@ namespace Badeend.ValueCollections;
 /// Unlike ValueSet, ValueSetBuilder is <em>not</em> thread-safe.
 /// </remarks>
 /// <typeparam name="T">The type of items in the set.</typeparam>
-[CollectionBuilder(typeof(ValueSet), nameof(ValueSet.Builder))]
 [SuppressMessage("Naming", "CA1710:Identifiers should have correct suffix", Justification = "Not applicable for Builder type.")]
 #if NET5_0_OR_GREATER
 public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>, IReadOnlySet<T>
