@@ -496,13 +496,11 @@ public sealed class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
 	{
 		if (this.Count == 0)
 		{
-			return "ValueDictionary(Count: 0) { }";
+			return "[]";
 		}
 
 		var builder = new StringBuilder();
-		builder.Append("ValueDictionary(Count: ");
-		builder.Append(this.Count);
-		builder.Append(") { ");
+		builder.Append('[');
 
 		var index = 0;
 		foreach (var entry in this)
@@ -521,7 +519,7 @@ public sealed class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
 			index++;
 		}
 
-		builder.Append(" }");
+		builder.Append(']');
 		return builder.ToString();
 	}
 

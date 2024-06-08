@@ -111,9 +111,16 @@ public class ValueSetTests
         ValueSet<int> b = [42];
         ValueSet<string?> c = ["A", null, "B"];
 
-        Assert.True(a.ToString() == "ValueSet(Count: 0) { }");
-        Assert.True(b.ToString() == "ValueSet(Count: 1) { 42 }");
-        Assert.True(c.ToString().StartsWith("ValueSet(Count: 3) { "));
+        Assert.Equal("[]", a.ToString());
+        Assert.Equal("[42]", b.ToString());
+        Assert.Contains(c.ToString(), [
+            "[A, B, null]",
+            "[A, null, B]",
+            "[B, A, null]",
+            "[B, null, A]",
+            "[null, A, B]",
+            "[null, B, A]",
+        ]);
     }
 
     [Theory]

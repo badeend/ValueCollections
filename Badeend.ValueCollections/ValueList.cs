@@ -490,13 +490,11 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	{
 		if (this.Count == 0)
 		{
-			return "ValueList(Count: 0) { }";
+			return "[]";
 		}
 
 		var builder = new StringBuilder();
-		builder.Append("ValueList(Count: ");
-		builder.Append(this.Count);
-		builder.Append(") { ");
+		builder.Append('[');
 
 		var index = 0;
 		foreach (var item in this)
@@ -512,7 +510,7 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 			index++;
 		}
 
-		builder.Append(" }");
+		builder.Append(']');
 		return builder.ToString();
 	}
 

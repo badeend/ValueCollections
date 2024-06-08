@@ -191,9 +191,9 @@ public class ValueSliceTests
         ValueSlice<int> b = [42];
         ValueSlice<string?> c = ["A", null, "B"];
 
-        Assert.True(a.ToString() == "ValueSlice(Length: 0) { }");
-        Assert.True(b.ToString() == "ValueSlice(Length: 1) { 42 }");
-        Assert.True(c.ToString() == "ValueSlice(Length: 3) { A, null, B }");
+        Assert.Equal("[]", a.ToString());
+        Assert.Equal("[42]", b.ToString());
+        Assert.Equal("[A, null, B]", c.ToString());
     }
 
     [Fact]

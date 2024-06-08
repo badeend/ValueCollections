@@ -469,13 +469,11 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 	{
 		if (this.Count == 0)
 		{
-			return "ValueSet(Count: 0) { }";
+			return "[]";
 		}
 
 		var builder = new StringBuilder();
-		builder.Append("ValueSet(Count: ");
-		builder.Append(this.Count);
-		builder.Append(") { ");
+		builder.Append('[');
 
 		var index = 0;
 		foreach (var item in this)
@@ -491,7 +489,7 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 			index++;
 		}
 
-		builder.Append(" }");
+		builder.Append(']');
 		return builder.ToString();
 	}
 

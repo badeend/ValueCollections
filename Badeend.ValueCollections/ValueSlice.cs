@@ -535,13 +535,11 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	{
 		if (this.Length == 0)
 		{
-			return "ValueSlice(Length: 0) { }";
+			return "[]";
 		}
 
 		var builder = new StringBuilder();
-		builder.Append("ValueSlice(Length: ");
-		builder.Append(this.Length);
-		builder.Append(") { ");
+		builder.Append('[');
 
 		var index = 0;
 		foreach (var item in this)
@@ -557,7 +555,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 			index++;
 		}
 
-		builder.Append(" }");
+		builder.Append(']');
 		return builder.ToString();
 	}
 }

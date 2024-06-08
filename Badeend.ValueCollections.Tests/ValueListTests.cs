@@ -143,8 +143,8 @@ public class ValueListTests
         ValueList<int> b = [42];
         ValueList<string?> c = ["A", null, "B"];
 
-        Assert.True(a.ToString() == "ValueList(Count: 0) { }");
-        Assert.True(b.ToString() == "ValueList(Count: 1) { 42 }");
-        Assert.True(c.ToString() == "ValueList(Count: 3) { A, null, B }");
+        Assert.Equal("[]", a.ToString());
+        Assert.Equal("[42]", b.ToString());
+        Assert.Equal("[A, null, B]", c.ToString());
     }
 }
