@@ -21,7 +21,7 @@ internal struct ShufflingDictionaryEnumerator<TKey, TValue> : IEnumeratorLike<Ke
 	private EnumeratorState state;
 	private KeyValuePair<TKey, TValue> current;
 	private int stashIndex;
-	private InlineArray32<KeyValuePair<TKey, TValue>> stash;
+	private InlineArray8<KeyValuePair<TKey, TValue>> stash;
 
 	internal ShufflingDictionaryEnumerator(Dictionary<TKey, TValue> dictionary, int initialSeed)
 	{
@@ -43,7 +43,7 @@ internal struct ShufflingDictionaryEnumerator<TKey, TValue> : IEnumeratorLike<Ke
 	{
 		if (this.state == EnumeratorState.Uninitialized)
 		{
-			this.stashIndex = InlineArray32<KeyValuePair<TKey, TValue>>.Length - 1;
+			this.stashIndex = InlineArray8<KeyValuePair<TKey, TValue>>.Length - 1;
 
 			var dictionarySize = this.dictionary.Count;
 			if (dictionarySize > 1)
@@ -56,12 +56,12 @@ internal struct ShufflingDictionaryEnumerator<TKey, TValue> : IEnumeratorLike<Ke
 				// the same results.
 				var seed = unchecked(this.initialSeed + RuntimeHelpers.GetHashCode(this.dictionary));
 
-				var maxStashSize = Math.Min(dictionarySize, InlineArray32<KeyValuePair<TKey, TValue>>.Length);
+				var maxStashSize = Math.Min(dictionarySize, InlineArray8<KeyValuePair<TKey, TValue>>.Length);
 				var stashSize = unchecked((int)((uint)seed % (uint)maxStashSize));
 
 				Debug.Assert(stashSize >= 0);
 				Debug.Assert(stashSize <= dictionarySize);
-				Debug.Assert(stashSize <= InlineArray32<KeyValuePair<TKey, TValue>>.Length);
+				Debug.Assert(stashSize <= InlineArray8<KeyValuePair<TKey, TValue>>.Length);
 
 				for (int i = 0; i < stashSize; i++)
 				{
@@ -81,7 +81,7 @@ internal struct ShufflingDictionaryEnumerator<TKey, TValue> : IEnumeratorLike<Ke
 			return true;
 		}
 
-		if (++this.stashIndex < InlineArray32<KeyValuePair<TKey, TValue>>.Length)
+		if (++this.stashIndex < InlineArray8<KeyValuePair<TKey, TValue>>.Length)
 		{
 			this.current = this.stash[this.stashIndex];
 			this.state = EnumeratorState.Stash;

@@ -20,7 +20,7 @@ internal struct ShufflingHashSetEnumerator<T> : IEnumeratorLike<T>
 	private EnumeratorState state;
 	private T current;
 	private int stashIndex;
-	private InlineArray32<T> stash;
+	private InlineArray8<T> stash;
 
 	internal ShufflingHashSetEnumerator(HashSet<T> set, int initialSeed)
 	{
@@ -43,7 +43,7 @@ internal struct ShufflingHashSetEnumerator<T> : IEnumeratorLike<T>
 	{
 		if (this.state == EnumeratorState.Uninitialized)
 		{
-			this.stashIndex = InlineArray32<T>.Length - 1;
+			this.stashIndex = InlineArray8<T>.Length - 1;
 
 			var setSize = this.set.Count;
 			if (setSize > 1)
@@ -56,12 +56,12 @@ internal struct ShufflingHashSetEnumerator<T> : IEnumeratorLike<T>
 				// the same results.
 				var seed = unchecked(this.initialSeed + RuntimeHelpers.GetHashCode(this.set));
 
-				var maxStashSize = Math.Min(setSize, InlineArray32<T>.Length);
+				var maxStashSize = Math.Min(setSize, InlineArray8<T>.Length);
 				var stashSize = unchecked((int)((uint)seed % (uint)maxStashSize));
 
 				Debug.Assert(stashSize >= 0);
 				Debug.Assert(stashSize <= setSize);
-				Debug.Assert(stashSize <= InlineArray32<T>.Length);
+				Debug.Assert(stashSize <= InlineArray8<T>.Length);
 
 				for (int i = 0; i < stashSize; i++)
 				{
@@ -81,7 +81,7 @@ internal struct ShufflingHashSetEnumerator<T> : IEnumeratorLike<T>
 			return true;
 		}
 
-		if (++this.stashIndex < InlineArray32<T>.Length)
+		if (++this.stashIndex < InlineArray8<T>.Length)
 		{
 			this.current = this.stash[this.stashIndex];
 			this.state = EnumeratorState.Stash;
