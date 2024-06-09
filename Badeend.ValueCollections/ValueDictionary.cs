@@ -62,7 +62,7 @@ public static class ValueDictionary
 /// </remarks>
 /// <typeparam name="TKey">The type of keys in the dictionary.</typeparam>
 /// <typeparam name="TValue">The type of values in the dictionary.</typeparam>
-public sealed class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>, IEquatable<ValueDictionary<TKey, TValue>>
+public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>, IEquatable<ValueDictionary<TKey, TValue>>
 	where TKey : notnull
 {
 	private const int UninitializedHashCode = 0;
@@ -128,23 +128,11 @@ public sealed class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
 	TValue IDictionary<TKey, TValue>.this[TKey key]
 	{
 		get => this[key];
-		set => throw CreateImmutableException();
+		set => throw ImmutableException();
 	}
 
 	/// <inheritdoc/>
 	bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => true;
-
-	/// <summary>
-	/// All keys in the dictionary in no particular order.
-	/// </summary>
-	[Pure]
-	public IReadOnlyCollection<TKey> Keys => this.items.Keys;
-
-	/// <inheritdoc/>
-	ICollection<TKey> IDictionary<TKey, TValue>.Keys => this.items.Keys;
-
-	/// <inheritdoc/>
-	IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => this.items.Keys;
 
 	/// <summary>
 	/// All values in the dictionary in no particular order.
@@ -526,19 +514,19 @@ public sealed class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
 	}
 
 	/// <inheritdoc/>
-	void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item) => throw CreateImmutableException();
+	void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item) => throw ImmutableException();
 
 	/// <inheritdoc/>
-	void ICollection<KeyValuePair<TKey, TValue>>.Clear() => throw CreateImmutableException();
+	void ICollection<KeyValuePair<TKey, TValue>>.Clear() => throw ImmutableException();
 
 	/// <inheritdoc/>
-	bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item) => throw CreateImmutableException();
+	bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item) => throw ImmutableException();
 
 	/// <inheritdoc/>
-	void IDictionary<TKey, TValue>.Add(TKey key, TValue value) => throw CreateImmutableException();
+	void IDictionary<TKey, TValue>.Add(TKey key, TValue value) => throw ImmutableException();
 
 	/// <inheritdoc/>
-	bool IDictionary<TKey, TValue>.Remove(TKey key) => throw CreateImmutableException();
+	bool IDictionary<TKey, TValue>.Remove(TKey key) => throw ImmutableException();
 
-	private static NotSupportedException CreateImmutableException() => new NotSupportedException("Collection is immutable");
+	private static NotSupportedException ImmutableException() => new NotSupportedException("Collection is immutable");
 }

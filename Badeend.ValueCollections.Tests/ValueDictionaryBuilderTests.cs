@@ -77,21 +77,21 @@ public class ValueDictionaryBuilderTests
         var keys = a.Keys;
         var values = a.Values;
 
-        Assert.True(keys.OrderBy(x => x).ToValueList() == ["a", "b", "c"]);
+        Assert.True(keys.AsCollection().OrderBy(x => x).ToValueList() == ["a", "b", "c"]);
         Assert.True(values.OrderBy(x => x).ToValueList() == [1, 2, 3]);
 
         a.Add("d", 4);
 
-        Assert.Throws<InvalidOperationException>(() => keys.Count);
-        Assert.Throws<InvalidOperationException>(() => keys.Contains("a"));
-        Assert.Throws<InvalidOperationException>(() => keys.ToValueList());
-        Assert.Throws<InvalidOperationException>(() => keys.OrderBy(x => x).ToValueList());
+        Assert.Throws<InvalidOperationException>(() => keys.MoveNext());
+        Assert.Throws<InvalidOperationException>(() => keys.AsCollection().Count);
+        Assert.Throws<InvalidOperationException>(() => keys.AsCollection().Contains("a"));
+        Assert.Throws<InvalidOperationException>(() => keys.AsCollection().OrderBy(x => x).ToValueList());
         Assert.Throws<InvalidOperationException>(() => values.Count);
         Assert.Throws<InvalidOperationException>(() => values.Contains(1));
         Assert.Throws<InvalidOperationException>(() => values.ToValueList());
         Assert.Throws<InvalidOperationException>(() => values.OrderBy(x => x).ToValueList());
 
-        Assert.True(a.Keys.OrderBy(x => x).ToValueList() == ["a", "b", "c", "d"]);
+        Assert.True(a.Keys.AsCollection().OrderBy(x => x).ToValueList() == ["a", "b", "c", "d"]);
         Assert.True(a.Values.OrderBy(x => x).ToValueList() == [1, 2, 3, 4]);
     }
 

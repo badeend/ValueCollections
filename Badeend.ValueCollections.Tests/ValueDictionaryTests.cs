@@ -75,17 +75,19 @@ public class ValueDictionaryTests
     [Fact]
     public void KeysValues()
     {
-        var a = ValueDictionary.Create([
+        var a = ValueDictionary<string, int>.Empty;
+        var b = ValueDictionary.Create([
             Entry("c", 3),
             Entry("b", 2),
             Entry("a", 1),
         ]);
 
-        Assert.True(object.ReferenceEquals(a.Keys, a.Keys));
-        Assert.True(object.ReferenceEquals(a.Values, a.Values));
+        Assert.True(object.ReferenceEquals(a.Keys.AsCollection(), a.Keys.AsCollection()));
+        Assert.True(!object.ReferenceEquals(b.Keys.AsCollection(), b.Keys.AsCollection()));
+        Assert.True(object.ReferenceEquals(b.Values, b.Values));
 
-        Assert.True(a.Keys.OrderBy(x => x).ToValueList() == ["a", "b", "c"]);
-        Assert.True(a.Values.OrderBy(x => x).ToValueList() == [1, 2, 3]);
+        Assert.True(b.Keys.AsCollection().OrderBy(x => x).ToValueList() == ["a", "b", "c"]);
+        Assert.True(b.Values.OrderBy(x => x).ToValueList() == [1, 2, 3]);
     }
 
     [Fact]

@@ -32,7 +32,7 @@ namespace Badeend.ValueCollections;
 /// <typeparam name="TKey">The type of keys in the dictionary.</typeparam>
 /// <typeparam name="TValue">The type of values in the dictionary.</typeparam>
 [SuppressMessage("Naming", "CA1710:Identifiers should have correct suffix", Justification = "Not applicable for Builder type.")]
-public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>
+public sealed partial class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>
 	where TKey : notnull
 {
 	private const int VersionBuilt = -1;
@@ -142,6 +142,47 @@ public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TVa
 		_ => throw UnreachableException(),
 	};
 
+	[StructLayout(LayoutKind.Auto)]
+	internal readonly struct Snapshot
+	{
+		private readonly ValueDictionaryBuilder<TKey, TValue> builder;
+		internal readonly int Version;
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public Snapshot(ValueDictionaryBuilder<TKey, TValue> builder, int version)
+		{
+			this.builder = builder;
+			this.Version = version;
+		}
+
+		internal void Validate()
+		{
+			if (this.Version != this.builder.version)
+			{
+				ThrowModifiedException();
+			}
+		}
+
+		internal ValueDictionaryBuilder<TKey, TValue> Read()
+		{
+			this.Validate();
+
+			return this.builder;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal ValueDictionaryBuilder<TKey, TValue> ReadUnsafe() => this.builder;
+
+		[DoesNotReturn]
+		private static void ThrowModifiedException()
+		{
+			throw new InvalidOperationException("Collection invalidated because the builder was modified.");
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private Snapshot TakeSnapshot() => new(this, this.version);
+
 	/// <summary>
 	/// Current size of the dictionary.
 	/// </summary>
@@ -173,32 +214,6 @@ public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TVa
 		get => this.Read()[key];
 		set => this.Mutate()[key] = value;
 	}
-
-	private KeyCollection KeysInternal
-	{
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		get => new KeyCollection(this, this.version);
-	}
-
-	/// <summary>
-	/// All keys in the dictionary in no particular order.
-	/// </summary>
-	/// <remarks>
-	/// Every modification to the builder invalidates any <c>Keys</c> collection
-	/// obtained before that moment.
-	/// </remarks>
-	[Pure]
-	public IReadOnlyCollection<TKey> Keys
-	{
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		get => this.KeysInternal;
-	}
-
-	/// <inheritdoc/>
-	ICollection<TKey> IDictionary<TKey, TValue>.Keys => this.KeysInternal;
-
-	/// <inheritdoc/>
-	IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => this.KeysInternal;
 
 	private ValueCollection ValuesInternal
 	{
@@ -728,7 +743,7 @@ public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TVa
 		}
 		else
 		{
-			return EnumeratorLike.AsIEnumerator<KeyValuePair<TKey, TValue>, Enumerator>(new Enumerator(this));
+			return EnumeratorLike.AsIEnumerator<KeyValuePair<TKey, TValue>, Enumerator>(new Enumerator(this.TakeSnapshot()));
 		}
 	}
 
@@ -743,7 +758,7 @@ public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TVa
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public Enumerator GetEnumerator() => new Enumerator(this);
+	public Enumerator GetEnumerator() => new Enumerator(this.TakeSnapshot());
 
 	/// <summary>
 	/// Enumerator for <see cref="ValueDictionaryBuilder{TKey, TValue}"/>.
@@ -753,23 +768,21 @@ public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TVa
 	[StructLayout(LayoutKind.Auto)]
 	public struct Enumerator : IEnumeratorLike<KeyValuePair<TKey, TValue>>
 	{
-		private readonly ValueDictionaryBuilder<TKey, TValue> builder;
-		private readonly int version;
+		internal readonly Snapshot Snapshot;
 		private ShufflingDictionaryEnumerator<TKey, TValue> enumerator;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal Enumerator(ValueDictionaryBuilder<TKey, TValue> builder)
+		internal Enumerator(Snapshot snapshot)
 		{
-			var innerDictionary = builder.items switch
+			var innerDictionary = snapshot.ReadUnsafe().items switch
 			{
 				Dictionary<TKey, TValue> items => items,
 				ValueDictionary<TKey, TValue> items => items.Items,
 				_ => throw UnreachableException(),
 			};
 
-			this.builder = builder;
-			this.version = builder.version;
-			this.enumerator = new(innerDictionary, initialSeed: builder.version);
+			this.Snapshot = snapshot;
+			this.enumerator = new(innerDictionary, initialSeed: snapshot.Version);
 		}
 
 		/// <inheritdoc/>
@@ -782,115 +795,10 @@ public sealed class ValueDictionaryBuilder<TKey, TValue> : IDictionary<TKey, TVa
 		/// <inheritdoc/>
 		public bool MoveNext()
 		{
-			if (this.version != this.builder.version)
-			{
-				throw new InvalidOperationException("Collection was modified during enumeration.");
-			}
+			this.Snapshot.Validate();
 
 			return this.enumerator.MoveNext();
 		}
-	}
-#pragma warning restore CA1815 // Override equals and operator equals on value types
-#pragma warning restore CA1034 // Nested types should not be visible
-
-	private sealed class KeyCollection : ICollection<TKey>, IReadOnlyCollection<TKey>
-	{
-		private readonly ValueDictionaryBuilder<TKey, TValue> builder;
-		private readonly int version;
-
-		public KeyCollection(ValueDictionaryBuilder<TKey, TValue> builder, int version)
-		{
-			this.builder = builder;
-			this.version = version;
-		}
-
-		private ValueDictionaryBuilder<TKey, TValue> Read()
-		{
-			if (this.version != this.builder.version)
-			{
-				throw new InvalidOperationException("ValueDictionaryBuilder.Keys collection invalidated because of modifications to the builder.");
-			}
-
-			return this.builder;
-		}
-
-		public int Count => this.Read().Count;
-
-		public bool IsReadOnly => true;
-
-		public bool Contains(TKey item) => this.Read().ContainsKey(item);
-
-		public void CopyTo(TKey[] array, int index)
-		{
-			if (array == null)
-			{
-				throw new ArgumentNullException(nameof(array));
-			}
-
-			if (index < 0 || index > array.Length)
-			{
-				throw new ArgumentOutOfRangeException(nameof(index));
-			}
-
-			var builder = this.Read();
-
-			if (array.Length - index < builder.Count)
-			{
-				throw new ArgumentException("Destination too small", nameof(array));
-			}
-
-			foreach (var entry in builder)
-			{
-				array[index++] = entry.Key;
-			}
-		}
-
-		public IEnumerator<TKey> GetEnumerator()
-		{
-			var builder = this.Read();
-			if (builder.Count == 0)
-			{
-				return EnumeratorLike.Empty<TKey>();
-			}
-			else
-			{
-				return EnumeratorLike.AsIEnumerator<TKey, Enumerator>(new Enumerator(builder.GetEnumerator()));
-			}
-		}
-
-		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-
-#pragma warning disable CA1034 // Nested types should not be visible
-#pragma warning disable CA1815 // Override equals and operator equals on value types
-		private struct Enumerator : IEnumeratorLike<TKey>
-		{
-			private ValueDictionaryBuilder<TKey, TValue>.Enumerator inner;
-
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			internal Enumerator(ValueDictionaryBuilder<TKey, TValue>.Enumerator inner)
-			{
-				this.inner = inner;
-			}
-
-			/// <inheritdoc/>
-			public readonly TKey Current
-			{
-				[MethodImpl(MethodImplOptions.AggressiveInlining)]
-				get => this.inner.Current.Key;
-			}
-
-			/// <inheritdoc/>
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			public bool MoveNext() => this.inner.MoveNext();
-		}
-#pragma warning restore CA1815 // Override equals and operator equals on value types
-#pragma warning restore CA1034 // Nested types should not be visible
-
-		public void Add(TKey item) => throw ImmutableException();
-
-		public bool Remove(TKey item) => throw ImmutableException();
-
-		public void Clear() => throw ImmutableException();
 	}
 
 	private sealed class ValueCollection : ICollection<TValue>, IReadOnlyCollection<TValue>

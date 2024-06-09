@@ -7,7 +7,7 @@ using Xunit;
 
 namespace Badeend.ValueCollections.Tests.Reference
 {
-    public class ValueDictionaryBuilder_Tests_Keys : ICollection_Generic_Tests<string>
+    public class ValueDictionaryBuilder_Tests_Keys : ISet_Generic_Tests<string>
     {
         protected override bool DefaultValueAllowed => false;
         protected override bool DuplicateValuesAllowed => false;
@@ -19,20 +19,21 @@ namespace Badeend.ValueCollections.Tests.Reference
         protected override bool Enumerator_Empty_ModifiedDuringEnumeration_ThrowsInvalidOperationException => false;
         protected override bool Enumerator_ModifiedDuringEnumeration_ThrowsInvalidOperationException => true;
 
-        protected override IEnumerable<ModifyEnumerable> GetModifyEnumerables(ModifyOperation operations) => new List<ModifyEnumerable>();
-        protected override ICollection<string> GenericICollectionFactory()
+        protected override ISet<string> GenericISetFactory()
         {
-            return (new ValueDictionaryBuilder<string, string>() as IDictionary<string, string>).Keys;
+            return new ValueDictionaryBuilder<string, string>().Keys.AsCollection();
         }
 
-        protected override ICollection<string> GenericICollectionFactory(int count)
+        protected override ISet<string> GenericISetFactory(int count)
         {
             ValueDictionaryBuilder<string, string> list = new ValueDictionaryBuilder<string, string>();
             int seed = 13453;
             for (int i = 0; i < count; i++)
                 list.Add(CreateT(seed++), CreateT(seed++));
-            return (list as IDictionary<string, string>).Keys;
+            return list.Keys.AsCollection();
         }
+
+        protected override IEnumerable<ModifyEnumerable> GetModifyEnumerables(ModifyOperation operations) => new List<ModifyEnumerable>();
 
         protected override string CreateT(int seed)
         {
