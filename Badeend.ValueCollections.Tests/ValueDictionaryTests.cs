@@ -84,10 +84,11 @@ public class ValueDictionaryTests
 
         Assert.True(object.ReferenceEquals(a.Keys.AsCollection(), a.Keys.AsCollection()));
         Assert.True(!object.ReferenceEquals(b.Keys.AsCollection(), b.Keys.AsCollection()));
-        Assert.True(object.ReferenceEquals(b.Values, b.Values));
+        Assert.True(object.ReferenceEquals(a.Values.AsCollection(), a.Values.AsCollection()));
+        Assert.True(!object.ReferenceEquals(b.Values.AsCollection(), b.Values.AsCollection()));
 
         Assert.True(b.Keys.AsCollection().OrderBy(x => x).ToValueList() == ["a", "b", "c"]);
-        Assert.True(b.Values.OrderBy(x => x).ToValueList() == [1, 2, 3]);
+        Assert.True(b.Values.AsCollection().OrderBy(x => x).ToValueList() == [1, 2, 3]);
     }
 
     [Fact]

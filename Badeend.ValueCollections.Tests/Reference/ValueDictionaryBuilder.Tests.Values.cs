@@ -23,7 +23,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
         protected override ICollection<string> GenericICollectionFactory()
         {
-            return (new ValueDictionaryBuilder<string, string>() as IDictionary<string, string>).Values;
+            return new ValueDictionaryBuilder<string, string>().Values.AsCollection();
         }
 
         protected override ICollection<string> GenericICollectionFactory(int count)
@@ -32,7 +32,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             int seed = 13453;
             for (int i = 0; i < count; i++)
                 list.Add(CreateT(seed++), CreateT(seed++));
-            return (list as IDictionary<string, string>).Values;
+            return list.Values.AsCollection();
         }
 
         protected override string CreateT(int seed)

@@ -2,6 +2,29 @@ namespace Badeend.ValueCollections;
 
 internal static class DictionaryExtensions
 {
+	internal static void Values_CopyTo<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, TValue[] array, int index)
+	{
+		if (array == null)
+		{
+			throw new ArgumentNullException(nameof(array));
+		}
+
+		if (index < 0 || index > array.Length)
+		{
+			throw new ArgumentOutOfRangeException(nameof(index));
+		}
+
+		if (array.Length - index < dictionary.Count)
+		{
+			throw new ArgumentException("Destination too small", nameof(array));
+		}
+
+		foreach (var entry in dictionary)
+		{
+			array[index++] = entry.Value;
+		}
+	}
+
 	internal static void Keys_CopyTo<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, TKey[] array, int index)
 	{
 		if (array == null)

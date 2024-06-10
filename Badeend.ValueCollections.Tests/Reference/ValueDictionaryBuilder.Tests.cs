@@ -90,7 +90,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             ValueDictionaryBuilder<TKey, TValue> dictionary = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(count);
             int seed = 4315;
             TValue notPresent = CreateTValue(seed++);
-            while (dictionary.Values.Contains(notPresent))
+            while (dictionary.Values.AsCollection().Contains(notPresent))
                 notPresent = CreateTValue(seed++);
             Assert.False(dictionary.ContainsValue(notPresent));
         }

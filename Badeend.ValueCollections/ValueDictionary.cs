@@ -134,18 +134,6 @@ public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TV
 	/// <inheritdoc/>
 	bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => true;
 
-	/// <summary>
-	/// All values in the dictionary in no particular order.
-	/// </summary>
-	[Pure]
-	public IReadOnlyCollection<TValue> Values => this.items.Values;
-
-	/// <inheritdoc/>
-	ICollection<TValue> IDictionary<TKey, TValue>.Values => this.items.Values;
-
-	/// <inheritdoc/>
-	IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => this.items.Values;
-
 	private ValueDictionary(Dictionary<TKey, TValue> items)
 	{
 		this.items = items;
