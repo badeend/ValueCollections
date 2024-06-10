@@ -17,6 +17,9 @@ public static class ValueDictionary
 	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueDictionary{TKey,TValue}"/>.
 	/// </summary>
+	/// <exception cref="ArgumentException">
+	/// <paramref name="items"/> contains duplicate keys.
+	/// </exception>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueDictionary<TKey, TValue> Create<TKey, TValue>(ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
@@ -35,6 +38,9 @@ public static class ValueDictionary
 	/// Create a new <see cref="ValueDictionaryBuilder{TKey,TValue}"/> with the provided
 	/// <paramref name="items"/> as its initial content.
 	/// </summary>
+	/// <exception cref="ArgumentException">
+	/// <paramref name="items"/> contains duplicate keys.
+	/// </exception>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueDictionaryBuilder<TKey, TValue> Builder<TKey, TValue>(ReadOnlySpan<KeyValuePair<TKey, TValue>> items)

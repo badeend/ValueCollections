@@ -232,6 +232,9 @@ public sealed partial class ValueDictionaryBuilder<TKey, TValue> : IDictionary<T
 	/// Use <see cref="ValueDictionary.Builder{TKey, TValue}(ReadOnlySpan{KeyValuePair{TKey, TValue}})"/>
 	/// to construct a ValueDictionaryBuilder from a span.
 	/// </remarks>
+	/// <exception cref="ArgumentException">
+	/// <paramref name="items"/> contains duplicate keys.
+	/// </exception>
 	public ValueDictionaryBuilder(IEnumerable<KeyValuePair<TKey, TValue>> items)
 	{
 		if (items is ValueDictionary<TKey, TValue> valueDictionary)
