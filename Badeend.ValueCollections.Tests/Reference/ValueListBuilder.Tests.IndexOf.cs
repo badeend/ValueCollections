@@ -14,7 +14,7 @@ namespace Badeend.ValueCollections.Tests.Reference
     {
         #region Helpers
 
-        public delegate int IndexOfDelegate(ValueListBuilder<T> list, T value);
+        public delegate int IndexOfDelegate(ValueList<T>.Builder list, T value);
         public enum IndexOfMethod
         {
             IndexOf_T,
@@ -26,9 +26,9 @@ namespace Badeend.ValueCollections.Tests.Reference
             switch (methodType)
             {
                 case (IndexOfMethod.IndexOf_T):
-                    return ((ValueListBuilder<T> list, T value) => { return list.IndexOf(value); });
+                    return ((ValueList<T>.Builder list, T value) => { return list.IndexOf(value); });
                 case (IndexOfMethod.LastIndexOf_T):
-                    return ((ValueListBuilder<T> list, T value) => { return list.LastIndexOf(value); });
+                    return ((ValueList<T>.Builder list, T value) => { return list.LastIndexOf(value); });
                 default:
                     throw new Exception("Invalid IndexOfMethod");
             }
@@ -59,8 +59,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void IndexOf_NoDuplicates(IndexOfMethod indexOfMethod, int count, bool frontToBackOrder)
         {
             _ = frontToBackOrder;
-            ValueListBuilder<T> list = GenericListFactory(count);
-            ValueListBuilder<T> expectedList = list.ToValueListBuilder();
+            ValueList<T>.Builder list = GenericListFactory(count);
+            ValueList<T>.Builder expectedList = list.ToValueListBuilder();
             IndexOfDelegate IndexOf = IndexOfDelegateFromType(indexOfMethod);
 
             Assert.All(Enumerable.Range(0, count), i =>
@@ -74,7 +74,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void IndexOf_NonExistingValues(IndexOfMethod indexOfMethod, int count, bool frontToBackOrder)
         {
             _ = frontToBackOrder;
-            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueList<T>.Builder list = GenericListFactory(count);
             IEnumerable<T> nonexistentValues = CreateEnumerable(EnumerableType.List, list, count: count, numberOfMatchingElements: 0, numberOfDuplicateElements: 0);
             IndexOfDelegate IndexOf = IndexOfDelegateFromType(indexOfMethod);
 
@@ -90,7 +90,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         {
             _ = frontToBackOrder;
             T defaultValue = default;
-            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueList<T>.Builder list = GenericListFactory(count);
             IndexOfDelegate IndexOf = IndexOfDelegateFromType(indexOfMethod);
             while (((IList<T>)list).Remove(defaultValue))
                 count--;
@@ -102,8 +102,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(IndexOfTestData))]
         public void IndexOf_OrderIsCorrect(IndexOfMethod indexOfMethod, int count, bool frontToBackOrder)
         {
-            ValueListBuilder<T> list = GenericListFactory(count);
-            ValueListBuilder<T> withoutDuplicates = list.ToValueListBuilder();
+            ValueList<T>.Builder list = GenericListFactory(count);
+            ValueList<T>.Builder withoutDuplicates = list.ToValueListBuilder();
             list.AddRange(list);
             IndexOfDelegate IndexOf = IndexOfDelegateFromType(indexOfMethod);
 

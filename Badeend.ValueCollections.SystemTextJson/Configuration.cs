@@ -14,7 +14,7 @@ public static class Configuration
 
 	private static readonly JsonConverter ValueListConverterFactory = new JsonArrayConverterFactory(typeof(ValueList<>), typeof(ValueListConverter<>));
 
-	private static readonly JsonConverter ValueListBuilderConverterFactory = new JsonArrayConverterFactory(typeof(ValueListBuilder<>), typeof(ValueListBuilderConverter<>));
+	private static readonly JsonConverter ValueListBuilderConverterFactory = new JsonArrayConverterFactory(typeof(ValueList<>.Builder), typeof(ValueListBuilderConverter<>));
 
 	private static readonly JsonConverter ValueSetConverterFactory = new JsonArrayConverterFactory(typeof(ValueSet<>), typeof(ValueSetConverter<>));
 

@@ -19,7 +19,7 @@ public static class ValueCollectionExtensions
 			return list;
 		}
 
-		if (items is ValueListBuilder<T> builder)
+		if (items is ValueList<T>.Builder builder)
 		{
 			return builder.ToValueList();
 		}
@@ -28,33 +28,33 @@ public static class ValueCollectionExtensions
 	}
 
 	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueListBuilder{T}"/>.
+	/// Copy the <paramref name="items"/> into a new <see cref="ValueList{T}.Builder"/>.
 	/// </summary>
 	[Pure]
 	[Obsolete("Use .ToBuilder() instead.")]
 	[Browsable(false)]
 	[EditorBrowsable(EditorBrowsableState.Never)]
-	public static ValueListBuilder<T> ToValueListBuilder<T>(this ValueList<T> items) => items.ToBuilder();
+	public static ValueList<T>.Builder ToValueListBuilder<T>(this ValueList<T> items) => items.ToBuilder();
 
 	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueListBuilder{T}"/>.
+	/// Copy the <paramref name="items"/> into a new <see cref="ValueList{T}.Builder"/>.
 	/// </summary>
 	/// <remarks>
 	/// The capacity of the returned builder may be larger than the size of the
 	/// input collection. How much larger exactly is undefined.
 	/// </remarks>
-	public static ValueListBuilder<T> ToValueListBuilder<T>(this IEnumerable<T> items)
+	public static ValueList<T>.Builder ToValueListBuilder<T>(this IEnumerable<T> items)
 	{
 		if (items is ValueList<T> list)
 		{
 			return list.ToBuilder();
 		}
 
-		return ValueListBuilder<T>.FromListUnsafe(new List<T>(items));
+		return ValueList<T>.Builder.FromListUnsafe(new List<T>(items));
 	}
 
 	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueListBuilder{T}"/>
+	/// Copy the <paramref name="items"/> into a new <see cref="ValueList{T}.Builder"/>
 	/// with a minimum capacity of <paramref name="minimumCapacity"/>.
 	/// </summary>
 	/// <exception cref="ArgumentOutOfRangeException">
@@ -67,7 +67,7 @@ public static class ValueCollectionExtensions
 	/// </code>
 	/// but without unnecessary intermediate copies.
 	/// </remarks>
-	public static ValueListBuilder<T> ToValueListBuilder<T>(this IEnumerable<T> items, int minimumCapacity)
+	public static ValueList<T>.Builder ToValueListBuilder<T>(this IEnumerable<T> items, int minimumCapacity)
 	{
 		if (items is ValueList<T> list)
 		{
@@ -79,7 +79,7 @@ public static class ValueCollectionExtensions
 			throw new ArgumentOutOfRangeException(nameof(minimumCapacity));
 		}
 
-		return new ValueListBuilder<T>(minimumCapacity).AddRange(items);
+		return new ValueList<T>.Builder(minimumCapacity).AddRange(items);
 	}
 
 	/// <summary>
@@ -89,7 +89,7 @@ public static class ValueCollectionExtensions
 	/// This overload is an extension method to avoid call site ambiguity.
 	/// </remarks>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueListBuilder<T> AddRange<T>(this ValueListBuilder<T> builder, ReadOnlySpan<T> items)
+	public static ValueList<T>.Builder AddRange<T>(this ValueList<T>.Builder builder, ReadOnlySpan<T> items)
 	{
 		if (builder is null)
 		{
@@ -106,7 +106,7 @@ public static class ValueCollectionExtensions
 	/// This overload is an extension method to avoid call site ambiguity.
 	/// </remarks>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueListBuilder<T> InsertRange<T>(this ValueListBuilder<T> builder, int index, ReadOnlySpan<T> items)
+	public static ValueList<T>.Builder InsertRange<T>(this ValueList<T>.Builder builder, int index, ReadOnlySpan<T> items)
 	{
 		if (builder is null)
 		{

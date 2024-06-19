@@ -18,7 +18,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             AssertExtensions.Throws<ArgumentNullException>("builder", () => ValueCollectionExtensions.InsertRange(null, 0, ReadOnlySpan<int>.Empty));
             AssertExtensions.Throws<ArgumentNullException>("builder", () => ValueCollectionExtensions.InsertRange(null, 0, new ReadOnlySpan<int>(new int[1])));
 
-            var list = new ValueListBuilder<int>();
+            var list = new ValueList<int>.Builder();
             AssertExtensions.Throws<ArgumentOutOfRangeException>("index", () => ValueCollectionExtensions.InsertRange(list, 1, new int[0]));
             AssertExtensions.Throws<ArgumentOutOfRangeException>("index", () => ValueCollectionExtensions.InsertRange(list, -1, new int[0]));
         }
@@ -26,7 +26,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void InsertRange_MatchesExpectedContents()
         {
-            var list = new ValueListBuilder<int>();
+            var list = new ValueList<int>.Builder();
 
             list.InsertRange(0, ReadOnlySpan<int>.Empty);
             Assert.Equal(0, list.Count);
@@ -51,7 +51,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void InsertRange_CollectionWithLargeCount_ThrowsOverflowException()
         {
-            ValueListBuilder<T> list = GenericListFactory(count: 1);
+            ValueList<T>.Builder list = GenericListFactory(count: 1);
             ICollection<T> collection = new CollectionWithLargeCount();
 
             Assert.Throws<OverflowException>(() => list.InsertRange(0, collection));

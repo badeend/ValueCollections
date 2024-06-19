@@ -61,7 +61,7 @@ Assert(a == b); // This would fail if `Tags` was a regular List<T>, ImmutableLis
 
 For every immutable ValueCollection type there also exists an accompanying "Builder" type.
 ```cs
-var builder = new ValueListBuilder<int>(); // Or: ValueList.Builder<int>()
+var builder = new ValueList<int>.Builder(); // Or: ValueList.Builder<int>()
 
 foreach (var x in /* complex source */)
 {
@@ -105,7 +105,7 @@ Being a 100% drop-in replacement for `System.Collections.Generic` is _not_ a goa
 
 ```cs
 ValueList<int> a = ...;
-ValueListBuilder<int> b = ...;
+ValueList<int>.Builder b = ...;
 
 /* Reading: */
 _ = a.Count;

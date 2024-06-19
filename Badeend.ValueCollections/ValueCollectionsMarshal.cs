@@ -36,7 +36,7 @@ public static class ValueCollectionsMarshal
 	/// > When increasing the count, this may expose uninitialized, garbage data.
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static void SetCount<T>(ValueListBuilder<T> builder, int count) => builder.SetCountUnsafe(count);
+	public static void SetCount<T>(ValueList<T>.Builder builder, int count) => builder.SetCountUnsafe(count);
 
 	/// <summary>
 	/// Get a <see cref="Span{T}"/> view over the current data in the
@@ -49,5 +49,5 @@ public static class ValueCollectionsMarshal
 	/// builder might trigger undefined behavior.
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static Span<T> AsSpan<T>(ValueListBuilder<T> builder) => builder.AsSpanUnsafe();
+	public static Span<T> AsSpan<T>(ValueList<T>.Builder builder) => builder.AsSpanUnsafe();
 }

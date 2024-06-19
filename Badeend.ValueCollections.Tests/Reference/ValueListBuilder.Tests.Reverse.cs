@@ -16,8 +16,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void Reverse(int listLength)
         {
-            ValueListBuilder<T> list = GenericListFactory(listLength);
-            ValueListBuilder<T> listBefore = list.ToValueListBuilder();
+            ValueList<T>.Builder list = GenericListFactory(listLength);
+            ValueList<T>.Builder listBefore = list.ToValueListBuilder();
 
             list.Reverse();
 

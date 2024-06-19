@@ -16,12 +16,12 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void BinarySearch_ForEveryItemWithoutDuplicates(int count)
         {
-            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueList<T>.Builder list = GenericListFactory(count);
             foreach (T item in list)
                 while (list.Count((value) => value.Equals(item)) > 1)
                     list.RemoveFirst(item);
             list.Sort();
-            ValueListBuilder<T> beforeList = list.ToValueListBuilder();
+            ValueList<T>.Builder beforeList = list.ToValueListBuilder();
 
             Assert.All(Enumerable.Range(0, list.Count), index =>
             {
@@ -36,10 +36,10 @@ namespace Badeend.ValueCollections.Tests.Reference
         {
             if (count > 0)
             {
-                ValueListBuilder<T> list = GenericListFactory(count);
+                ValueList<T>.Builder list = GenericListFactory(count);
                 list.Add(list[0]);
                 list.Sort();
-                ValueListBuilder<T> beforeList = list.ToValueListBuilder();
+                ValueList<T>.Builder beforeList = list.ToValueListBuilder();
 
                 Assert.All(Enumerable.Range(0, list.Count), index =>
                 {

@@ -16,7 +16,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void BinarySearch_ForEveryItemWithoutDuplicates(int count)
         {
-            ValueListBuilder<T> builder = GenericListFactory(count).ToBuilder();
+            ValueList<T>.Builder builder = GenericListFactory(count).ToBuilder();
             foreach (T item in builder)
                 while (builder.Count((value) => value.Equals(item)) > 1)
                     builder.RemoveFirst(item);
@@ -37,7 +37,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         {
             if (count > 0)
             {
-                ValueListBuilder<T> builder = GenericListFactory(count).ToBuilder();
+                ValueList<T>.Builder builder = GenericListFactory(count).ToBuilder();
                 builder.Add(builder[0]);
                 builder.Sort();
                 T[] beforeList = builder.ToArray();

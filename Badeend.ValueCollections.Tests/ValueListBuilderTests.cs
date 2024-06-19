@@ -5,13 +5,13 @@ public class ValueListBuilderTests
     [Fact]
     public void CollectionExpression()
     {
-        ValueListBuilder<int> _ = [1, 2, 3];
+        ValueList<int>.Builder _ = [1, 2, 3];
     }
 
     [Fact]
     public void CollectionInitializer()
     {
-        _ = new ValueListBuilder<int>
+        _ = new ValueList<int>.Builder
         {
             1,
             2,
@@ -32,8 +32,8 @@ public class ValueListBuilderTests
     [Fact]
     public void ReferenceSemantics()
     {
-        ValueListBuilder<int> a = [1, 2, 3];
-        ValueListBuilder<int> b = [1, 2, 3];
+        ValueList<int>.Builder a = [1, 2, 3];
+        ValueList<int>.Builder b = [1, 2, 3];
 
         Assert.True(a != b);
     }
@@ -41,7 +41,7 @@ public class ValueListBuilderTests
     [Fact]
     public void ToValueListPerformsCopy()
     {
-        ValueListBuilder<int> builder = [1, 2, 3];
+        ValueList<int>.Builder builder = [1, 2, 3];
 
         var list = builder.ToValueList();
 
@@ -53,7 +53,7 @@ public class ValueListBuilderTests
     [Fact]
     public void ValueListIsCached()
     {
-        ValueListBuilder<int> builder = [1, 2, 3];
+        ValueList<int>.Builder builder = [1, 2, 3];
 
         var list1 = builder.ToValueList();
         var list2 = builder.Build();
@@ -64,7 +64,7 @@ public class ValueListBuilderTests
     [Fact]
     public void AddInsertRemove()
     {
-        ValueListBuilder<int> a = [];
+        ValueList<int>.Builder a = [];
 
         Assert.True(a.ToValueList() == []);
 
@@ -108,7 +108,7 @@ public class ValueListBuilderTests
     [Fact]
     public void Remove()
     {
-        ValueListBuilder<int> a = [4, 2, 4, 2, 4, 2];
+        ValueList<int>.Builder a = [4, 2, 4, 2, 4, 2];
 
         a.RemoveFirst(2);
 
@@ -122,7 +122,7 @@ public class ValueListBuilderTests
     [Fact]
     public void Reverse()
     {
-        ValueListBuilder<int> a = [1, 2, 3, 4];
+        ValueList<int>.Builder a = [1, 2, 3, 4];
 
         a.Reverse();
 
@@ -132,7 +132,7 @@ public class ValueListBuilderTests
     [Fact]
     public void Sort()
     {
-        ValueListBuilder<int> a = [3, 2, 4, 1];
+        ValueList<int>.Builder a = [3, 2, 4, 1];
 
         a.Sort();
 
@@ -181,7 +181,7 @@ public class ValueListBuilderTests
     [Fact]
     public void BuildIsFinal()
     {
-        var builder = new ValueListBuilder<int>();
+        var builder = new ValueList<int>.Builder();
 
         Assert.False(builder.IsReadOnly);
         builder.Add(1);
@@ -215,7 +215,7 @@ public class ValueListBuilderTests
     [Fact]
     public void SetCount()
     {
-        var builder = new ValueListBuilder<int>()
+        var builder = new ValueList<int>.Builder()
         {
             1,
             2,
@@ -243,9 +243,9 @@ public class ValueListBuilderTests
     [Fact]
     public void SerializeToString()
     {
-        ValueListBuilder<int> a = [];
-        ValueListBuilder<int> b = [42];
-        ValueListBuilder<string?> c = ["A", null, "B"];
+        ValueList<int>.Builder a = [];
+        ValueList<int>.Builder b = [42];
+        ValueList<string?>.Builder c = ["A", null, "B"];
 
         Assert.Equal("[]", a.ToString());
         Assert.Equal("[42]", b.ToString());

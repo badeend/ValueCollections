@@ -18,8 +18,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void RemoveAll_AllElements(int count)
         {
-            ValueListBuilder<T> list = GenericListFactory(count);
-            ValueListBuilder<T> beforeList = list.ToValueListBuilder();
+            ValueList<T>.Builder list = GenericListFactory(count);
+            ValueList<T>.Builder beforeList = list.ToValueListBuilder();
             list.RemoveAll((value) => { return true; });
             Assert.Equal(0, list.Count);
         }
@@ -28,8 +28,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void RemoveAll_NoElements(int count)
         {
-            ValueListBuilder<T> list = GenericListFactory(count);
-            ValueListBuilder<T> beforeList = list.ToValueListBuilder();
+            ValueList<T>.Builder list = GenericListFactory(count);
+            ValueList<T>.Builder beforeList = list.ToValueListBuilder();
             list.RemoveAll((value) => { return false; });
             Assert.Equal(count, list.Count);
             VerifyList(list, beforeList);
@@ -39,8 +39,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void RemoveAll_DefaultElements(int count)
         {
-            ValueListBuilder<T> list = GenericListFactory(count);
-            ValueListBuilder<T> beforeList = list.ToValueListBuilder();
+            ValueList<T>.Builder list = GenericListFactory(count);
+            ValueList<T>.Builder beforeList = list.ToValueListBuilder();
             Predicate<T> EqualsDefaultElement = (value) => { return default(T) == null ? value == null : default(T).Equals(value); };
             int expectedCount = beforeList.Count - beforeList.Count((value) => EqualsDefaultElement(value));
             list.RemoveAll(EqualsDefaultElement);
@@ -50,7 +50,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void RemoveAll_NullMatchPredicate()
         {
-            AssertExtensions.Throws<ArgumentNullException>("match", () => new ValueListBuilder<T>().RemoveAll(null));
+            AssertExtensions.Throws<ArgumentNullException>("match", () => new ValueList<T>.Builder().RemoveAll(null));
         }
 
         #endregion
@@ -69,8 +69,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(10, 8, 2)]
         public void Remove_Range(int listLength, int index, int count)
         {
-            ValueListBuilder<T> list = GenericListFactory(listLength);
-            ValueListBuilder<T> beforeList = list.ToValueListBuilder();
+            ValueList<T>.Builder list = GenericListFactory(listLength);
+            ValueList<T>.Builder beforeList = list.ToValueListBuilder();
 
             list.RemoveRange(index, count);
             Assert.Equal(list.Count, listLength - count); //"Expected them to be the same."
@@ -91,7 +91,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         {
             if (listLength % 2 != 0)
                 listLength++;
-            ValueListBuilder<T> list = GenericListFactory(listLength);
+            ValueList<T>.Builder list = GenericListFactory(listLength);
             Tuple<int, int>[] InvalidParameters = new Tuple<int, int>[]
             {
                 Tuple.Create(listLength     ,1             ),
@@ -123,7 +123,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         {
             if (listLength % 2 != 0)
                 listLength++;
-            ValueListBuilder<T> list = GenericListFactory(listLength);
+            ValueList<T>.Builder list = GenericListFactory(listLength);
             Tuple<int, int>[] InvalidParameters = new Tuple<int, int>[]
             {
                 Tuple.Create(-1,-1),

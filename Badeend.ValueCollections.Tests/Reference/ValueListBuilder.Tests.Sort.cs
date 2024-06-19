@@ -24,7 +24,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes_GreaterThanOne))]
         public void Sort_WithoutDuplicates(int count)
         {
-            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueList<T>.Builder list = GenericListFactory(count);
             IComparer<T> comparer = Comparer<T>.Default;
             list.Sort();
             Assert.All(Enumerable.Range(0, count - 2), i =>
@@ -37,7 +37,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes_GreaterThanOne))]
         public void Sort_WithDuplicates(int count)
         {
-            ValueListBuilder<T> list = GenericListFactory(count);
+            ValueList<T>.Builder list = GenericListFactory(count);
             list.Add(list[0]);
             IComparer<T> comparer = Comparer<T>.Default;
             list.Sort();

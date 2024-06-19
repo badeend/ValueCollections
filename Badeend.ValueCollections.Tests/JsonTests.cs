@@ -12,7 +12,7 @@ public abstract class JsonTests
 		Assert.Equal("null", Serialize<ValueSlice<string>?>(null));
 		Assert.Equal("null", Serialize<List<string?>?>(null));
 		Assert.Equal("null", Serialize<ValueList<string?>?>(null));
-		Assert.Equal("null", Serialize<ValueListBuilder<string?>?>(null));
+		Assert.Equal("null", Serialize<ValueList<string?>.Builder?>(null));
 		Assert.Equal("null", Serialize<HashSet<string?>?>(null));
 		Assert.Equal("null", Serialize<ValueSet<string?>?>(null));
 		Assert.Equal("null", Serialize<ValueSetBuilder<string?>?>(null));
@@ -23,7 +23,7 @@ public abstract class JsonTests
 		Assert.Null(Deserialize<ValueSlice<string>?>("null"));
 		Assert.Null(Deserialize<List<string?>?>("null"));
 		Assert.Null(Deserialize<ValueList<string?>?>("null"));
-		Assert.Null(Deserialize<ValueListBuilder<string?>?>("null"));
+		Assert.Null(Deserialize<ValueList<string?>.Builder?>("null"));
 		Assert.Null(Deserialize<HashSet<string?>?>("null"));
 		Assert.Null(Deserialize<ValueSet<string?>?>("null"));
 		Assert.Null(Deserialize<ValueSetBuilder<string?>?>("null"));
@@ -39,7 +39,7 @@ public abstract class JsonTests
 		Assert.Equal("[]", Serialize<ValueSlice<string>?>([]));
 		Assert.Equal("[]", Serialize<List<string?>?>([]));
 		Assert.Equal("[]", Serialize<ValueList<string?>?>([]));
-		Assert.Equal("[]", Serialize<ValueListBuilder<string?>?>([]));
+		Assert.Equal("[]", Serialize<ValueList<string?>.Builder?>([]));
 		Assert.Equal("[]", Serialize<HashSet<string?>?>([]));
 		Assert.Equal("[]", Serialize<ValueSet<string?>?>([]));
 		Assert.Equal("[]", Serialize<ValueSetBuilder<string?>?>([]));
@@ -51,7 +51,7 @@ public abstract class JsonTests
 		Assert.Equal(0, Deserialize<ValueSlice<string>?>("[]")!.Value.Length);
 		Assert.Empty(Deserialize<List<string?>?>("[]")!);
 		Assert.Empty(Deserialize<ValueList<string?>?>("[]")!);
-		Assert.Empty(Deserialize<ValueListBuilder<string?>?>("[]")!);
+		Assert.Empty(Deserialize<ValueList<string?>.Builder?>("[]")!);
 		Assert.Empty(Deserialize<HashSet<string?>?>("[]")!);
 		Assert.Empty(Deserialize<ValueSet<string?>?>("[]")!);
 		Assert.Empty(Deserialize<ValueSetBuilder<string?>?>("[]")!);
@@ -85,7 +85,7 @@ public abstract class JsonTests
 		Assert.Equal(listJson, Serialize<ValueSlice<string?>?>(["a", null, "b"]));
 		Assert.Equal(listJson, Serialize<List<string?>?>(["a", null, "b"]));
 		Assert.Equal(listJson, Serialize<ValueList<string?>?>(["a", null, "b"]));
-		Assert.Equal(listJson, Serialize<ValueListBuilder<string?>?>(["a", null, "b"]));
+		Assert.Equal(listJson, Serialize<ValueList<string?>.Builder?>(["a", null, "b"]));
 		Assert.Contains(Serialize<HashSet<string?>?>(["a", null, "b"]), setJsons);
 		Assert.Contains(Serialize<ValueSet<string?>?>(["a", null, "b"]), setJsons);
 		Assert.Contains(Serialize<ValueSetBuilder<string?>?>(["a", null, "b"]), setJsons);
@@ -125,7 +125,7 @@ public abstract class JsonTests
 		Assert.True(list![1] == null);
 		Assert.True(list![2] == "b");
 
-		var listBuilder = Deserialize<ValueListBuilder<string?>?>(arrayJson)!;
+		var listBuilder = Deserialize<ValueList<string?>.Builder?>(arrayJson)!;
 		Assert.True(listBuilder!.Count == 3);
 		Assert.True(listBuilder![0] == "a");
 		Assert.True(listBuilder![1] == null);

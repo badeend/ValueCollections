@@ -31,20 +31,20 @@ namespace Badeend.ValueCollections.Tests.Reference
 
         #endregion
 
-        #region ValueListBuilder<T> Helper Methods
+        #region ValueList<T>.Builder Helper Methods
 
-        protected virtual ValueListBuilder<T> GenericListFactory()
+        protected virtual ValueList<T>.Builder GenericListFactory()
         {
-            return new ValueListBuilder<T>();
+            return new ValueList<T>.Builder();
         }
 
-        protected virtual ValueListBuilder<T> GenericListFactory(int count)
+        protected virtual ValueList<T>.Builder GenericListFactory(int count)
         {
             IEnumerable<T> toCreateFrom = CreateEnumerable(EnumerableType.List, null, count, 0, 0);
-            return new ValueListBuilder<T>(toCreateFrom);
+            return new ValueList<T>.Builder(toCreateFrom);
         }
 
-        protected void VerifyList(ValueListBuilder<T> list, ValueListBuilder<T> expectedItems)
+        protected void VerifyList(ValueList<T>.Builder list, ValueList<T>.Builder expectedItems)
         {
             Assert.Equal(expectedItems.Count, list.Count);
 

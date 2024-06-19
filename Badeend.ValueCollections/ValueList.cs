@@ -20,22 +20,22 @@ public static class ValueList
 	public static ValueList<T> Create<T>(ReadOnlySpan<T> items) => ValueList<T>.FromArrayUnsafe(items.ToArray());
 
 	/// <summary>
-	/// Create a new empty <see cref="ValueListBuilder{T}"/>. This builder can
+	/// Create a new empty <see cref="ValueList{T}.Builder"/>. This builder can
 	/// then be used to efficiently construct an immutable <see cref="ValueList{T}"/>.
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueListBuilder<T> Builder<T>() => new ValueListBuilder<T>();
+	public static ValueList<T>.Builder Builder<T>() => new ValueList<T>.Builder();
 
 	/// <summary>
-	/// Create a new <see cref="ValueListBuilder{T}"/> with the provided
+	/// Create a new <see cref="ValueList{T}.Builder"/> with the provided
 	/// <paramref name="items"/> as its initial content.
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueListBuilder<T> Builder<T>(ReadOnlySpan<T> items)
+	public static ValueList<T>.Builder Builder<T>(ReadOnlySpan<T> items)
 	{
-		var builder = new ValueListBuilder<T>();
+		var builder = new ValueList<T>.Builder();
 		builder.AddRange(items);
 		return builder;
 	}
@@ -47,7 +47,7 @@ public static class ValueList
 /// <remarks>
 /// Constructing new instances can be done using
 /// <see cref="ValueList.Builder{T}()"/> or <see cref="ValueList{T}.ToBuilder()"/>.
-/// For creating ValueLists, <see cref="ValueListBuilder{T}"/> is generally more
+/// For creating ValueLists, <see cref="ValueList{T}.Builder"/> is generally more
 /// efficient than <see cref="List{T}"/>.
 ///
 /// ValueLists have "structural equality". This means that two lists
@@ -60,7 +60,7 @@ public static class ValueList
 /// </remarks>
 /// <typeparam name="T">The type of items in the list.</typeparam>
 [CollectionBuilder(typeof(ValueList), nameof(ValueList.Create))]
-public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueList<T>>
+public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueList<T>>
 {
 	private const int UninitializedHashCode = 0;
 
@@ -243,7 +243,7 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	public bool TryCopyTo(Span<T> destination) => this.AsValueSlice().TryCopyTo(destination);
 
 	/// <summary>
-	/// Create a new <see cref="ValueListBuilder{T}"/> with this list as its
+	/// Create a new <see cref="ValueList{T}.Builder"/> with this list as its
 	/// initial content. This builder can then be used to efficiently construct
 	/// a new immutable <see cref="ValueList{T}"/>.
 	/// </summary>
@@ -252,10 +252,10 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	/// list. How much larger exactly is undefined.
 	/// </remarks>
 	[Pure]
-	public ValueListBuilder<T> ToBuilder() => ValueListBuilder<T>.FromValueList(this);
+	public Builder ToBuilder() => Builder.FromValueList(this);
 
 	/// <summary>
-	/// Create a new <see cref="ValueListBuilder{T}"/> with a capacity of at
+	/// Create a new <see cref="ValueList{T}.Builder"/> with a capacity of at
 	/// least <paramref name="minimumCapacity"/> and with this list as its
 	/// initial content. This builder can then be used to efficiently construct
 	/// a new immutable <see cref="ValueList{T}"/>.
@@ -271,7 +271,7 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	/// but without unnecessary intermediate copies.
 	/// </remarks>
 	[Pure]
-	public ValueListBuilder<T> ToBuilder(int minimumCapacity)
+	public Builder ToBuilder(int minimumCapacity)
 	{
 		if (minimumCapacity < 0)
 		{
@@ -280,11 +280,11 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 
 		if (minimumCapacity <= this.Count)
 		{
-			return ValueListBuilder<T>.FromValueList(this);
+			return Builder.FromValueList(this);
 		}
 		else
 		{
-			return new ValueListBuilder<T>(minimumCapacity).AddRangeSpan(this.AsSpan());
+			return new Builder(minimumCapacity).AddRangeSpan(this.AsSpan());
 		}
 	}
 
