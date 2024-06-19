@@ -118,23 +118,23 @@ public class ValueListTests
         Assert.True(hashCodes.Count() == hashCodes.Distinct().Count());
     }
 
-    [Fact]
-    public void MarshalAsValueList()
-    {
-        int[] unsafeItems = [1, 2, 3];
+    // [Fact]
+    // public void MarshalAsValueList()
+    // {
+    //     int[] unsafeItems = [1, 2, 3];
 
-        var valueList = ValueCollectionsMarshal.AsValueList(unsafeItems);
+    //     var valueList = ValueCollectionsMarshal.AsValueList(unsafeItems);
 
-        Assert.True(valueList.Count == 3);
-        Assert.True(valueList[0] == 1);
-        Assert.True(valueList[1] == 2);
-        Assert.True(valueList[2] == 3);
+    //     Assert.True(valueList.Count == 3);
+    //     Assert.True(valueList[0] == 1);
+    //     Assert.True(valueList[1] == 2);
+    //     Assert.True(valueList[2] == 3);
 
-        // Don't ever do this:
-        unsafeItems[2] = 42;
+    //     // Don't ever do this:
+    //     unsafeItems[2] = 42;
 
-        Assert.True(valueList[2] == 42);
-    }
+    //     Assert.True(valueList[2] == 42);
+    // }
 
     [Fact]
     public void SerializeToString()

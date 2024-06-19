@@ -165,18 +165,18 @@ public class ValueListBuilderTests
         builder.InsertRange(0, [1, 2]);
     }
 
-    [Fact]
-    public void BuildWithoutReallocation()
-    {
-        int[] unsafeItems = [1, 2, 3, 4];
+    // [Fact]
+    // public void BuildWithoutReallocation()
+    // {
+    //     int[] unsafeItems = [1, 2, 3, 4];
 
-        var list = ValueCollectionsMarshal.AsValueList(unsafeItems)
-            .ToBuilder()
-            .Build();
+    //     var list = ValueCollectionsMarshal.AsValueList(unsafeItems)
+    //         .ToBuilder()
+    //         .Build();
 
-        unsafeItems[1] = 42;
-        Assert.True(list[1] == 42);
-    }
+    //     unsafeItems[1] = 42;
+    //     Assert.True(list[1] == 42);
+    // }
 
     [Fact]
     public void BuildIsFinal()

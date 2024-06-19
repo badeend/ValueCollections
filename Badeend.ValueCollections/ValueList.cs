@@ -72,11 +72,7 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	[Pure]
 	public static ValueList<T> Empty { get; } = new ValueList<T>(Array.Empty<T>(), 0);
 
-	/// <summary>
-	/// The array may have excess capacity.
-	/// </summary>
-	private readonly T[] items;
-	private readonly int count;
+	private readonly List<T> items;
 
 	/// <summary>
 	/// Warning! This class promises to be thread-safe, yet this is a mutable field.
@@ -86,13 +82,13 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	internal T[] Items
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		get => this.items;
+		get => UnsafeHelpers.GetBackingArray(this.items);
 	}
 
 	internal int Capacity
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		get => this.items.Length;
+		get => this.items.Capacity;
 	}
 
 	/// <summary>
@@ -102,7 +98,7 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	public int Count
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		get => this.count;
+		get => this.items.Count;
 	}
 
 	/// <summary>
@@ -112,7 +108,7 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	public bool IsEmpty
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		get => this.count == 0;
+		get => this.items.Count == 0;
 	}
 
 	/// <inheritdoc/>
@@ -127,12 +123,12 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		get
 		{
-			if (index < 0 || index >= this.count)
+			if (index < 0 || index >= this.items.Count)
 			{
 				throw new ArgumentOutOfRangeException(nameof(index));
 			}
 
-			return ref this.items![index];
+			return ref this.Items![index];
 		}
 	}
 
@@ -148,8 +144,14 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 
 	private ValueList(T[] items, int count)
 	{
-		this.items = items;
-		this.count = count;
+		// TODO: don't copy! 
+
+		this.items = new List<T>(count);
+
+		for (int i = 0; i < count; i++)
+		{
+			this.items.Add(items[i]);
+		}
 	}
 
 	internal static ValueList<T> FromArrayUnsafe(T[] items) => FromArrayUnsafe(items, items.Length);
@@ -169,7 +171,7 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public ValueSlice<T> AsValueSlice() => new ValueSlice<T>(this.items, 0, this.count);
+	public ValueSlice<T> AsValueSlice() => new ValueSlice<T>(this.Items, 0, this.Count);
 
 	/// <summary>
 	/// Access the list's contents using a <see cref="ReadOnlySpan{T}"/>.
@@ -461,8 +463,8 @@ public sealed class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueL
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal Enumerator(ValueList<T> list)
 		{
-			this.items = list.items;
-			this.end = list.count;
+			this.items = list.Items;
+			this.end = list.Count;
 			this.current = -1;
 		}
 
