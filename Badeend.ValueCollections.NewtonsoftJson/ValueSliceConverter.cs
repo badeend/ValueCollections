@@ -8,7 +8,7 @@ internal sealed class ValueSliceConverter<T> : JsonConverter<ValueSlice<T>>
 {
 	internal override ValueSlice<T> ReadJson(JsonReader reader, JsonSerializer serializer)
 	{
-		var builder = ValueList.Builder<T>();
+		var builder = ValueList.CreateBuilder<T>();
 		serializer.Populate(reader, builder);
 		return builder.Build();
 	}

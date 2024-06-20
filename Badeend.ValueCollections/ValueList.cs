@@ -25,7 +25,7 @@ public static class ValueList
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueList<T>.Builder Builder<T>() => ValueList<T>.Builder.Create();
+	public static ValueList<T>.Builder CreateBuilder<T>() => ValueList<T>.Builder.Create();
 
 	/// <summary>
 	/// Create a new empty <see cref="ValueList{T}.Builder"/> with the specified
@@ -34,7 +34,7 @@ public static class ValueList
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueList<T>.Builder Builder<T>(int capacity) => ValueList<T>.Builder.CreateWithCapacity(capacity);
+	public static ValueList<T>.Builder CreateBuilder<T>(int capacity) => ValueList<T>.Builder.CreateWithCapacity(capacity);
 
 	/// <summary>
 	/// Create a new <see cref="ValueList{T}.Builder"/> with the provided
@@ -42,9 +42,9 @@ public static class ValueList
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueList<T>.Builder Builder<T>(ReadOnlySpan<T> items)
+	public static ValueList<T>.Builder CreateBuilder<T>(ReadOnlySpan<T> items)
 	{
-		var builder = Builder<T>(items.Length);
+		var builder = CreateBuilder<T>(items.Length);
 		builder.AddRange(items);
 		return builder;
 	}
@@ -55,7 +55,7 @@ public static class ValueList
 /// </summary>
 /// <remarks>
 /// Constructing new instances can be done using
-/// <see cref="ValueList.Builder{T}()"/> or <see cref="ValueList{T}.ToBuilder()"/>.
+/// <see cref="ValueList.CreateBuilder{T}()"/> or <see cref="ValueList{T}.ToBuilder()"/>.
 /// For creating ValueLists, <see cref="ValueList{T}.Builder"/> is generally more
 /// efficient than <see cref="List{T}"/>.
 ///
@@ -293,7 +293,7 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 		}
 		else
 		{
-			return ValueList.Builder<T>(minimumCapacity).AddRange(this.AsSpan());
+			return ValueList.CreateBuilder<T>(minimumCapacity).AddRange(this.AsSpan());
 		}
 	}
 

@@ -11,7 +11,7 @@ internal sealed class ValueListBuilderConverter<T>(JsonConverter<T> valueConvert
 
 	public override ValueList<T>.Builder Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 	{
-		var builder = ValueList.Builder<T>();
+		var builder = ValueList.CreateBuilder<T>();
 		this.inner.ReadInto(ref reader, builder, options);
 		return builder;
 	}

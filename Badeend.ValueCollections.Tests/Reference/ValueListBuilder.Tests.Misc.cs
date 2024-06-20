@@ -30,7 +30,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void BasicInsert(T[] items, T item, int index, int repeat)
             {
-                ValueList<T>.Builder list = ValueList.Builder<T>(items);
+                ValueList<T>.Builder list = ValueList.CreateBuilder<T>(items);
 
                 for (int i = 0; i < repeat; i++)
                 {
@@ -60,7 +60,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void InsertValidations(T[] items)
             {
-                ValueList<T>.Builder list = ValueList.Builder<T>(items);
+                ValueList<T>.Builder list = ValueList.CreateBuilder<T>(items);
                 int[] bad = new int[] { items.Length + 1, items.Length + 2, int.MaxValue, -1, -2, int.MinValue };
                 for (int i = 0; i < bad.Length; i++)
                 {
@@ -163,7 +163,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void BasicContains(T[] items)
             {
-                ValueList<T>.Builder list = ValueList.Builder<T>(items);
+                ValueList<T>.Builder list = ValueList.CreateBuilder<T>(items);
 
                 for (int i = 0; i < items.Length; i++)
                 {
@@ -173,7 +173,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void NonExistingValues(T[] itemsX, T[] itemsY)
             {
-                ValueList<T>.Builder list = ValueList.Builder<T>(itemsX);
+                ValueList<T>.Builder list = ValueList.CreateBuilder<T>(itemsX);
 
                 for (int i = 0; i < itemsY.Length; i++)
                 {
@@ -183,7 +183,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void RemovedValues(T[] items)
             {
-                ValueList<T>.Builder list = ValueList.Builder<T>(items);
+                ValueList<T>.Builder list = ValueList.CreateBuilder<T>(items);
                 for (int i = 0; i < items.Length; i++)
                 {
                     list.RemoveFirst(items[i]);
@@ -193,7 +193,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void AddRemoveValues(T[] items)
             {
-                ValueList<T>.Builder list = ValueList.Builder<T>(items);
+                ValueList<T>.Builder list = ValueList.CreateBuilder<T>(items);
                 for (int i = 0; i < items.Length; i++)
                 {
                     list.Add(items[i]);
@@ -205,7 +205,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void MultipleValues(T[] items, int times)
             {
-                ValueList<T>.Builder list = ValueList.Builder<T>(items);
+                ValueList<T>.Builder list = ValueList.CreateBuilder<T>(items);
 
                 for (int i = 0; i < times; i++)
                 {
@@ -226,7 +226,7 @@ namespace Badeend.ValueCollections.Tests.Reference
                     throw new ArgumentException("invalid argument passed to testcase");
                 }
 
-                ValueList<T>.Builder list = ValueList.Builder<T>(items);
+                ValueList<T>.Builder list = ValueList.CreateBuilder<T>(items);
                 list.Add(value);
                 Assert.True(list.Contains(value)); //"Should contain item."
             }
@@ -237,14 +237,14 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void ClearEmptyList()
             {
-                ValueList<T>.Builder list = ValueList.Builder<T>();
+                ValueList<T>.Builder list = ValueList.CreateBuilder<T>();
                 Assert.Equal(0, list.Count); //"Should be equal to 0"
                 list.Clear();
                 Assert.Equal(0, list.Count); //"Should be equal to 0."
             }
             public void ClearMultipleTimesEmptyList(int times)
             {
-                ValueList<T>.Builder list = ValueList.Builder<T>();
+                ValueList<T>.Builder list = ValueList.CreateBuilder<T>();
                 Assert.Equal(0, list.Count); //"Should be equal to 0."
                 for (int i = 0; i < times; i++)
                 {
@@ -254,14 +254,14 @@ namespace Badeend.ValueCollections.Tests.Reference
             }
             public void ClearNonEmptyList(T[] items)
             {
-                ValueList<T>.Builder list = ValueList.Builder<T>(items);
+                ValueList<T>.Builder list = ValueList.CreateBuilder<T>(items);
                 list.Clear();
                 Assert.Equal(0, list.Count); //"Should be equal to 0."
             }
 
             public void ClearMultipleTimesNonEmptyList(T[] items, int times)
             {
-                ValueList<T>.Builder list = ValueList.Builder<T>(items);
+                ValueList<T>.Builder list = ValueList.CreateBuilder<T>(items);
                 for (int i = 0; i < times; i++)
                 {
                     list.Clear();

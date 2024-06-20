@@ -11,7 +11,7 @@ public class ValueListBuilderTests
     [Fact]
     public void FluentInterface()
     {
-        _ = ValueList.Builder<int>()
+        _ = ValueList.CreateBuilder<int>()
             .Add(1)
             .Add(2)
             .Add(3)
@@ -137,7 +137,7 @@ public class ValueListBuilderTests
         Span<int> d = [1, 2, 3];
         ReadOnlySpan<int> e = [1, 2, 3];
 
-        var builder = ValueList.Builder<int>();
+        var builder = ValueList.CreateBuilder<int>();
 
         builder.AddRange(a);
         builder.AddRange(b);
@@ -170,7 +170,7 @@ public class ValueListBuilderTests
     [Fact]
     public void BuildIsFinal()
     {
-        var builder = ValueList.Builder<int>();
+        var builder = ValueList.CreateBuilder<int>();
 
         Assert.False(builder.IsReadOnly);
         builder.Add(1);
@@ -204,7 +204,7 @@ public class ValueListBuilderTests
     [Fact]
     public void SetCount()
     {
-        var builder = ValueList.Builder<int>([1, 2, 3, 4]);
+        var builder = ValueList.CreateBuilder<int>([1, 2, 3, 4]);
 
         Assert.True(builder.Count == 4);
         Assert.True(builder.ToValueList() == [1, 2, 3, 4]);

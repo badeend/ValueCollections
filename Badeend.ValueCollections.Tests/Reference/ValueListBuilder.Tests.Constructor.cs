@@ -15,7 +15,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void Constructor_Default()
         {
-            ValueList<T>.Builder list = ValueList.Builder<T>();
+            ValueList<T>.Builder list = ValueList.CreateBuilder<T>();
             Assert.Equal(0, list.Capacity); //"Expected capacity of list to be the same as given."
             Assert.Equal(0, list.Count); //"Do not expect anything to be in the list."
             Assert.False(((IList<T>)list).IsReadOnly); //"List should not be readonly"
@@ -30,7 +30,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(100)]
         public void Constructor_Capacity(int capacity)
         {
-            ValueList<T>.Builder list = ValueList.Builder<T>(capacity);
+            ValueList<T>.Builder list = ValueList.CreateBuilder<T>(capacity);
             Assert.Equal(capacity, list.Capacity); //"Expected capacity of list to be the same as given."
             Assert.Equal(0, list.Count); //"Do not expect anything to be in the list."
             Assert.False(((IList<T>)list).IsReadOnly); //"List should not be readonly"
@@ -41,7 +41,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(int.MinValue)]
         public void Constructor_NegativeCapacity_ThrowsArgumentOutOfRangeException(int capacity)
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => ValueList.Builder<T>(capacity));
+            Assert.Throws<ArgumentOutOfRangeException>(() => ValueList.CreateBuilder<T>(capacity));
         }
 
         [Theory]

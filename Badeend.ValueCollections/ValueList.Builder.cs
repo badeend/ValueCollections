@@ -29,7 +29,7 @@ public sealed partial class ValueList<T>
 	///
 	/// Unlike ValueList, Builder is <em>not</em> thread-safe.
 	/// </remarks>
-	[CollectionBuilder(typeof(ValueList), nameof(ValueList.Builder))]
+	[CollectionBuilder(typeof(ValueList), nameof(ValueList.CreateBuilder))]
 	public sealed class Builder : IList<T>, IReadOnlyList<T>
 	{
 		private const int VersionBuilt = -1;

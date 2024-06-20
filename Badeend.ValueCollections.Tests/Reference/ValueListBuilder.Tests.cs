@@ -35,7 +35,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
         protected virtual ValueList<T>.Builder GenericListFactory()
         {
-            return ValueList.Builder<T>();
+            return ValueList.CreateBuilder<T>();
         }
 
         protected virtual ValueList<T>.Builder GenericListFactory(int count)

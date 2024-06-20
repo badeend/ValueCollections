@@ -79,7 +79,7 @@ public static class ValueCollectionExtensions
 			throw new ArgumentOutOfRangeException(nameof(minimumCapacity));
 		}
 
-		return ValueList.Builder<T>(minimumCapacity).AddRange(items);
+		return ValueList.CreateBuilder<T>(minimumCapacity).AddRange(items);
 	}
 
 	/// <summary>
