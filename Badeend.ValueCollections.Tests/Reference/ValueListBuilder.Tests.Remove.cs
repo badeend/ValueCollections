@@ -42,7 +42,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             ValueList<T>.Builder list = GenericListFactory(count);
             ValueList<T>.Builder beforeList = list.ToValueListBuilder();
             Predicate<T> EqualsDefaultElement = (value) => { return default(T) == null ? value == null : default(T).Equals(value); };
-            int expectedCount = beforeList.Count - beforeList.Count((value) => EqualsDefaultElement(value));
+            int expectedCount = beforeList.Count - beforeList.AsCollection().Count((value) => EqualsDefaultElement(value));
             list.RemoveAll(EqualsDefaultElement);
             Assert.Equal(expectedCount, list.Count);
         }

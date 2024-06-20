@@ -51,7 +51,7 @@ public abstract class JsonTests
 		Assert.Equal(0, Deserialize<ValueSlice<string>?>("[]")!.Value.Length);
 		Assert.Empty(Deserialize<List<string?>?>("[]")!);
 		Assert.Empty(Deserialize<ValueList<string?>?>("[]")!);
-		Assert.Empty(Deserialize<ValueList<string?>.Builder?>("[]")!);
+		Assert.Empty(Deserialize<ValueList<string?>.Builder?>("[]")!.AsCollection());
 		Assert.Empty(Deserialize<HashSet<string?>?>("[]")!);
 		Assert.Empty(Deserialize<ValueSet<string?>?>("[]")!);
 		Assert.Empty(Deserialize<ValueSetBuilder<string?>?>("[]")!);

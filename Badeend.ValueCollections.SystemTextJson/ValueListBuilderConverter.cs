@@ -12,12 +12,12 @@ internal sealed class ValueListBuilderConverter<T>(JsonConverter<T> valueConvert
 	public override ValueList<T>.Builder Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 	{
 		var builder = ValueList.CreateBuilder<T>();
-		this.inner.ReadInto(ref reader, builder, options);
+		this.inner.ReadInto(ref reader, builder.AsCollection(), options);
 		return builder;
 	}
 
 	public override void Write(Utf8JsonWriter writer, ValueList<T>.Builder builder, JsonSerializerOptions options)
 	{
-		this.inner.Write(writer, builder, options);
+		this.inner.Write(writer, builder.AsCollection(), options);
 	}
 }

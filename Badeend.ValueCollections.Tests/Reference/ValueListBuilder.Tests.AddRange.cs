@@ -21,7 +21,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         {
             ValueList<T>.Builder list = GenericListFactory(listLength);
             ValueList<T>.Builder listBeforeAdd = list.ToValueListBuilder();
-            IEnumerable<T> enumerable = CreateEnumerable(enumerableType, list, enumerableLength, numberOfMatchingElements, numberOfDuplicateElements);
+            IEnumerable<T> enumerable = CreateEnumerable(enumerableType, list.AsCollection(), enumerableLength, numberOfMatchingElements, numberOfDuplicateElements);
             list.AddRange(enumerable);
 
             // Check that the first section of the List is unchanged
@@ -43,7 +43,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         {
             ValueList<T>.Builder list = GenericListFactory(listLength);
             ValueList<T>.Builder listBeforeAdd = list.ToValueListBuilder();
-            Span<T> span = CreateEnumerable(enumerableType, list, enumerableLength, numberOfMatchingElements, numberOfDuplicateElements).ToArray();
+            Span<T> span = CreateEnumerable(enumerableType, list.AsCollection(), enumerableLength, numberOfMatchingElements, numberOfDuplicateElements).ToArray();
             list.AddRange(span);
 
             // Check that the first section of the List is unchanged
@@ -73,30 +73,31 @@ namespace Badeend.ValueCollections.Tests.Reference
             ValueList<T>.Builder list = GenericListFactory(count);
             ValueList<T>.Builder listBeforeAdd = list.ToValueListBuilder();
             Assert.Throws<ArgumentNullException>(() => list.AddRange(null));
-            Assert.Equal(listBeforeAdd, list);
+            Assert.Equal(listBeforeAdd.AsCollection(), list.AsCollection());
         }
 
         [Fact]
         public void AddRange_AddSelfAsEnumerable_ThrowsExceptionWhenNotEmpty()
         {
             ValueList<T>.Builder list = GenericListFactory(0);
+            var listAsCollection = list.AsCollection();
 
             // Succeeds when list is empty.
-            list.AddRange(list);
-            list.AddRange(list.Where(_ => true));
+            list.AddRange(listAsCollection);
+            list.AddRange(listAsCollection.Where(_ => true));
 
             // Succeeds when list has elements and is added as collection.
             list.Add(default);
             Assert.Equal(1, list.Count);
-            list.AddRange(list);
+            list.AddRange(listAsCollection);
             Assert.Equal(2, list.Count);
-            list.AddRange(list);
+            list.AddRange(listAsCollection);
             Assert.Equal(4, list.Count);
 
             // Fails version check when list has elements and is added as non-collection.
-            Assert.Throws<InvalidOperationException>(() => list.AddRange(list.Where(_ => true)));
+            Assert.Throws<InvalidOperationException>(() => list.AddRange(listAsCollection.Where(_ => true)));
             Assert.Equal(5, list.Count);
-            Assert.Throws<InvalidOperationException>(() => list.AddRange(list.Where(_ => true)));
+            Assert.Throws<InvalidOperationException>(() => list.AddRange(listAsCollection.Where(_ => true)));
             Assert.Equal(6, list.Count);
         }
 

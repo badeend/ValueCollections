@@ -30,7 +30,7 @@ public sealed partial class ValueList<T>
 	/// Unlike ValueList, Builder is <em>not</em> thread-safe.
 	/// </remarks>
 	[CollectionBuilder(typeof(ValueList), nameof(ValueList.CreateBuilder))]
-	public sealed class Builder : IList<T>, IReadOnlyList<T>
+	public sealed class Builder
 	{
 		private const int VersionBuilt = -1;
 
@@ -46,6 +46,8 @@ public sealed partial class ValueList<T>
 		/// `-1` means: Collection has been built and the builder is now read-only.
 		/// </summary>
 		private int version;
+
+		private Collection? collectionCache;
 
 		/// <summary>
 		/// Returns <see langword="true"/> when this instance has been built and is
@@ -104,6 +106,15 @@ public sealed partial class ValueList<T>
 			}
 
 			throw UnreachableException();
+		}
+
+		/// <summary>
+		/// Copy the current contents of the builder into a new <see cref="ValueList{T}.Builder"/>.
+		/// </summary>
+		[Pure]
+		public Builder ToValueListBuilder()
+		{
+			return ValueList.CreateBuilder<T>(this.Count).AddRange(this.AsSpanUnsafe());
 		}
 
 		private List<T> Mutate()
@@ -704,48 +715,6 @@ public sealed partial class ValueList<T>
 			}
 		}
 
-		/// <inheritdoc/>
-		void ICollection<T>.Add(T item) => this.Add(item);
-
-		/// <inheritdoc/>
-		void ICollection<T>.Clear() => this.Clear();
-
-		/// <inheritdoc/>
-		void ICollection<T>.CopyTo(T[] array, int arrayIndex)
-		{
-			if (array is null)
-			{
-				throw new ArgumentNullException(nameof(array));
-			}
-
-			this.CopyTo(array.AsSpan(arrayIndex));
-		}
-
-		/// <inheritdoc/>
-		void IList<T>.Insert(int index, T item) => this.Insert(index, item);
-
-		/// <inheritdoc/>
-		bool ICollection<T>.Remove(T item) => this.Mutate().Remove(item);
-
-		/// <inheritdoc/>
-		void IList<T>.RemoveAt(int index) => this.RemoveAt(index);
-
-		/// <inheritdoc/>
-		IEnumerator<T> IEnumerable<T>.GetEnumerator()
-		{
-			if (this.Count == 0)
-			{
-				return EnumeratorLike.Empty<T>();
-			}
-			else
-			{
-				return EnumeratorLike.AsIEnumerator<T, Enumerator>(new Enumerator(this));
-			}
-		}
-
-		/// <inheritdoc/>
-		IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<T>)this).GetEnumerator();
-
 		private static InvalidOperationException UnreachableException() => new("Unreachable");
 
 		private static InvalidOperationException BuiltException() => new("Builder has already been built");
@@ -785,6 +754,100 @@ public sealed partial class ValueList<T>
 			public bool Remove(T item) => throw new NotSupportedException();
 		}
 #endif
+
+		/// <summary>
+		/// Create a new heap-allocated live view of the builder.
+		/// </summary>
+		/// <remarks>
+		/// This method is an <c>O(1)</c> operation and allocates a new fixed-size
+		/// collection instance. The items are not copied. Changes made to the
+		/// builder are visible in the collection and vice versa.
+		/// </remarks>
+		public Collection AsCollection() => this.collectionCache ??= new Collection(this);
+
+#pragma warning disable CA1034 // Nested types should not be visible
+		/// <summary>
+		/// A new heap-allocated live view of a builder. Changes made to the
+		/// collection are visible in the builder and vice versa.
+		/// </summary>
+		public sealed class Collection : IList<T>, IReadOnlyList<T>
+		{
+			private readonly Builder builder;
+
+			/// <summary>
+			/// The underlying builder.
+			/// </summary>
+			public Builder Builder => this.builder;
+
+			internal Collection(Builder builder)
+			{
+				this.builder = builder;
+			}
+
+			/// <inheritdoc/>
+			T IList<T>.this[int index] { get => this.builder[index]; set => this.builder[index] = value; }
+
+			/// <inheritdoc/>
+			T IReadOnlyList<T>.this[int index] => this.builder[index];
+
+			/// <inheritdoc/>
+			int ICollection<T>.Count => this.builder.Count;
+
+			/// <inheritdoc/>
+			int IReadOnlyCollection<T>.Count => this.builder.Count;
+
+			/// <inheritdoc/>
+			bool ICollection<T>.IsReadOnly => this.builder.IsReadOnly;
+
+			/// <inheritdoc/>
+			void ICollection<T>.Add(T item) => this.builder.Add(item);
+
+			/// <inheritdoc/>
+			void ICollection<T>.Clear() => this.builder.Clear();
+
+			/// <inheritdoc/>
+			bool ICollection<T>.Contains(T item) => this.builder.Contains(item);
+
+			/// <inheritdoc/>
+			void ICollection<T>.CopyTo(T[] array, int arrayIndex)
+			{
+				if (array is null)
+				{
+					throw new ArgumentNullException(nameof(array));
+				}
+
+				this.builder.CopyTo(array.AsSpan(arrayIndex));
+			}
+
+			/// <inheritdoc/>
+			IEnumerator<T> IEnumerable<T>.GetEnumerator()
+			{
+				if (this.builder.Count == 0)
+				{
+					return EnumeratorLike.Empty<T>();
+				}
+				else
+				{
+					return EnumeratorLike.AsIEnumerator<T, Enumerator>(new Enumerator(this.builder));
+				}
+			}
+
+			/// <inheritdoc/>
+			IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<T>)this).GetEnumerator();
+
+			/// <inheritdoc/>
+			int IList<T>.IndexOf(T item) => this.builder.IndexOf(item);
+
+			/// <inheritdoc/>
+			void IList<T>.Insert(int index, T item) => this.builder.Insert(index, item);
+
+			/// <inheritdoc/>
+			bool ICollection<T>.Remove(T item) => this.builder.TryRemoveFirst(item);
+
+			/// <inheritdoc/>
+			void IList<T>.RemoveAt(int index) => this.builder.RemoveAt(index);
+		}
+#pragma warning restore CA1034 // Nested types should not be visible
 
 		/// <summary>
 		/// Returns an enumerator for this <see cref="Builder"/>.

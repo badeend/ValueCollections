@@ -19,11 +19,6 @@ public static class ValueCollectionExtensions
 			return list;
 		}
 
-		if (items is ValueList<T>.Builder builder)
-		{
-			return builder.ToValueList();
-		}
-
 		return ValueList<T>.FromArrayUnsafe(items.ToArray());
 	}
 

@@ -105,7 +105,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
                 //InsertRange into itself
                 list = constructIEnumerable(itemsX).ToValueListBuilder();
-                list.InsertRange(index, list);
+                list.InsertRange(index, list.AsCollection());
 
                 foreach (T item in itemsX)
                 {
@@ -154,7 +154,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public IEnumerable<T> ConstructTestList(T[] items)
             {
-                return items.ToValueListBuilder();
+                return items.ToValueListBuilder().AsCollection();
             }
 
             #endregion

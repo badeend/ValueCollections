@@ -27,25 +27,26 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void InsertRange_MatchesExpectedContents()
         {
             var list = ValueList.CreateBuilder<int>();
+            var listAsCollection = list.AsCollection();
 
             list.InsertRange(0, ReadOnlySpan<int>.Empty);
             Assert.Equal(0, list.Count);
 
             list.InsertRange(0, (ReadOnlySpan<int>)new int[] { 3, 2, 1 });
             Assert.Equal(3, list.Count);
-            Assert.Equal(new[] { 3, 2, 1 }, list);
+            Assert.Equal(new[] { 3, 2, 1 }, listAsCollection);
 
             list.InsertRange(0, (ReadOnlySpan<int>)new int[] { 6, 5, 4 });
             Assert.Equal(6, list.Count);
-            Assert.Equal(new[] { 6, 5, 4, 3, 2, 1 }, list);
+            Assert.Equal(new[] { 6, 5, 4, 3, 2, 1 }, listAsCollection);
 
             list.InsertRange(6, (ReadOnlySpan<int>)new int[] { 0, -1, -2 });
             Assert.Equal(9, list.Count);
-            Assert.Equal(new[] { 6, 5, 4, 3, 2, 1, 0, -1, -2 }, list);
+            Assert.Equal(new[] { 6, 5, 4, 3, 2, 1, 0, -1, -2 }, listAsCollection);
 
             list.InsertRange(3, (ReadOnlySpan<int>)new int[] { 100, 99, 98 });
             Assert.Equal(12, list.Count);
-            Assert.Equal(new[] { 6, 5, 4, 100, 99, 98, 3, 2, 1, 0, -1, -2 }, list);
+            Assert.Equal(new[] { 6, 5, 4, 100, 99, 98, 3, 2, 1, 0, -1, -2 }, listAsCollection);
         }
 
         [Fact]

@@ -91,7 +91,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             var copiedList = list.ToValueListBuilder();
 
             list.EnsureCapacity(list.Capacity + 1);
-            Assert.Equal(copiedList, list);
+            Assert.Equal(copiedList.AsCollection(), list.AsCollection());
         }
     }
 }

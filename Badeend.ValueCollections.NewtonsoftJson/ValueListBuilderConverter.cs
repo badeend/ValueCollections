@@ -12,13 +12,13 @@ internal sealed class ValueListBuilderConverter<T> : JsonConverter<ValueList<T>.
 	internal override ValueList<T>.Builder ReadJson(JsonReader reader, JsonSerializer serializer)
 	{
 		var builder = ValueList.CreateBuilder<T>();
-		serializer.Populate(reader, builder);
+		serializer.Populate(reader, builder.AsCollection());
 		return builder;
 	}
 
 	internal override void WriteJson(JsonWriter writer, ValueList<T>.Builder list, JsonSerializer serializer)
 	{
-		var wrapper = list.IsEmpty ? EmptyReadOnlyCollection : new(list);
+		var wrapper = list.IsEmpty ? EmptyReadOnlyCollection : new(list.AsCollection());
 
 		serializer.Serialize(writer, wrapper);
 	}

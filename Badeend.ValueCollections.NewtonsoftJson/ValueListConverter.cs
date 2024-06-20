@@ -12,7 +12,7 @@ internal sealed class ValueListConverter<T> : JsonConverter<ValueList<T>>
 	internal override ValueList<T> ReadJson(JsonReader reader, JsonSerializer serializer)
 	{
 		var builder = ValueList.CreateBuilder<T>();
-		serializer.Populate(reader, builder);
+		serializer.Populate(reader, builder.AsCollection());
 		return builder.Build();
 	}
 

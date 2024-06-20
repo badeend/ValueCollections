@@ -21,12 +21,12 @@ namespace Badeend.ValueCollections.Tests.Reference
 
         protected override IList<T> GenericIListFactory()
         {
-            return GenericListFactory();
+            return GenericListFactory().AsCollection();
         }
 
         protected override IList<T> GenericIListFactory(int count)
         {
-            return GenericListFactory(count);
+            return GenericListFactory(count).AsCollection();
         }
 
         #endregion
