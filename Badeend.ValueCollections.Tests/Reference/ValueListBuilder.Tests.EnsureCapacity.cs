@@ -14,7 +14,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void EnsureCapacity_NotInitialized_RequestedZero_ReturnsZero()
         {
-            var list = new ValueList<T>.Builder();
+            var list = ValueList.Builder<T>();
             list.EnsureCapacity(0);
             Assert.Equal(0, list.Capacity);
         }
@@ -22,7 +22,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void EnsureCapacity_NegativeCapacityRequested_Throws()
         {
-            var list = new ValueList<T>.Builder();
+            var list = ValueList.Builder<T>();
             AssertExtensions.Throws<ArgumentOutOfRangeException>("capacity", () => list.EnsureCapacity(-1));
         }
 
@@ -46,7 +46,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(5)]
         public void EnsureCapacity_RequestedCapacitySmallerThanOrEqualToCurrent_CapacityUnchanged(int currentCapacity)
         {
-            var list = new ValueList<T>.Builder(currentCapacity);
+            var list = ValueList.Builder<T>(currentCapacity);
 
             for (int requestCapacity = 0; requestCapacity <= currentCapacity; requestCapacity++)
             {
@@ -88,7 +88,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void EnsureCapacity_RequestingLargerCapacity_DoesNotImpactListContent(int count)
         {
             ValueList<T>.Builder list = GenericListFactory(count);
-            var copiedList = new ValueList<T>.Builder(list);
+            var copiedList = list.ToValueListBuilder();
 
             list.EnsureCapacity(list.Capacity + 1);
             Assert.Equal(copiedList, list);

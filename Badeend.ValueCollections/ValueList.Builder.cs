@@ -29,6 +29,7 @@ public sealed partial class ValueList<T>
 	///
 	/// Unlike ValueList, Builder is <em>not</em> thread-safe.
 	/// </remarks>
+	[CollectionBuilder(typeof(ValueList), nameof(ValueList.Builder))]
 	public sealed class Builder : IList<T>, IReadOnlyList<T>
 	{
 		private const int VersionBuilt = -1;
@@ -171,54 +172,6 @@ public sealed partial class ValueList<T>
 			get => this.Count == 0;
 		}
 
-		/// <summary>
-		/// Construct a new empty list builder.
-		/// </summary>
-		[Pure]
-		public Builder()
-		{
-			this.items = ValueList<T>.Empty;
-		}
-
-		/// <summary>
-		/// Construct a new empty list builder with the specified initial capacity.
-		/// </summary>
-		/// <exception cref="ArgumentOutOfRangeException">
-		///   <paramref name="capacity"/> is less than 0.
-		/// </exception>
-		[Pure]
-		public Builder(int capacity)
-		{
-			if (capacity == 0)
-			{
-				this.items = ValueList<T>.Empty;
-			}
-			else
-			{
-				this.items = new List<T>(capacity);
-			}
-		}
-
-		/// <summary>
-		/// Construct a new <see cref="Builder"/> with the provided
-		/// <paramref name="items"/> as its initial content.
-		/// </summary>
-		/// <remarks>
-		/// Use <see cref="ValueList.Builder{T}(ReadOnlySpan{T})"/> to construct a
-		/// Builder from a span.
-		/// </remarks>
-		public Builder(IEnumerable<T> items)
-		{
-			if (items is ValueList<T> valueList)
-			{
-				this.items = valueList;
-			}
-			else
-			{
-				this.items = new List<T>(items);
-			}
-		}
-
 		private Builder(ValueList<T> items)
 		{
 			this.items = items;
@@ -227,6 +180,40 @@ public sealed partial class ValueList<T>
 		private Builder(List<T> items)
 		{
 			this.items = items;
+		}
+
+		internal static Builder Create()
+		{
+			return new(ValueList<T>.Empty);
+		}
+
+		internal static Builder CreateWithCapacity(int capacity)
+		{
+			if (capacity < 0)
+			{
+				throw new ArgumentOutOfRangeException(nameof(capacity));
+			}
+
+			if (capacity == 0)
+			{
+				return new(ValueList<T>.Empty);
+			}
+			else
+			{
+				return new(new List<T>(capacity));
+			}
+		}
+
+		internal static Builder FromEnumerable(IEnumerable<T> items)
+		{
+			if (items is ValueList<T> valueList)
+			{
+				return new(valueList);
+			}
+			else
+			{
+				return new(new List<T>(items));
+			}
 		}
 
 		internal static Builder FromValueList(ValueList<T> items) => new(items);

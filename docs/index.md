@@ -61,7 +61,7 @@ Assert(a == b); // This would fail if `Tags` was a regular List<T>, ImmutableLis
 
 For every immutable ValueCollection type there also exists an accompanying "Builder" type.
 ```cs
-var builder = new ValueList<int>.Builder(); // Or: ValueList.Builder<int>()
+var builder = ValueList.Builder<int>();
 
 foreach (var x in /* complex source */)
 {

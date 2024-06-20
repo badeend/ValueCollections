@@ -14,7 +14,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void CopyTo_InvalidArgs_Throws()
         {
-            var list = new ValueList<int>.Builder() { 1, 2, 3 };
+            ValueList<int>.Builder list = [1, 2, 3];
             Assert.Throws<ArgumentException>(() => list.CopyTo((Span<int>)new int[2]));
         }
 
@@ -24,16 +24,16 @@ namespace Badeend.ValueCollections.Tests.Reference
             ValueList<int>.Builder list;
             Span<int> destination;
 
-            list = new ValueList<int>.Builder();
+            list = ValueList.Builder<int>();
             destination = Span<int>.Empty;
             list.CopyTo(destination);
 
-            list = new ValueList<int>.Builder() { 1, 2, 3 };
+            list = [1, 2, 3];
             destination = new int[3];
             list.CopyTo(destination);
             Assert.Equal(new[] { 1, 2, 3 }, destination.ToArray());
 
-            list = new ValueList<int>.Builder() { 1, 2, 3 };
+            list = [1, 2, 3];
             destination = new int[4];
             list.CopyTo(destination);
             Assert.Equal(new[] { 1, 2, 3, 0 }, destination.ToArray());

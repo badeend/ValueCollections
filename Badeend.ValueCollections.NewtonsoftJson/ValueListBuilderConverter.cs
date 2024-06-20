@@ -5,18 +5,18 @@ using Newtonsoft.Json;
 namespace Badeend.ValueCollections.NewtonsoftJson;
 
 [SuppressMessage("Microsoft.Performance", "CA1812:AvoidUninstantiatedInternalClasses", Justification = "Instantiated using reflection")]
-internal sealed class ValueListConverter<T> : JsonConverter<ValueList<T>>
+internal sealed class ValueListBuilderConverter<T> : JsonConverter<ValueList<T>.Builder>
 {
 	private static readonly ReadOnlyCollection<T> EmptyReadOnlyCollection = new(ValueList<T>.Empty);
 
-	internal override ValueList<T> ReadJson(JsonReader reader, JsonSerializer serializer)
+	internal override ValueList<T>.Builder ReadJson(JsonReader reader, JsonSerializer serializer)
 	{
 		var builder = ValueList.Builder<T>();
 		serializer.Populate(reader, builder);
-		return builder.Build();
+		return builder;
 	}
 
-	internal override void WriteJson(JsonWriter writer, ValueList<T> list, JsonSerializer serializer)
+	internal override void WriteJson(JsonWriter writer, ValueList<T>.Builder list, JsonSerializer serializer)
 	{
 		var wrapper = list.IsEmpty ? EmptyReadOnlyCollection : new(list);
 

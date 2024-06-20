@@ -30,7 +30,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void BasicInsert(T[] items, T item, int index, int repeat)
             {
-                ValueList<T>.Builder list = new ValueList<T>.Builder(items);
+                ValueList<T>.Builder list = ValueList.Builder<T>(items);
 
                 for (int i = 0; i < repeat; i++)
                 {
@@ -60,7 +60,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void InsertValidations(T[] items)
             {
-                ValueList<T>.Builder list = new ValueList<T>.Builder(items);
+                ValueList<T>.Builder list = ValueList.Builder<T>(items);
                 int[] bad = new int[] { items.Length + 1, items.Length + 2, int.MaxValue, -1, -2, int.MinValue };
                 for (int i = 0; i < bad.Length; i++)
                 {
@@ -75,7 +75,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void InsertRangeIEnumerable(T[] itemsX, T[] itemsY, int index, int repeat, Func<T[], IEnumerable<T>> constructIEnumerable)
             {
-                ValueList<T>.Builder list = new ValueList<T>.Builder(constructIEnumerable(itemsX));
+                ValueList<T>.Builder list = constructIEnumerable(itemsX).ToValueListBuilder();
 
                 for (int i = 0; i < repeat; i++)
                 {
@@ -104,7 +104,7 @@ namespace Badeend.ValueCollections.Tests.Reference
                 }
 
                 //InsertRange into itself
-                list = new ValueList<T>.Builder(constructIEnumerable(itemsX));
+                list = constructIEnumerable(itemsX).ToValueListBuilder();
                 list.InsertRange(index, list);
 
                 foreach (T item in itemsX)
@@ -131,7 +131,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void InsertRangeValidations(T[] items, Func<T[], IEnumerable<T>> constructIEnumerable)
             {
-                ValueList<T>.Builder list = new ValueList<T>.Builder(constructIEnumerable(items));
+                ValueList<T>.Builder list = constructIEnumerable(items).ToValueListBuilder();
                 int[] bad = new int[] { items.Length + 1, items.Length + 2, int.MaxValue, -1, -2, int.MinValue };
                 for (int i = 0; i < bad.Length; i++)
                 {
@@ -163,7 +163,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void BasicContains(T[] items)
             {
-                ValueList<T>.Builder list = new ValueList<T>.Builder(items);
+                ValueList<T>.Builder list = ValueList.Builder<T>(items);
 
                 for (int i = 0; i < items.Length; i++)
                 {
@@ -173,7 +173,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void NonExistingValues(T[] itemsX, T[] itemsY)
             {
-                ValueList<T>.Builder list = new ValueList<T>.Builder(itemsX);
+                ValueList<T>.Builder list = ValueList.Builder<T>(itemsX);
 
                 for (int i = 0; i < itemsY.Length; i++)
                 {
@@ -183,7 +183,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void RemovedValues(T[] items)
             {
-                ValueList<T>.Builder list = new ValueList<T>.Builder(items);
+                ValueList<T>.Builder list = ValueList.Builder<T>(items);
                 for (int i = 0; i < items.Length; i++)
                 {
                     list.RemoveFirst(items[i]);
@@ -193,7 +193,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void AddRemoveValues(T[] items)
             {
-                ValueList<T>.Builder list = new ValueList<T>.Builder(items);
+                ValueList<T>.Builder list = ValueList.Builder<T>(items);
                 for (int i = 0; i < items.Length; i++)
                 {
                     list.Add(items[i]);
@@ -205,7 +205,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void MultipleValues(T[] items, int times)
             {
-                ValueList<T>.Builder list = new ValueList<T>.Builder(items);
+                ValueList<T>.Builder list = ValueList.Builder<T>(items);
 
                 for (int i = 0; i < times; i++)
                 {
@@ -226,7 +226,7 @@ namespace Badeend.ValueCollections.Tests.Reference
                     throw new ArgumentException("invalid argument passed to testcase");
                 }
 
-                ValueList<T>.Builder list = new ValueList<T>.Builder(items);
+                ValueList<T>.Builder list = ValueList.Builder<T>(items);
                 list.Add(value);
                 Assert.True(list.Contains(value)); //"Should contain item."
             }
@@ -237,14 +237,14 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             public void ClearEmptyList()
             {
-                ValueList<T>.Builder list = new ValueList<T>.Builder();
+                ValueList<T>.Builder list = ValueList.Builder<T>();
                 Assert.Equal(0, list.Count); //"Should be equal to 0"
                 list.Clear();
                 Assert.Equal(0, list.Count); //"Should be equal to 0."
             }
             public void ClearMultipleTimesEmptyList(int times)
             {
-                ValueList<T>.Builder list = new ValueList<T>.Builder();
+                ValueList<T>.Builder list = ValueList.Builder<T>();
                 Assert.Equal(0, list.Count); //"Should be equal to 0."
                 for (int i = 0; i < times; i++)
                 {
@@ -254,14 +254,14 @@ namespace Badeend.ValueCollections.Tests.Reference
             }
             public void ClearNonEmptyList(T[] items)
             {
-                ValueList<T>.Builder list = new ValueList<T>.Builder(items);
+                ValueList<T>.Builder list = ValueList.Builder<T>(items);
                 list.Clear();
                 Assert.Equal(0, list.Count); //"Should be equal to 0."
             }
 
             public void ClearMultipleTimesNonEmptyList(T[] items, int times)
             {
-                ValueList<T>.Builder list = new ValueList<T>.Builder(items);
+                ValueList<T>.Builder list = ValueList.Builder<T>(items);
                 for (int i = 0; i < times; i++)
                 {
                     list.Clear();

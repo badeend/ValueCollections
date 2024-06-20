@@ -35,13 +35,13 @@ namespace Badeend.ValueCollections.Tests.Reference
 
         protected virtual ValueList<T>.Builder GenericListFactory()
         {
-            return new ValueList<T>.Builder();
+            return ValueList.Builder<T>();
         }
 
         protected virtual ValueList<T>.Builder GenericListFactory(int count)
         {
             IEnumerable<T> toCreateFrom = CreateEnumerable(EnumerableType.List, null, count, 0, 0);
-            return new ValueList<T>.Builder(toCreateFrom);
+            return toCreateFrom.ToValueListBuilder();
         }
 
         protected void VerifyList(ValueList<T>.Builder list, ValueList<T>.Builder expectedItems)

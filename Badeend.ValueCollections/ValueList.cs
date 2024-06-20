@@ -25,7 +25,16 @@ public static class ValueList
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueList<T>.Builder Builder<T>() => new ValueList<T>.Builder();
+	public static ValueList<T>.Builder Builder<T>() => ValueList<T>.Builder.Create();
+
+	/// <summary>
+	/// Create a new empty <see cref="ValueList{T}.Builder"/> with the specified
+	/// initial <paramref name="capacity"/>. This builder can then be used to
+	/// efficiently construct an immutable <see cref="ValueList{T}"/>.
+	/// </summary>
+	[Pure]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ValueList<T>.Builder Builder<T>(int capacity) => ValueList<T>.Builder.CreateWithCapacity(capacity);
 
 	/// <summary>
 	/// Create a new <see cref="ValueList{T}.Builder"/> with the provided
@@ -35,7 +44,7 @@ public static class ValueList
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueList<T>.Builder Builder<T>(ReadOnlySpan<T> items)
 	{
-		var builder = new ValueList<T>.Builder();
+		var builder = Builder<T>(items.Length);
 		builder.AddRange(items);
 		return builder;
 	}
@@ -284,7 +293,7 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 		}
 		else
 		{
-			return new Builder(minimumCapacity).AddRangeSpan(this.AsSpan());
+			return ValueList.Builder<T>(minimumCapacity).AddRange(this.AsSpan());
 		}
 	}
 

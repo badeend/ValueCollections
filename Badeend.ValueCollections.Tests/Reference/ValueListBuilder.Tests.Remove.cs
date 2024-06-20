@@ -50,7 +50,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void RemoveAll_NullMatchPredicate()
         {
-            AssertExtensions.Throws<ArgumentNullException>("match", () => new ValueList<T>.Builder().RemoveAll(null));
+            AssertExtensions.Throws<ArgumentNullException>("match", () => ValueList.Builder<T>().RemoveAll(null));
         }
 
         #endregion
