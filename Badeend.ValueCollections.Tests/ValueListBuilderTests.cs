@@ -99,7 +99,8 @@ public class ValueListBuilderTests
     {
         ValueList<int>.Builder a = [4, 2, 4, 2, 4, 2];
 
-        a.RemoveFirst(2);
+        Assert.True(a.TryRemoveFirst(2));
+        Assert.False(a.TryRemoveFirst(-1));
 
         Assert.True(a.ToValueList() == [4, 4, 2, 4, 2]);
 

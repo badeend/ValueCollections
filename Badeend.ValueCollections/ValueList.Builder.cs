@@ -442,11 +442,37 @@ public sealed partial class ValueList<T>
 		}
 
 		/// <summary>
+		/// Attempt to remove the first occurrence of a specific object from the list.
+		/// Returns <see langword="false"/> when the element wasn't found.
+		/// </summary>
+		public bool TryRemoveFirst(T item)
+		{
+			return this.Mutate().Remove(item);
+		}
+
+		/// <summary>
+		/// Attempt to remove the first element that matches the predicate.
+		/// Returns <see langword="false"/> when the element wasn't found.
+		/// </summary>
+		public bool TryRemoveFirst(Predicate<T> match)
+		{
+			var list = this.Mutate();
+			var index = list.FindIndex(match);
+			if (index >= 0)
+			{
+				list.RemoveAt(index);
+				return true;
+			}
+
+			return false;
+		}
+
+		/// <summary>
 		/// Remove the first occurrence of a specific object from the list.
 		/// </summary>
 		public Builder RemoveFirst(T item)
 		{
-			this.Mutate().Remove(item);
+			_ = this.TryRemoveFirst(item);
 			return this;
 		}
 
@@ -455,13 +481,7 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public Builder RemoveFirst(Predicate<T> match)
 		{
-			var list = this.Mutate();
-			var index = list.FindIndex(match);
-			if (index >= 0)
-			{
-				list.RemoveAt(index);
-			}
-
+			_ = this.TryRemoveFirst(match);
 			return this;
 		}
 
