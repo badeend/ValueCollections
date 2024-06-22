@@ -220,10 +220,10 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 		{
 			// TODO: check that the length meets a minimum threshold of the total
 			// capacity, to prevent unnecessarily keeping large arrays alive.
-			return ValueList<T>.FromArrayUnsafe(this.items!, this.length);
+			return ValueList<T>.CreateImmutableFromArrayUnsafe(this.items!, this.length);
 		}
 
-		return ValueList<T>.FromArrayUnsafe(this.ToArray());
+		return ValueList<T>.CreateImmutableFromSpan(this.Span);
 	}
 
 	/// <summary>

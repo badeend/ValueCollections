@@ -1,5 +1,6 @@
 using System.Collections;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -17,7 +18,7 @@ public static class ValueList
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueList<T> Create<T>(ReadOnlySpan<T> items) => ValueList<T>.FromArrayUnsafe(items.ToArray());
+	public static ValueList<T> Create<T>(ReadOnlySpan<T> items) => ValueList<T>.CreateImmutableFromSpan(items);
 
 	/// <summary>
 	/// Create a new empty <see cref="ValueList{T}.Builder"/>. This builder can
@@ -71,28 +72,18 @@ public static class ValueList
 [CollectionBuilder(typeof(ValueList), nameof(ValueList.Create))]
 public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueList<T>>
 {
-	private const int UninitializedHashCode = 0;
-
 	/// <summary>
 	/// Get an empty list.
 	///
 	/// This does not allocate any memory.
 	/// </summary>
 	[Pure]
-	public static ValueList<T> Empty { get; } = new ValueList<T>(Array.Empty<T>(), 0);
+	public static ValueList<T> Empty { get; } = new(new List<T>(), BuilderState.InitialImmutable);
 
 	private readonly List<T> items;
 
-	/// <summary>
-	/// Warning! This class promises to be thread-safe, yet this is a mutable field.
-	/// </summary>
-	private int hashCode = UninitializedHashCode;
-
-	internal T[] Items
-	{
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		get => UnsafeHelpers.GetBackingArray(this.items);
-	}
+	// See the BuilderState utility class for more info.
+	private int state;
 
 	internal int Capacity
 	{
@@ -137,7 +128,7 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 				throw new ArgumentOutOfRangeException(nameof(index));
 			}
 
-			return ref this.Items![index];
+			return ref UnsafeHelpers.GetBackingArray(this.items)[index];
 		}
 	}
 
@@ -151,28 +142,90 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 		set => throw CreateImmutableException();
 	}
 
-	private ValueList(T[] items, int count)
+	private ValueList(List<T> items, int state)
 	{
-		// TODO: don't copy! 
-
-		this.items = new List<T>(count);
-
-		for (int i = 0; i < count; i++)
-		{
-			this.items.Add(items[i]);
-		}
+		this.items = items;
+		this.state = state;
 	}
 
-	internal static ValueList<T> FromArrayUnsafe(T[] items) => FromArrayUnsafe(items, items.Length);
+	internal static ValueList<T> CreateImmutableFromEnumerable(IEnumerable<T> items)
+	{
+		if (items is null)
+		{
+			throw new ArgumentNullException(nameof(items));
+		}
 
-	internal static ValueList<T> FromArrayUnsafe(T[] items, int count)
+		if (items is ValueList<T> list)
+		{
+			Debug.Assert(BuilderState.IsImmutable(list.state));
+
+			return list;
+		}
+
+		if (items is ICollection { Count: 0 })
+		{
+			return Empty;
+		}
+
+		return new(new List<T>(items), BuilderState.InitialImmutable);
+	}
+
+	internal static ValueList<T> CreateImmutableFromSpan(ReadOnlySpan<T> items)
+	{
+		if (items.Length == 0)
+		{
+			return Empty;
+		}
+
+		var list = new List<T>(items.Length);
+
+		foreach (var item in items)
+		{
+			list.Add(item);
+		}
+
+		return new(list, BuilderState.InitialImmutable);
+	}
+
+	internal static ValueList<T> CreateImmutableFromArrayUnsafe(T[] items) => CreateImmutableFromArrayUnsafe(items, items.Length);
+
+	internal static ValueList<T> CreateImmutableFromArrayUnsafe(T[] items, int count)
 	{
 		if (count == 0)
 		{
 			return Empty;
 		}
 
-		return new(items, count);
+		// TODO: don't copy! 
+
+		var list = new List<T>(count);
+
+		for (int i = 0; i < count; i++)
+		{
+			list.Add(items[i]);
+		}
+
+		return new(list, BuilderState.InitialImmutable);
+	}
+
+	internal static ValueList<T> CreateMutable()
+	{
+		return new(new List<T>(), BuilderState.InitialMutable);
+	}
+
+	internal static ValueList<T> CreateMutableWithCapacity(int capacity)
+	{
+		if (capacity < 0)
+		{
+			throw new ArgumentOutOfRangeException(nameof(capacity));
+		}
+
+		return new(new List<T>(capacity), BuilderState.InitialMutable);
+	}
+
+	internal static ValueList<T> CreateMutableFromEnumerable(IEnumerable<T> items)
+	{
+		return new(new List<T>(items), BuilderState.InitialMutable);
 	}
 
 	/// <summary>
@@ -180,7 +233,7 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public ValueSlice<T> AsValueSlice() => new ValueSlice<T>(this.Items, 0, this.Count);
+	public ValueSlice<T> AsValueSlice() => new ValueSlice<T>(UnsafeHelpers.GetBackingArray(this.items), 0, this.Count);
 
 	/// <summary>
 	/// Access the list's contents using a <see cref="ReadOnlySpan{T}"/>.
@@ -261,7 +314,7 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	/// list. How much larger exactly is undefined.
 	/// </remarks>
 	[Pure]
-	public Builder ToBuilder() => Builder.FromValueList(this);
+	public Builder ToBuilder() => ValueList.CreateBuilder(this.AsSpan());
 
 	/// <summary>
 	/// Create a new <see cref="ValueList{T}.Builder"/> with a capacity of at
@@ -287,14 +340,9 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 			throw new ArgumentOutOfRangeException(nameof(minimumCapacity));
 		}
 
-		if (minimumCapacity <= this.Count)
-		{
-			return Builder.FromValueList(this);
-		}
-		else
-		{
-			return ValueList.CreateBuilder<T>(minimumCapacity).AddRange(this.AsSpan());
-		}
+		var capacity = Math.Max(minimumCapacity, this.Count);
+
+		return ValueList.CreateBuilder<T>(capacity).AddRange(this.AsSpan());
 	}
 
 	/// <summary>
@@ -354,15 +402,12 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	[Pure]
 	public sealed override int GetHashCode()
 	{
-		var hashCode = Volatile.Read(ref this.hashCode);
-		if (hashCode != UninitializedHashCode)
+		if (BuilderState.ReadHashCode(ref this.state, out var hashCode))
 		{
 			return hashCode;
 		}
 
-		hashCode = this.ComputeHashCode();
-		Volatile.Write(ref this.hashCode, hashCode);
-		return hashCode;
+		return BuilderState.AdjustAndStoreHashCode(ref this.state, this.ComputeHashCode());
 	}
 
 	private int ComputeHashCode()
@@ -376,14 +421,7 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 			hasher.Add(item);
 		}
 
-		var hashCode = hasher.ToHashCode();
-		if (hashCode == UninitializedHashCode)
-		{
-			// Never return 0, as that is our placeholder value.
-			hashCode = 1;
-		}
-
-		return hashCode;
+		return hasher.ToHashCode();
 	}
 
 	/// <summary>
@@ -472,7 +510,7 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal Enumerator(ValueList<T> list)
 		{
-			this.items = list.Items;
+			this.items = UnsafeHelpers.GetBackingArray(list.items);
 			this.end = list.Count;
 			this.current = -1;
 		}
@@ -489,7 +527,13 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 
 		/// <inheritdoc/>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public bool MoveNext() => ++this.current < this.end;
+		public bool MoveNext()
+		{
+			// FYI, we don't need to compare with the current `state` (version)
+			// of the list, because this enumerator type can only be accessed
+			// after the list has already been built and is therefore immutable.
+			return ++this.current < this.end;
+		}
 	}
 #pragma warning restore CA1815 // Override equals and operator equals on value types
 #pragma warning restore CA1034 // Nested types should not be visible

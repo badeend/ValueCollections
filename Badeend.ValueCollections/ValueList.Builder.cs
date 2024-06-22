@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -32,37 +33,21 @@ public sealed partial class ValueList<T>
 	[CollectionBuilder(typeof(ValueList), nameof(ValueList.CreateBuilder))]
 	public sealed class Builder
 	{
-		private const int VersionBuilt = -1;
-
-		/// <summary>
-		/// Can be one of:
-		/// - ValueList{T}: when copy-on-write hasn't kicked in yet.
-		/// - List{T}: we're actively building a list.
-		/// </summary>
-		private IReadOnlyList<T> items;
-
-		/// <summary>
-		/// Mutation counter.
-		/// `-1` means: Collection has been built and the builder is now read-only.
-		/// </summary>
-		private int version;
-
-		private Collection? collectionCache;
+		private readonly ValueList<T> list;
 
 		/// <summary>
 		/// Returns <see langword="true"/> when this instance has been built and is
 		/// now read-only.
 		/// </summary>
 		[Pure]
-		public bool IsReadOnly => this.version == VersionBuilt;
+		public bool IsReadOnly => BuilderState.IsImmutable(this.Read().state);
 
 		/// <summary>
 		/// Finalize the builder and export its contents as a <see cref="ValueList{T}"/>.
 		/// This makes the builder read-only. Any future attempt to mutate the
 		/// builder will throw.
 		///
-		/// This is an <c>O(1)</c> operation and performs only a small fixed-size
-		/// memory allocation. This does not perform a bulk copy of the contents.
+		/// This is an <c>O(1)</c> operation and performs no heap allocations.
 		/// </summary>
 		/// <remarks>
 		/// If you need an intermediate snapshot of the contents while keeping the
@@ -73,14 +58,16 @@ public sealed partial class ValueList<T>
 		/// </exception>
 		public ValueList<T> Build()
 		{
-			if (this.version == VersionBuilt)
+			var list = this.Read();
+
+			if (BuilderState.IsImmutable(list.state))
 			{
-				throw BuiltException();
+				BuilderState.ThrowBuiltException();
 			}
 
-			this.version = VersionBuilt;
+			list.state = BuilderState.InitialImmutable;
 
-			return this.ToValueList();
+			return list;
 		}
 
 		/// <summary>
@@ -93,19 +80,16 @@ public sealed partial class ValueList<T>
 		[Pure]
 		public ValueList<T> ToValueList()
 		{
-			if (this.items is List<T> list)
-			{
-				var newValueList = ValueList<T>.FromArrayUnsafe(UnsafeHelpers.GetBackingArray(list), list.Count);
-				this.items = newValueList;
-				return newValueList;
-			}
+			var list = this.Read();
 
-			if (this.items is ValueList<T> valueList)
+			if (BuilderState.IsImmutable(list.state))
 			{
-				return valueList;
+				return list;
 			}
-
-			throw UnreachableException();
+			else
+			{
+				return ValueList<T>.CreateImmutableFromSpan(list.AsSpan());
+			}
 		}
 
 		/// <summary>
@@ -114,48 +98,48 @@ public sealed partial class ValueList<T>
 		[Pure]
 		public Builder ToValueListBuilder()
 		{
-			return ValueList.CreateBuilder<T>(this.Count).AddRange(this.AsSpanUnsafe());
+			var list = this.Read();
+
+			return ValueList.CreateBuilder<T>(list.Count).AddRange(list.AsSpan());
 		}
 
 		private List<T> Mutate()
 		{
-			if (this.version == VersionBuilt)
+			var list = this.list;
+			if ((uint)list.state >= BuilderState.LastMutableVersion)
 			{
-				throw BuiltException();
+				SlowPath(list);
 			}
 
-			this.version++;
+			list.state++;
 
-			if (this.items is List<T> list)
+			Debug.Assert(BuilderState.IsMutable(list.state));
+
+			return list.items;
+
+			[MethodImpl(MethodImplOptions.NoInlining)]
+			static void SlowPath(ValueList<T> list)
 			{
-				return list;
-			}
+				if (list.state == BuilderState.LastMutableVersion)
+				{
+					list.state = BuilderState.InitialMutable;
+				}
+				else
+				{
+					Debug.Assert(BuilderState.IsImmutable(list.state));
 
-			if (this.items is ValueList<T> valueList)
-			{
-				var newList = new List<T>(valueList);
-				this.items = newList;
-				return newList;
+					BuilderState.ThrowBuiltException();
+				}
 			}
-
-			throw UnreachableException();
 		}
 
-		private IReadOnlyList<T> Read() => this.items;
+		private ValueList<T> Read() => this.list;
 
 		/// <summary>
 		/// The total number of elements the internal data structure can hold without resizing.
 		/// </summary>
-		public int Capacity
-		{
-			[Pure]
-			get => this.items switch
-			{
-				List<T> items => items.Capacity,
-				ValueList<T> items => items.Capacity,
-				_ => throw UnreachableException(),
-			};
-		}
+		[Pure]
+		public int Capacity => this.Read().Capacity;
 
 		/// <summary>
 		/// Gets or sets the element at the specified <paramref name="index"/>.
@@ -183,53 +167,25 @@ public sealed partial class ValueList<T>
 			get => this.Count == 0;
 		}
 
-		private Builder(ValueList<T> items)
+		private Builder(ValueList<T> list)
 		{
-			this.items = items;
-		}
-
-		private Builder(List<T> items)
-		{
-			this.items = items;
+			this.list = list;
 		}
 
 		internal static Builder Create()
 		{
-			return new(ValueList<T>.Empty);
+			return new(ValueList<T>.CreateMutable());
 		}
 
 		internal static Builder CreateWithCapacity(int capacity)
 		{
-			if (capacity < 0)
-			{
-				throw new ArgumentOutOfRangeException(nameof(capacity));
-			}
-
-			if (capacity == 0)
-			{
-				return new(ValueList<T>.Empty);
-			}
-			else
-			{
-				return new(new List<T>(capacity));
-			}
+			return new(ValueList<T>.CreateMutableWithCapacity(capacity));
 		}
 
-		internal static Builder FromEnumerable(IEnumerable<T> items)
+		internal static Builder CreateFromEnumerable(IEnumerable<T> items)
 		{
-			if (items is ValueList<T> valueList)
-			{
-				return new(valueList);
-			}
-			else
-			{
-				return new(new List<T>(items));
-			}
+			return new(ValueList<T>.CreateMutableFromEnumerable(items));
 		}
-
-		internal static Builder FromValueList(ValueList<T> items) => new(items);
-
-		internal static Builder FromListUnsafe(List<T> items) => new(items);
 
 		/// <summary>
 		/// Replaces an element at a given position in the list with the specified
@@ -620,36 +576,21 @@ public sealed partial class ValueList<T>
 		/// <paramref name="item"/>.
 		/// </summary>
 		[Pure]
-		public bool Contains(T item) => this.items switch
-		{
-			List<T> items => items.Contains(item),
-			ValueList<T> items => items.Contains(item),
-			_ => throw UnreachableException(),
-		};
+		public bool Contains(T item) => this.Read().Contains(item);
 
 		/// <summary>
 		/// Return the index of the first occurrence of <paramref name="item"/> in
 		/// the list, or <c>-1</c> if not found.
 		/// </summary>
 		[Pure]
-		public int IndexOf(T item) => this.items switch
-		{
-			List<T> items => items.IndexOf(item),
-			ValueList<T> items => items.IndexOf(item),
-			_ => throw UnreachableException(),
-		};
+		public int IndexOf(T item) => this.Read().IndexOf(item);
 
 		/// <summary>
 		/// Return the index of the last occurrence of <paramref name="item"/> in
 		/// the list, or <c>-1</c> if not found.
 		/// </summary>
 		[Pure]
-		public int LastIndexOf(T item) => this.items switch
-		{
-			List<T> items => items.LastIndexOf(item),
-			ValueList<T> items => items.LastIndexOf(item),
-			_ => throw UnreachableException(),
-		};
+		public int LastIndexOf(T item) => this.Read().LastIndexOf(item);
 
 		/// <summary>
 		/// Perform a binary search for <paramref name="item"/> within the list.
@@ -660,35 +601,20 @@ public sealed partial class ValueList<T>
 		/// the bitwise complement of the index where the item should be inserted.
 		/// </summary>
 		[Pure]
-		public int BinarySearch(T item) => this.items switch
-		{
-			List<T> items => items.BinarySearch(item),
-			ValueList<T> items => items.BinarySearch(item),
-			_ => throw UnreachableException(),
-		};
+		public int BinarySearch(T item) => this.Read().BinarySearch(item);
 
 		/// <summary>
 		/// Copy the contents of the list into a new array.
 		/// </summary>
 		[Pure]
-		public T[] ToArray() => this.items switch
-		{
-			List<T> items => items.ToArray(),
-			ValueList<T> items => items.ToArray(),
-			_ => throw UnreachableException(),
-		};
+		public T[] ToArray() => this.Read().ToArray();
 
 		/// <summary>
 		/// Attempt to copy the contents of the list into an existing
 		/// <see cref="Span{T}"/>. If the <paramref name="destination"/> is too short,
 		/// no items are copied and the method returns <see langword="false"/>.
 		/// </summary>
-		public bool TryCopyTo(Span<T> destination) => this.items switch
-		{
-			List<T> items => UnsafeHelpers.AsSpan(items).TryCopyTo(destination),
-			ValueList<T> items => items.AsValueSlice().TryCopyTo(destination),
-			_ => throw UnreachableException(),
-		};
+		public bool TryCopyTo(Span<T> destination) => this.Read().TryCopyTo(destination);
 
 		/// <summary>
 		/// Copy the contents of the list into an existing <see cref="Span{T}"/>.
@@ -696,24 +622,7 @@ public sealed partial class ValueList<T>
 		/// <exception cref="ArgumentException">
 		///   <paramref name="destination"/> is shorter than the source list.
 		/// </exception>
-		public void CopyTo(Span<T> destination)
-		{
-			switch (this.items)
-			{
-				case List<T> items:
-					UnsafeHelpers.AsSpan(items).CopyTo(destination);
-					return;
-				case ValueList<T> items:
-					items.AsValueSlice().CopyTo(destination);
-					return;
-				default:
-					throw UnreachableException();
-			}
-		}
-
-		private static InvalidOperationException UnreachableException() => new("Unreachable");
-
-		private static InvalidOperationException BuiltException() => new("Builder has already been built");
+		public void CopyTo(Span<T> destination) => this.Read().CopyTo(destination);
 
 #if !NET8_0_OR_GREATER
 		/// <summary>
@@ -759,11 +668,11 @@ public sealed partial class ValueList<T>
 		/// collection instance. The items are not copied. Changes made to the
 		/// builder are visible in the collection and vice versa.
 		/// </remarks>
-		public Collection AsCollection() => this.collectionCache ??= new Collection(this);
+		public Collection AsCollection() => new Collection(this);
 
 #pragma warning disable CA1034 // Nested types should not be visible
 		/// <summary>
-		/// A new heap-allocated live view of a builder. Changes made to the
+		/// A heap-allocated live view of a builder. Changes made to the
 		/// collection are visible in the builder and vice versa.
 		/// </summary>
 		public sealed class Collection : IList<T>, IReadOnlyList<T>
@@ -824,7 +733,7 @@ public sealed partial class ValueList<T>
 				}
 				else
 				{
-					return EnumeratorLike.AsIEnumerator<T, Enumerator>(new Enumerator(this.builder));
+					return EnumeratorLike.AsIEnumerator<T, Enumerator>(this.builder.GetEnumerator());
 				}
 			}
 
@@ -853,7 +762,7 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		[Pure]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public Enumerator GetEnumerator() => new Enumerator(this);
+		public Enumerator GetEnumerator() => new Enumerator(this.Read());
 
 		/// <summary>
 		/// Enumerator for <see cref="Builder"/>.
@@ -863,41 +772,50 @@ public sealed partial class ValueList<T>
 		[StructLayout(LayoutKind.Auto)]
 		public struct Enumerator : IEnumeratorLike<T>
 		{
-			private readonly Builder builder;
-			private readonly T[] items;
-			private readonly int version;
-			private int current;
+			private readonly ValueList<T> list;
+			private readonly int expectedState;
+			private ValueList<T>.Enumerator inner;
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			internal Enumerator(Builder builder)
+			internal Enumerator(ValueList<T> list)
 			{
-				this.builder = builder;
-				this.items = builder.items switch
-				{
-					List<T> items => UnsafeHelpers.GetBackingArray(items),
-					ValueList<T> items => items.Items,
-					_ => throw UnreachableException(),
-				};
-				this.version = builder.version;
-				this.current = -1;
+				this.list = list;
+				this.expectedState = list.state;
+				this.inner = list.GetEnumerator();
 			}
 
 			/// <inheritdoc/>
 			public readonly T Current
 			{
 				[MethodImpl(MethodImplOptions.AggressiveInlining)]
-				get => this.items![this.current];
+				get => this.inner.Current;
 			}
 
 			/// <inheritdoc/>
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public bool MoveNext()
 			{
-				if (this.version != this.builder.version)
+				if (this.expectedState != this.list.state)
 				{
-					throw new InvalidOperationException("Collection was modified during enumeration.");
+					this.MoveNextSlow();
 				}
 
-				return ++this.current < this.builder.Count;
+				return this.inner.MoveNext();
+			}
+
+			private void MoveNextSlow()
+			{
+				// The only valid reason for ending up here is when the enumerator
+				// was obtained in an already-built state and the hash code was
+				// materialized during enumeration.
+				if (BuilderState.IsImmutable(this.expectedState))
+				{
+					Debug.Assert(BuilderState.IsImmutable(this.list.state));
+
+					return;
+				}
+
+				throw new InvalidOperationException("Collection was modified during enumeration.");
 			}
 		}
 #pragma warning restore CA1815 // Override equals and operator equals on value types

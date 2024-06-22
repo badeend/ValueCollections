@@ -34,7 +34,7 @@ public class ValueListBuilderTests
 
         var list = builder.ToValueList();
 
-        builder.SetItem(0, 42); // In reality _this_ performs the copy.
+        builder.SetItem(0, 42);
 
         Assert.True(list == [1, 2, 3]);
     }
@@ -44,8 +44,8 @@ public class ValueListBuilderTests
     {
         ValueList<int>.Builder builder = [1, 2, 3];
 
-        var list1 = builder.ToValueList();
-        var list2 = builder.Build();
+        var list1 = builder.Build();
+        var list2 = builder.ToValueList();
 
         Assert.True(object.ReferenceEquals(list1, list2));
     }

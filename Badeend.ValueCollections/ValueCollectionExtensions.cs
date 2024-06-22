@@ -14,12 +14,7 @@ public static class ValueCollectionExtensions
 	/// </summary>
 	public static ValueList<T> ToValueList<T>(this IEnumerable<T> items)
 	{
-		if (items is ValueList<T> list)
-		{
-			return list;
-		}
-
-		return ValueList<T>.FromArrayUnsafe(items.ToArray());
+		return ValueList<T>.CreateImmutableFromEnumerable(items);
 	}
 
 	/// <summary>
@@ -40,12 +35,7 @@ public static class ValueCollectionExtensions
 	/// </remarks>
 	public static ValueList<T>.Builder ToValueListBuilder<T>(this IEnumerable<T> items)
 	{
-		if (items is ValueList<T> list)
-		{
-			return list.ToBuilder();
-		}
-
-		return ValueList<T>.Builder.FromListUnsafe(new List<T>(items));
+		return ValueList<T>.Builder.CreateFromEnumerable(items);
 	}
 
 	/// <summary>
