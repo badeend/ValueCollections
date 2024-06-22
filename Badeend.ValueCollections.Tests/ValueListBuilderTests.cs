@@ -23,8 +23,26 @@ public class ValueListBuilderTests
     {
         ValueList<int>.Builder a = [1, 2, 3];
         ValueList<int>.Builder b = [1, 2, 3];
+        ValueList<int>.Builder c = b;
 
         Assert.True(a != b);
+        Assert.True(b == c);
+    }
+
+    [Fact]
+    public void Default()
+    {
+        ValueList<int>.Builder a = default;
+        ValueList<int>.Builder b = new();
+
+        Assert.True(a == b);
+
+        Assert.Equal(0, a.Count);
+        Assert.Equal(0, a.Capacity);
+        Assert.Equal([], a.ToValueList());
+
+        Assert.Throws<InvalidOperationException>(() => a.Add(1));
+        Assert.Throws<InvalidOperationException>(() => a.Build());
     }
 
     [Fact]

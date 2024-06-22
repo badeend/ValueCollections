@@ -59,13 +59,6 @@ namespace Badeend.ValueCollections.Tests.Reference
             };
         }
 
-        [Fact]
-        public void AddRange_NullList_ThrowsArgumentNullException()
-        {
-            AssertExtensions.Throws<ArgumentNullException>("builder", () => ValueCollectionExtensions.AddRange<int>(null, default));
-            AssertExtensions.Throws<ArgumentNullException>("builder", () => ValueCollectionExtensions.AddRange<int>(null, new int[1]));
-        }
-
         [Theory]
         [MemberData(nameof(ValidCollectionSizes))]
         public void AddRange_NullEnumerable_ThrowsArgumentNullException(int count)

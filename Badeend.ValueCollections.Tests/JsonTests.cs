@@ -51,7 +51,7 @@ public abstract class JsonTests
 		Assert.Equal(0, Deserialize<ValueSlice<string>?>("[]")!.Value.Length);
 		Assert.Empty(Deserialize<List<string?>?>("[]")!);
 		Assert.Empty(Deserialize<ValueList<string?>?>("[]")!);
-		Assert.Empty(Deserialize<ValueList<string?>.Builder?>("[]")!.AsCollection());
+		Assert.Empty(Deserialize<ValueList<string?>.Builder>("[]").AsCollection());
 		Assert.Empty(Deserialize<HashSet<string?>?>("[]")!);
 		Assert.Empty(Deserialize<ValueSet<string?>?>("[]")!);
 		Assert.Empty(Deserialize<ValueSetBuilder<string?>?>("[]")!);
@@ -125,11 +125,11 @@ public abstract class JsonTests
 		Assert.True(list![1] == null);
 		Assert.True(list![2] == "b");
 
-		var listBuilder = Deserialize<ValueList<string?>.Builder?>(arrayJson)!;
-		Assert.True(listBuilder!.Count == 3);
-		Assert.True(listBuilder![0] == "a");
-		Assert.True(listBuilder![1] == null);
-		Assert.True(listBuilder![2] == "b");
+		var listBuilder = Deserialize<ValueList<string?>.Builder>(arrayJson)!;
+		Assert.True(listBuilder.Count == 3);
+		Assert.True(listBuilder[0] == "a");
+		Assert.True(listBuilder[1] == null);
+		Assert.True(listBuilder[2] == "b");
 
 		var systemSet = Deserialize<HashSet<string?>?>(arrayJson)!;
 		Assert.True(systemSet!.Count == 3);

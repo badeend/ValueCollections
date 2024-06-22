@@ -76,11 +76,6 @@ public static class ValueCollectionExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueList<T>.Builder AddRange<T>(this ValueList<T>.Builder builder, ReadOnlySpan<T> items)
 	{
-		if (builder is null)
-		{
-			throw new ArgumentNullException(nameof(builder));
-		}
-
 		return builder.AddRangeSpan(items);
 	}
 
@@ -93,11 +88,6 @@ public static class ValueCollectionExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueList<T>.Builder InsertRange<T>(this ValueList<T>.Builder builder, int index, ReadOnlySpan<T> items)
 	{
-		if (builder is null)
-		{
-			throw new ArgumentNullException(nameof(builder));
-		}
-
 		return builder.InsertRangeSpan(index, items);
 	}
 

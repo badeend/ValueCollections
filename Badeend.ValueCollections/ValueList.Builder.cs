@@ -1,5 +1,7 @@
 using System.Collections;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -23,17 +25,19 @@ public sealed partial class ValueList<T>
 	/// resulting list.
 	///
 	/// For constructing <see cref="ValueList{T}"/>s it is recommended to use this
-	/// class over e.g. <see cref="List{T}"/>. This type can avoiding unnecessary
+	/// type over e.g. <see cref="List{T}"/>. This type can avoiding unnecessary
 	/// copying by taking advantage of the immutability of its results. Whereas
 	/// calling <c>.ToValueList()</c> on a regular <see cref="List{T}"/>
 	/// <em>always</em> performs a full copy.
 	///
-	/// Unlike ValueList, Builder is <em>not</em> thread-safe.
+	/// Unlike the resulting ValueList, its Builder is <em>not</em> thread-safe.
+	///
+	/// The <c>default</c> value is an empty read-only builder.
 	/// </remarks>
 	[CollectionBuilder(typeof(ValueList), nameof(ValueList.CreateBuilder))]
-	public sealed class Builder
+	public readonly struct Builder : IEquatable<Builder>
 	{
-		private readonly ValueList<T> list;
+		private readonly ValueList<T>? list;
 
 		/// <summary>
 		/// Returns <see langword="true"/> when this instance has been built and is
@@ -58,11 +62,12 @@ public sealed partial class ValueList<T>
 		/// </exception>
 		public ValueList<T> Build()
 		{
+			_ = this.Mutate();
 			var list = this.Read();
 
 			if (BuilderState.IsImmutable(list.state))
 			{
-				BuilderState.ThrowBuiltException();
+				ThrowHelpers.ThrowBuiltException();
 			}
 
 			list.state = BuilderState.InitialImmutable;
@@ -106,7 +111,7 @@ public sealed partial class ValueList<T>
 		private List<T> Mutate()
 		{
 			var list = this.list;
-			if ((uint)list.state >= BuilderState.LastMutableVersion)
+			if (list is null || (uint)list.state >= BuilderState.LastMutableVersion)
 			{
 				SlowPath(list);
 			}
@@ -118,9 +123,13 @@ public sealed partial class ValueList<T>
 			return list.items;
 
 			[MethodImpl(MethodImplOptions.NoInlining)]
-			static void SlowPath(ValueList<T> list)
+			static void SlowPath([NotNull] ValueList<T>? list)
 			{
-				if (list.state == BuilderState.LastMutableVersion)
+				if (list is null)
+				{
+					ThrowHelpers.ThrowUninitializedBuilerException();
+				}
+				else if (list.state == BuilderState.LastMutableVersion)
 				{
 					list.state = BuilderState.InitialMutable;
 				}
@@ -128,12 +137,12 @@ public sealed partial class ValueList<T>
 				{
 					Debug.Assert(BuilderState.IsImmutable(list.state));
 
-					BuilderState.ThrowBuiltException();
+					ThrowHelpers.ThrowBuiltException();
 				}
 			}
 		}
 
-		private ValueList<T> Read() => this.list;
+		private ValueList<T> Read() => this.list ?? Empty;
 
 		/// <summary>
 		/// The total number of elements the internal data structure can hold without resizing.
@@ -167,8 +176,26 @@ public sealed partial class ValueList<T>
 			get => this.Count == 0;
 		}
 
+		/// <summary>
+		/// Create a new uninitialized builder.
+		///
+		/// An uninitialized builder behaves the same as an already built list
+		/// with 0 items and 0 capacity. Reading from it will succeed, but
+		/// mutating it will throw.
+		///
+		/// This is the same as the <c>default</c> value.
+		/// </summary>
+		[Pure]
+		[Obsolete("This creates an uninitialized builder. Use ValueList.CreateBuilder<T>() instead.")]
+		[EditorBrowsable(EditorBrowsableState.Never)]
+		public Builder()
+		{
+		}
+
 		private Builder(ValueList<T> list)
 		{
+			Debug.Assert(BuilderState.IsMutable(list.state));
+
 			this.list = list;
 		}
 
@@ -853,5 +880,35 @@ public sealed partial class ValueList<T>
 			builder.Append(']');
 			return builder.ToString();
 		}
+
+		/// <inheritdoc/>
+		[Pure]
+		public override int GetHashCode() => RuntimeHelpers.GetHashCode(this.list);
+
+		/// <summary>
+		/// Returns <see langword="true"/> when the two builders refer to the same allocation.
+		/// </summary>
+		[Pure]
+		public bool Equals(Builder other) => object.ReferenceEquals(this.list, other.list);
+
+#pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
+		/// <inheritdoc/>
+		[Pure]
+		[Obsolete("Avoid boxing. Use == instead.")]
+		[EditorBrowsable(EditorBrowsableState.Never)]
+		public override bool Equals(object? obj) => obj is Builder builder && obj.Equals(builder);
+#pragma warning restore CS0809 // Obsolete member overrides non-obsolete member
+
+		/// <summary>
+		/// Check for equality.
+		/// </summary>
+		[Pure]
+		public static bool operator ==(Builder left, Builder right) => left.Equals(right);
+
+		/// <summary>
+		/// Check for inequality.
+		/// </summary>
+		[Pure]
+		public static bool operator !=(Builder left, Builder right) => !left.Equals(right);
 	}
 }

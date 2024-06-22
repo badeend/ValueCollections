@@ -15,9 +15,6 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void InsertRange_InvalidArgs_Throws()
         {
-            AssertExtensions.Throws<ArgumentNullException>("builder", () => ValueCollectionExtensions.InsertRange(null, 0, ReadOnlySpan<int>.Empty));
-            AssertExtensions.Throws<ArgumentNullException>("builder", () => ValueCollectionExtensions.InsertRange(null, 0, new ReadOnlySpan<int>(new int[1])));
-
             var list = ValueList.CreateBuilder<int>();
             AssertExtensions.Throws<ArgumentOutOfRangeException>("index", () => ValueCollectionExtensions.InsertRange(list, 1, new int[0]));
             AssertExtensions.Throws<ArgumentOutOfRangeException>("index", () => ValueCollectionExtensions.InsertRange(list, -1, new int[0]));

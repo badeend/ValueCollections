@@ -75,10 +75,4 @@ internal static class BuilderState
 
 		return hashCode;
 	}
-
-	[DoesNotReturn]
-	internal static void ThrowBuiltException()
-	{
-		throw new InvalidOperationException("Builder has already been built");
-	}
 }
