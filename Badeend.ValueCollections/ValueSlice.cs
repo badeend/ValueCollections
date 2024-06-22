@@ -137,10 +137,10 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		get
 		{
-			// This check indirectly also ensures that _items is not null.
-			if (index < 0 || index >= this.length)
+			// This check indirectly also ensures that `items` is not null.
+			if ((uint)index >= (uint)this.length)
 			{
-				throw new ArgumentOutOfRangeException(nameof(index));
+				ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.index);
 			}
 
 			return ref this.items![this.offset + index];
@@ -162,9 +162,9 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	[Pure]
 	public ValueSlice<T> Slice(int offset)
 	{
-		if (offset < 0 || offset > this.length)
+		if ((uint)offset > (uint)this.length)
 		{
-			throw new ArgumentOutOfRangeException(nameof(offset));
+			ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.offset);
 		}
 
 		return new ValueSlice<T>(this.items, this.offset + offset, this.length - offset);
@@ -191,14 +191,15 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	[Pure]
 	public ValueSlice<T> Slice(int offset, int length)
 	{
-		if (offset < 0 || offset > this.length)
+		if ((uint)offset > (uint)this.length)
 		{
-			throw new ArgumentOutOfRangeException(nameof(offset));
+			ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.offset);
 		}
 
-		if (length < 0 || length > (this.length - offset))
+		var maxLength = this.length - offset;
+		if ((uint)length > (uint)maxLength)
 		{
-			throw new ArgumentOutOfRangeException(nameof(length));
+			ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.length);
 		}
 
 		return new ValueSlice<T>(this.items, this.offset + offset, length);
@@ -355,7 +356,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 
 		/// <inheritdoc/>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public bool MoveNext() => ++this.current < this.end;
+		public bool MoveNext() => (uint)++this.current < this.end;
 	}
 #pragma warning restore CA1815 // Override equals and operator equals on value types
 #pragma warning restore CA1034 // Nested types should not be visible
@@ -439,7 +440,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 		T IList<T>.this[int index]
 		{
 			get => this.slice[index];
-			set => throw ImmutableException();
+			set => ThrowHelpers.ThrowNotSupportedException_CollectionImmutable();
 		}
 
 		/// <inheritdoc/>
@@ -462,7 +463,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 		{
 			if (array is null)
 			{
-				throw new ArgumentNullException(nameof(array));
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.array);
 			}
 
 			this.slice.CopyTo(array.AsSpan(arrayIndex));
@@ -481,21 +482,23 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 		IEnumerator IEnumerable.GetEnumerator() => (this as IEnumerable<T>).GetEnumerator();
 
 		/// <inheritdoc/>
-		void ICollection<T>.Add(T item) => throw ImmutableException();
+		void ICollection<T>.Add(T item) => ThrowHelpers.ThrowNotSupportedException_CollectionImmutable();
 
 		/// <inheritdoc/>
-		void ICollection<T>.Clear() => throw ImmutableException();
+		void ICollection<T>.Clear() => ThrowHelpers.ThrowNotSupportedException_CollectionImmutable();
 
 		/// <inheritdoc/>
-		bool ICollection<T>.Remove(T item) => throw ImmutableException();
+		bool ICollection<T>.Remove(T item)
+		{
+			ThrowHelpers.ThrowNotSupportedException_CollectionImmutable();
+			return false;
+		}
 
 		/// <inheritdoc/>
-		void IList<T>.Insert(int index, T item) => throw ImmutableException();
+		void IList<T>.Insert(int index, T item) => ThrowHelpers.ThrowNotSupportedException_CollectionImmutable();
 
 		/// <inheritdoc/>
-		void IList<T>.RemoveAt(int index) => throw ImmutableException();
-
-		private static NotSupportedException ImmutableException() => new("Collection is immutable");
+		void IList<T>.RemoveAt(int index) => ThrowHelpers.ThrowNotSupportedException_CollectionImmutable();
 	}
 #pragma warning restore CA1034 // Nested types should not be visible
 #pragma warning restore CA1815 // Override equals and operator equals on value types

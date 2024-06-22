@@ -113,6 +113,48 @@ public class ValueListBuilderTests
     }
 
     [Fact]
+    public void AddRangeSelf()
+    {
+        {
+            ValueList<int>.Builder a = [1, 2, 3];
+
+            a.AddRange(a.AsCollection());
+
+            Assert.Equal(6, a.Count);
+            Assert.Equal([1, 2, 3, 1, 2, 3], a.ToValueList());
+        }
+        {
+            ValueList<int>.Builder a = [1, 2, 3];
+
+            Assert.Throws<InvalidOperationException>(() => a.AddRange(a.AsCollection().Where(_ => true)));
+
+            Assert.Equal(4, a.Count);
+            Assert.Equal([1, 2, 3, 1], a.ToValueList());
+        }
+    }
+
+    [Fact]
+    public void InsertRangeSelf()
+    {
+        {
+            ValueList<int>.Builder a = [1, 2, 3];
+
+            a.InsertRange(1, a.AsCollection());
+
+            Assert.Equal(6, a.Count);
+            Assert.Equal([1, 1, 2, 3, 2, 3], a.ToValueList());
+        }
+        {
+            ValueList<int>.Builder a = [1, 2, 3];
+
+            Assert.Throws<InvalidOperationException>(() => a.InsertRange(1, a.AsCollection().Where(_ => true)));
+
+            Assert.Equal(4, a.Count);
+            Assert.Equal([1, 1, 2, 3], a.ToValueList());
+        }
+    }
+
+    [Fact]
     public void Remove()
     {
         ValueList<int>.Builder a = [4, 2, 4, 2, 4, 2];
@@ -172,19 +214,6 @@ public class ValueListBuilderTests
         builder.InsertRange(0, e);
         builder.InsertRange(0, [1, 2]);
     }
-
-    // [Fact]
-    // public void BuildWithoutReallocation()
-    // {
-    //     int[] unsafeItems = [1, 2, 3, 4];
-
-    //     var list = ValueCollectionsMarshal.AsValueList(unsafeItems)
-    //         .ToBuilder()
-    //         .Build();
-
-    //     unsafeItems[1] = 42;
-    //     Assert.True(list[1] == 42);
-    // }
 
     [Fact]
     public void BuildIsFinal()

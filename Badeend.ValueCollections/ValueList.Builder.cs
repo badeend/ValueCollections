@@ -37,6 +37,17 @@ public sealed partial class ValueList<T>
 	[CollectionBuilder(typeof(ValueList), nameof(ValueList.CreateBuilder))]
 	public readonly struct Builder : IEquatable<Builder>
 	{
+		// Various parts of this class have been adapted from:
+		// https://github.com/dotnet/runtime/blob/5aa9687e110faa19d1165ba680e52585a822464d/src/libraries/System.Private.CoreLib/src/System/Collections/Generic/List.cs
+
+		/// <summary>
+		/// Initial capacity for non-zero size lists.
+		/// </summary>
+		private const int DefaultCapacity = 4;
+
+		/// <summary>
+		/// Only access this field through .Read() or .Mutate().
+		/// </summary>
 		private readonly ValueList<T>? list;
 
 		/// <summary>
@@ -67,7 +78,7 @@ public sealed partial class ValueList<T>
 
 			if (BuilderState.IsImmutable(list.state))
 			{
-				ThrowHelpers.ThrowBuiltException();
+				ThrowHelpers.ThrowInvalidOperationException_AlreadyBuilt();
 			}
 
 			list.state = BuilderState.InitialImmutable;
@@ -108,7 +119,7 @@ public sealed partial class ValueList<T>
 			return ValueList.CreateBuilder<T>(list.Count).AddRange(list.AsSpan());
 		}
 
-		private List<T> Mutate()
+		private ValueList<T> Mutate()
 		{
 			var list = this.list;
 			if (list is null || (uint)list.state >= BuilderState.LastMutableVersion)
@@ -120,14 +131,14 @@ public sealed partial class ValueList<T>
 
 			Debug.Assert(BuilderState.IsMutable(list.state));
 
-			return list.items;
+			return list;
 
 			[MethodImpl(MethodImplOptions.NoInlining)]
 			static void SlowPath([NotNull] ValueList<T>? list)
 			{
 				if (list is null)
 				{
-					ThrowHelpers.ThrowUninitializedBuilerException();
+					ThrowHelpers.ThrowInvalidOperationException_UninitializedBuiler();
 				}
 				else if (list.state == BuilderState.LastMutableVersion)
 				{
@@ -137,7 +148,7 @@ public sealed partial class ValueList<T>
 				{
 					Debug.Assert(BuilderState.IsImmutable(list.state));
 
-					ThrowHelpers.ThrowBuiltException();
+					ThrowHelpers.ThrowInvalidOperationException_AlreadyBuilt();
 				}
 			}
 		}
@@ -157,7 +168,17 @@ public sealed partial class ValueList<T>
 		{
 			[Pure]
 			get => this.Read()[index];
-			set => this.Mutate()[index] = value;
+			set
+			{
+				var list = this.Mutate();
+
+				if ((uint)index >= (uint)list.size)
+				{
+					ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.index);
+				}
+
+				list.items[index] = value;
+			}
 		}
 
 		/// <summary>
@@ -211,7 +232,18 @@ public sealed partial class ValueList<T>
 
 		internal static Builder CreateFromEnumerable(IEnumerable<T> items)
 		{
-			return new(ValueList<T>.CreateMutableFromEnumerable(items));
+			if (items is null)
+			{
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.items);
+			}
+
+			var builder = Create();
+			foreach (var item in items)
+			{
+				builder.Add(item);
+			}
+
+			return builder;
 		}
 
 		/// <summary>
@@ -220,7 +252,7 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public Builder SetItem(int index, T value)
 		{
-			this.Mutate()[index] = value;
+			this[index] = value;
 			return this;
 		}
 
@@ -229,29 +261,52 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public Builder Add(T item)
 		{
-			this.Mutate().Add(item);
+			var list = this.Mutate();
+
+			T[] items = list.items;
+			int size = list.size;
+			if ((uint)size < (uint)items.Length)
+			{
+				list.size = size + 1;
+				items[size] = item;
+			}
+			else
+			{
+				AddWithResize(list, item);
+			}
+
 			return this;
+		}
+
+		// Non-inline from List.Add to improve its code quality as uncommon path
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		private static void AddWithResize(ValueList<T> list, T item)
+		{
+			Debug.Assert(list.size == list.items.Length);
+
+			int size = list.size;
+			Grow(list, size + 1);
+			list.size = size + 1;
+			list.items[size] = item;
 		}
 
 		// Accessible through an extension method.
 		internal Builder AddRangeSpan(ReadOnlySpan<T> items)
 		{
-			AddRange(this.Mutate(), items);
-			return this;
-		}
+			var list = this.Mutate();
 
-		private static void AddRange(List<T> list, ReadOnlySpan<T> items)
-		{
-#if NET8_0_OR_GREATER
-			CollectionExtensions.AddRange(list, items);
-#else
-			EnsureCapacity(list, list.Count + items.Length);
-
-			foreach (var item in items)
+			if (!items.IsEmpty)
 			{
-				list.Add(item);
+				if (list.items.Length - list.size < items.Length)
+				{
+					Grow(list, checked(list.size + items.Length));
+				}
+
+				items.CopyTo(list.items.AsSpan(list.size));
+				list.size += items.Length;
 			}
-#endif
+
+			return this;
 		}
 
 		/// <summary>
@@ -263,21 +318,26 @@ public sealed partial class ValueList<T>
 		/// </remarks>
 		public Builder AddRange(IEnumerable<T> items)
 		{
+			var list = this.Mutate();
+
 			if (items is null)
 			{
-				throw new ArgumentNullException(nameof(items));
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.items);
 			}
 
 			if (items is ICollection<T> collection)
 			{
-				var list = this.Mutate();
-
-				if (checked(list.Count + collection.Count) < list.Count)
+				int count = collection.Count;
+				if (count > 0)
 				{
-					throw new OverflowException();
-				}
+					if (list.items.Length - list.size < count)
+					{
+						Grow(list, checked(list.size + count));
+					}
 
-				list.AddRange(items);
+					collection.CopyTo(list.items, list.size);
+					list.size += count; // Update size _after_ copying, to handle the case in which we're inserting the list into itself.
+				}
 			}
 			else
 			{
@@ -299,7 +359,7 @@ public sealed partial class ValueList<T>
 				// infinite memory growth.
 				// We "protect" our consumers from this by invalidating the enumerator
 				// on each iteration such that an exception will be thrown.
-				this.Mutate().Add(item);
+				this.Add(item);
 			}
 		}
 
@@ -308,7 +368,26 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public Builder Insert(int index, T item)
 		{
-			this.Mutate().Insert(index, item);
+			var list = this.Mutate();
+
+			// Note that insertions at the end are legal.
+			if ((uint)index > (uint)list.size)
+			{
+				ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.index);
+			}
+
+			if (list.size == list.items.Length)
+			{
+				GrowForInsertion(list, index, 1);
+			}
+			else if (index < list.size)
+			{
+				Array.Copy(list.items, index, list.items, index + 1, list.size - index);
+			}
+
+			list.items[index] = item;
+			list.size++;
+
 			return this;
 		}
 
@@ -317,40 +396,32 @@ public sealed partial class ValueList<T>
 		{
 			var list = this.Mutate();
 
-#if NET8_0_OR_GREATER
-			CollectionExtensions.InsertRange(list, index, items);
-#else
-			if (index == this.Count)
+			if ((uint)index > (uint)list.size)
 			{
-				AddRange(list, items);
-				return this;
+				ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.index);
 			}
 
-			if (index < 0 || index > list.Count)
+			if (!items.IsEmpty)
 			{
-				throw new ArgumentOutOfRangeException(nameof(index));
-			}
+				if (list.items.Length - list.size < items.Length)
+				{
+					Grow(list, checked(list.size + items.Length));
+				}
 
-			if (items.Length == 0)
-			{
-				// Nothing to do
-			}
-			else if (items.Length == 1)
-			{
-				list.Insert(index, items[0]);
-			}
-			else
-			{
-				// FYI, the following only works because List<T>.InsertRange has
-				// specialized behavior for ICollection<T>
+				// If the index at which to insert is less than the number of items in the list,
+				// shift all items past that location in the list down to the end, making room
+				// to copy in the new data.
+				if (index < list.size)
+				{
+					Array.Copy(list.items, index, list.items, index + items.Length, list.size - index);
+				}
 
-				// Make room inside the backing array:
-				list.InsertRange(index, new NoOpCollection(items.Length));
-
-				// Actually write the content:
-				items.CopyTo(UnsafeHelpers.GetBackingArray(list).AsSpan(index));
+				// Copy the source span into the list.
+				// Note that this does not handle the unsafe case of trying to insert a CollectionsMarshal.AsSpan(list)
+				// or some slice thereof back into the list itself; such an operation has undefined behavior.
+				items.CopyTo(list.items.AsSpan(index));
+				list.size += items.Length;
 			}
-#endif
 
 			return this;
 		}
@@ -364,21 +435,48 @@ public sealed partial class ValueList<T>
 		/// </remarks>
 		public Builder InsertRange(int index, IEnumerable<T> items)
 		{
+			var list = this.Mutate();
+
 			if (items is null)
 			{
-				throw new ArgumentNullException(nameof(items));
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.items);
+			}
+
+			if ((uint)index > (uint)list.size)
+			{
+				ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.index);
 			}
 
 			if (items is ICollection<T> collection)
 			{
-				var list = this.Mutate();
-
-				if (checked(list.Count + collection.Count) < list.Count)
+				int count = collection.Count;
+				if (count > 0)
 				{
-					throw new OverflowException();
-				}
+					if (list.items.Length - list.size < count)
+					{
+						GrowForInsertion(list, index, count);
+					}
+					else if (index < list.size)
+					{
+						Array.Copy(list.items, index, list.items, index + count, list.size - index);
+					}
 
-				list.InsertRange(index, items);
+					// If we're inserting the list into itself, we want to be able to deal with that.
+					if (collection is ValueList<T>.Builder.Collection vlbc && object.ReferenceEquals(vlbc.Builder.list, list))
+					{
+						// Copy first part of _items to insert location
+						Array.Copy(list.items, 0, list.items, index, index);
+
+						// Copy last part of _items back to inserted location
+						Array.Copy(list.items, index + count, list.items, index * 2, list.size - index);
+					}
+					else
+					{
+						collection.CopyTo(list.items, index);
+					}
+
+					list.size += count;
+				}
 			}
 			else
 			{
@@ -400,7 +498,7 @@ public sealed partial class ValueList<T>
 				// infinite memory growth.
 				// We "protect" our consumers from this by invalidating the enumerator
 				// on each iteration such that an exception will be thrown.
-				this.Mutate().Insert(index++, item);
+				this.Insert(index++, item);
 			}
 		}
 
@@ -409,7 +507,22 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public Builder Clear()
 		{
-			this.Mutate().Clear();
+			var list = this.Mutate();
+
+			if (Polyfills.IsReferenceOrContainsReferences<T>())
+			{
+				int size = list.size;
+				list.size = 0;
+				if (size > 0)
+				{
+					Array.Clear(list.items, 0, size); // Clear the elements so that the gc can reclaim the references.
+				}
+			}
+			else
+			{
+				list.size = 0;
+			}
+
 			return this;
 		}
 
@@ -418,8 +531,33 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public Builder RemoveAt(int index)
 		{
-			this.Mutate().RemoveAt(index);
+			var list = this.Mutate();
+
+			if ((uint)index >= (uint)list.size)
+			{
+				ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.index);
+			}
+
+			RemoveAtUnsafe(list, index);
+
 			return this;
+		}
+
+		// This assumes Mutate has already been called and that `index` is valid.
+		private static void RemoveAtUnsafe(ValueList<T> list, int index)
+		{
+			Debug.Assert((uint)index < (uint)list.size);
+
+			list.size--;
+			if (index < list.size)
+			{
+				Array.Copy(list.items, index + 1, list.items, index, list.size - index);
+			}
+
+			if (Polyfills.IsReferenceOrContainsReferences<T>())
+			{
+				list.items[list.size] = default!;
+			}
 		}
 
 		/// <summary>
@@ -427,7 +565,38 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public Builder RemoveRange(int index, int count)
 		{
-			this.Mutate().RemoveRange(index, count);
+			var list = this.Mutate();
+
+			if (index < 0)
+			{
+				ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.index);
+			}
+
+			if (count < 0)
+			{
+				ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.count);
+			}
+
+			if (list.size - index < count)
+			{
+				ThrowHelpers.ThrowArgumentException_InvalidOffsetOrLength();
+			}
+
+			if (count > 0)
+			{
+				list.size -= count;
+
+				if (index < list.size)
+				{
+					Array.Copy(list.items, index + count, list.items, index, list.size - index);
+				}
+
+				if (Polyfills.IsReferenceOrContainsReferences<T>())
+				{
+					Array.Clear(list.items, list.size, count);
+				}
+			}
+
 			return this;
 		}
 
@@ -437,7 +606,16 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public bool TryRemoveFirst(T item)
 		{
-			return this.Mutate().Remove(item);
+			var list = this.Mutate();
+
+			int index = list.IndexOf(item);
+			if (index >= 0)
+			{
+				RemoveAtUnsafe(list, index);
+				return true;
+			}
+
+			return false;
 		}
 
 		/// <summary>
@@ -447,11 +625,20 @@ public sealed partial class ValueList<T>
 		public bool TryRemoveFirst(Predicate<T> match)
 		{
 			var list = this.Mutate();
-			var index = list.FindIndex(match);
-			if (index >= 0)
+
+			if (match is null)
 			{
-				list.RemoveAt(index);
-				return true;
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.match);
+			}
+
+			// Note that the `match` function can read and even modify the list we're about to remove from.
+			for (int i = 0; i < list.size; i++)
+			{
+				if (match(list.items[i]))
+				{
+					RemoveAtUnsafe(list, i);
+					return true;
+				}
 			}
 
 			return false;
@@ -480,8 +667,7 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public Builder RemoveAll(T item)
 		{
-			this.Mutate().RemoveAll(x => EqualityComparer<T>.Default.Equals(x, item));
-			return this;
+			return this.RemoveAll(x => EqualityComparer<T>.Default.Equals(x, item));
 		}
 
 		/// <summary>
@@ -489,7 +675,47 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public Builder RemoveAll(Predicate<T> match)
 		{
-			this.Mutate().RemoveAll(match);
+			var list = this.Mutate();
+
+			if (match == null)
+			{
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.match);
+			}
+
+			int freeIndex = 0;   // the first free slot in items array
+
+			// Find the first item which needs to be removed.
+			while (freeIndex < list.size && !match(list.items[freeIndex]))
+			{
+				freeIndex++;
+			}
+
+			if (freeIndex < list.size)
+			{
+				int current = freeIndex + 1;
+				while (current < list.size)
+				{
+					// Find the first item which needs to be kept.
+					while (current < list.size && match(list.items[current]))
+					{
+						current++;
+					}
+
+					if (current < list.size)
+					{
+						// copy item to the free slot.
+						list.items[freeIndex++] = list.items[current++];
+					}
+				}
+
+				if (Polyfills.IsReferenceOrContainsReferences<T>())
+				{
+					Array.Clear(list.items, freeIndex, list.size - freeIndex); // Clear the elements so that the gc can reclaim the references.
+				}
+
+				list.size = freeIndex;
+			}
+
 			return this;
 		}
 
@@ -498,7 +724,13 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public Builder Reverse()
 		{
-			this.Mutate().Reverse();
+			var list = this.Mutate();
+
+			if (list.size > 1)
+			{
+				Array.Reverse(list.items, 0, list.size);
+			}
+
 			return this;
 		}
 
@@ -507,37 +739,43 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public Builder Sort()
 		{
-			this.Mutate().Sort();
+			var list = this.Mutate();
+
+			if (list.size > 1)
+			{
+				Array.Sort(list.items, 0, list.size);
+			}
+
 			return this;
 		}
 
 		/// <inheritdoc cref="ValueCollectionsMarshal.AsSpan"/>
-		internal Span<T> AsSpanUnsafe() => UnsafeHelpers.AsSpan(this.Mutate());
+		internal Span<T> AsSpanUnsafe()
+		{
+			var list = this.Mutate();
+			return list.items.AsSpan(0, list.size);
+		}
 
 		/// <inheritdoc cref="ValueCollectionsMarshal.SetCount"/>
 		internal void SetCountUnsafe(int count)
 		{
 			var list = this.Mutate();
 
-#if NET8_0_OR_GREATER
-			System.Runtime.InteropServices.CollectionsMarshal.SetCount(list, count);
-#else
 			if (count < 0)
 			{
-				throw new ArgumentOutOfRangeException(nameof(count));
+				ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.count);
 			}
 
-			var currentCount = list.Count;
+			if (count > list.Capacity)
+			{
+				Grow(list, count);
+			}
+			else if (count < list.size && Polyfills.IsReferenceOrContainsReferences<T>())
+			{
+				Array.Clear(list.items, count, list.size - count);
+			}
 
-			if (count > currentCount)
-			{
-				list.AddRange(new NoOpCollection(count - currentCount));
-			}
-			else if (count < currentCount)
-			{
-				list.RemoveRange(count, currentCount - count);
-			}
-#endif
+			list.size = count;
 		}
 
 		/// <summary>
@@ -546,7 +784,14 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public Builder TrimExcess()
 		{
-			this.Mutate().TrimExcess();
+			var list = this.Mutate();
+
+			int threshold = (int)(((double)list.items.Length) * 0.9);
+			if (list.size < threshold)
+			{
+				SetCapacity(list, list.size);
+			}
+
 			return this;
 		}
 
@@ -557,45 +802,105 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public Builder EnsureCapacity(int capacity)
 		{
-			EnsureCapacity(this.Mutate(), capacity);
+			var list = this.Mutate();
+
+			if (capacity < 0)
+			{
+				ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.capacity);
+			}
+
+			if (list.items.Length < capacity)
+			{
+				Grow(list, capacity);
+			}
+
 			return this;
 		}
 
-		private static void EnsureCapacity(List<T> list, int capacity)
+		/// <summary>
+		/// Increase the capacity of this list to at least the specified <paramref name="capacity"/>.
+		/// </summary>
+		private static void Grow(ValueList<T> list, int capacity)
 		{
-#if NET6_0_OR_GREATER
-			list.EnsureCapacity(capacity);
-#else
-			if (capacity < 0)
+			SetCapacity(list, GetNewCapacity(list, capacity));
+		}
+
+		/// <summary>
+		/// Enlarge this list so it may contain at least <paramref name="insertionCount"/> more elements
+		/// And copy data to their after-insertion positions.
+		/// This method is specifically for insertion, as it avoids 1 extra array copy.
+		/// You should only call this method when Count + insertionCount > Capacity.
+		/// </summary>
+		private static void GrowForInsertion(ValueList<T> list, int indexToInsert, int insertionCount = 1)
+		{
+			Debug.Assert(insertionCount > 0);
+
+			int requiredCapacity = checked(list.size + insertionCount);
+			int newCapacity = GetNewCapacity(list, requiredCapacity);
+
+			// Inline and adapt logic from set_Capacity
+			T[] newItems = new T[newCapacity];
+			if (indexToInsert != 0)
 			{
-				throw new ArgumentOutOfRangeException(nameof(capacity));
+				Array.Copy(list.items, newItems, length: indexToInsert);
 			}
 
-			var currentCapacity = list.Capacity;
-			if (currentCapacity < capacity)
+			if (list.size != indexToInsert)
 			{
-				const int DefaultCapacity = 4;
-				const int MaxCapacity = 0X7FFFFFC7;
-
-				var newCapacity = currentCapacity == 0 ? DefaultCapacity : 2 * currentCapacity;
-
-				// Allow the list to grow to maximum possible capacity (~2G elements) before encountering overflow.
-				// Note that this check works even when _items.Length overflowed thanks to the (uint) cast
-				if ((uint)newCapacity > MaxCapacity)
-				{
-					newCapacity = MaxCapacity;
-				}
-
-				// If the computed capacity is still less than specified, set to the original argument.
-				// Capacities exceeding Array.MaxLength will be surfaced as OutOfMemoryException by Array.Resize.
-				if (newCapacity < capacity)
-				{
-					newCapacity = capacity;
-				}
-
-				list.Capacity = newCapacity;
+				Array.Copy(list.items, indexToInsert, newItems, indexToInsert + insertionCount, list.size - indexToInsert);
 			}
-#endif
+
+			list.items = newItems;
+		}
+
+		private static void SetCapacity(ValueList<T> list, int capacity)
+		{
+			if (capacity < list.size)
+			{
+				ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.capacity);
+			}
+
+			if (capacity != list.items.Length)
+			{
+				if (capacity > 0)
+				{
+					T[] newItems = new T[capacity];
+					if (list.size > 0)
+					{
+						Array.Copy(list.items, newItems, list.size);
+					}
+
+					list.items = newItems;
+				}
+				else
+				{
+					list.items = [];
+				}
+			}
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static int GetNewCapacity(ValueList<T> list, int capacity)
+		{
+			Debug.Assert(list.items.Length < capacity);
+
+			int newCapacity = list.items.Length == 0 ? DefaultCapacity : 2 * list.items.Length;
+
+			// Allow the list to grow to maximum possible capacity (~2G elements) before encountering overflow.
+			// Note that this check works even when _items.Length overflowed thanks to the (uint) cast
+			if ((uint)newCapacity > Polyfills.ArrayMaxLength)
+			{
+				newCapacity = Polyfills.ArrayMaxLength;
+			}
+
+			// If the computed capacity is still less than specified, set to the original argument.
+			// Capacities exceeding Polyfills.ArrayMaxLength will be surfaced as OutOfMemoryException by Array.Resize.
+			if (newCapacity < capacity)
+			{
+				newCapacity = capacity;
+			}
+
+			return newCapacity;
 		}
 
 		/// <summary>
@@ -650,42 +955,6 @@ public sealed partial class ValueList<T>
 		///   <paramref name="destination"/> is shorter than the source list.
 		/// </exception>
 		public void CopyTo(Span<T> destination) => this.Read().CopyTo(destination);
-
-#if !NET8_0_OR_GREATER
-		/// <summary>
-		/// ICollection with a specified size, but no contents.
-		/// </summary>
-		private sealed class NoOpCollection : ICollection<T>
-		{
-			private readonly int size;
-
-			public int Count => this.size;
-
-			public bool IsReadOnly => true;
-
-			internal NoOpCollection(int size)
-			{
-				this.size = size;
-			}
-
-			public void CopyTo(T[] array, int arrayIndex)
-			{
-				// Do nothing.
-			}
-
-			public IEnumerator<T> GetEnumerator() => throw new NotImplementedException();
-
-			IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-
-			public void Add(T item) => throw new NotSupportedException();
-
-			public void Clear() => throw new NotSupportedException();
-
-			public bool Contains(T item) => throw new NotSupportedException();
-
-			public bool Remove(T item) => throw new NotSupportedException();
-		}
-#endif
 
 		/// <summary>
 		/// Create a new heap-allocated live view of the builder.
@@ -745,7 +1014,7 @@ public sealed partial class ValueList<T>
 			{
 				if (array is null)
 				{
-					throw new ArgumentNullException(nameof(array));
+					ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.array);
 				}
 
 				this.builder.CopyTo(array.AsSpan(arrayIndex));
@@ -842,7 +1111,7 @@ public sealed partial class ValueList<T>
 					return;
 				}
 
-				throw new InvalidOperationException("Collection was modified during enumeration.");
+				ThrowHelpers.ThrowInvalidOperationException_CollectionModifiedDuringEnumeration();
 			}
 		}
 #pragma warning restore CA1815 // Override equals and operator equals on value types

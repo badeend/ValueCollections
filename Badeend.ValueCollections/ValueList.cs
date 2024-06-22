@@ -72,15 +72,19 @@ public static class ValueList
 [CollectionBuilder(typeof(ValueList), nameof(ValueList.Create))]
 public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueList<T>>
 {
+	// Various parts of this class have been adapted from:
+	// https://github.com/dotnet/runtime/blob/5aa9687e110faa19d1165ba680e52585a822464d/src/libraries/System.Private.CoreLib/src/System/Collections/Generic/List.cs
+
 	/// <summary>
 	/// Get an empty list.
 	///
 	/// This does not allocate any memory.
 	/// </summary>
 	[Pure]
-	public static ValueList<T> Empty { get; } = new(new List<T>(), BuilderState.InitialImmutable);
+	public static ValueList<T> Empty { get; } = new(Array.Empty<T>(), 0, BuilderState.InitialImmutable);
 
-	private readonly List<T> items;
+	private T[] items;
+	private int size;
 
 	// See the BuilderState utility class for more info.
 	private int state;
@@ -88,7 +92,7 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	internal int Capacity
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		get => this.items.Capacity;
+		get => this.items.Length;
 	}
 
 	/// <summary>
@@ -98,7 +102,7 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	public int Count
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		get => this.items.Count;
+		get => this.size;
 	}
 
 	/// <summary>
@@ -108,7 +112,7 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	public bool IsEmpty
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		get => this.items.Count == 0;
+		get => this.size == 0;
 	}
 
 	/// <inheritdoc/>
@@ -123,12 +127,13 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		get
 		{
-			if (index < 0 || index >= this.items.Count)
+			// Following trick can reduce the range check by one
+			if ((uint)index >= (uint)this.size)
 			{
-				throw new ArgumentOutOfRangeException(nameof(index));
+				ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.index);
 			}
 
-			return ref UnsafeHelpers.GetBackingArray(this.items)[index];
+			return ref this.items[index];
 		}
 	}
 
@@ -139,12 +144,17 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	T IList<T>.this[int index]
 	{
 		get => this[index];
-		set => throw CreateImmutableException();
+		set => ThrowHelpers.ThrowNotSupportedException_CollectionImmutable();
 	}
 
-	private ValueList(List<T> items, int state)
+	private ValueList(T[] items, int size, int state)
 	{
+		Debug.Assert(items is not null);
+		Debug.Assert(size >= 0);
+		Debug.Assert(size <= items!.Length);
+
 		this.items = items;
+		this.size = size;
 		this.state = state;
 	}
 
@@ -152,7 +162,7 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	{
 		if (items is null)
 		{
-			throw new ArgumentNullException(nameof(items));
+			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.items);
 		}
 
 		if (items is ValueList<T> list)
@@ -162,29 +172,39 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 			return list;
 		}
 
-		if (items is ICollection { Count: 0 })
+		if (items is ICollection<T> collection)
 		{
-			return Empty;
+			int count = collection.Count;
+			if (count == 0)
+			{
+				return Empty;
+			}
+
+			var newItems = new T[count];
+			collection.CopyTo(newItems, 0);
+			return new(newItems, count, BuilderState.InitialImmutable);
 		}
 
-		return new(new List<T>(items), BuilderState.InitialImmutable);
+		var builder = ValueList.CreateBuilder<T>();
+		foreach (var item in items)
+		{
+			builder.Add(item);
+		}
+
+		return builder.Build();
 	}
 
 	internal static ValueList<T> CreateImmutableFromSpan(ReadOnlySpan<T> items)
 	{
-		if (items.Length == 0)
+		var length = items.Length;
+		if (length == 0)
 		{
 			return Empty;
 		}
 
-		var list = new List<T>(items.Length);
-
-		foreach (var item in items)
-		{
-			list.Add(item);
-		}
-
-		return new(list, BuilderState.InitialImmutable);
+		var newItems = new T[length];
+		items.CopyTo(newItems);
+		return new(newItems, length, BuilderState.InitialImmutable);
 	}
 
 	internal static ValueList<T> CreateImmutableFromArrayUnsafe(T[] items) => CreateImmutableFromArrayUnsafe(items, items.Length);
@@ -196,36 +216,22 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 			return Empty;
 		}
 
-		// TODO: don't copy! 
-
-		var list = new List<T>(count);
-
-		for (int i = 0; i < count; i++)
-		{
-			list.Add(items[i]);
-		}
-
-		return new(list, BuilderState.InitialImmutable);
+		return new(items, count, BuilderState.InitialImmutable);
 	}
 
 	internal static ValueList<T> CreateMutable()
 	{
-		return new(new List<T>(), BuilderState.InitialMutable);
+		return new(Array.Empty<T>(), 0, BuilderState.InitialMutable);
 	}
 
 	internal static ValueList<T> CreateMutableWithCapacity(int capacity)
 	{
 		if (capacity < 0)
 		{
-			throw new ArgumentOutOfRangeException(nameof(capacity));
+			ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.capacity);
 		}
 
-		return new(new List<T>(capacity), BuilderState.InitialMutable);
-	}
-
-	internal static ValueList<T> CreateMutableFromEnumerable(IEnumerable<T> items)
-	{
-		return new(new List<T>(items), BuilderState.InitialMutable);
+		return new(new T[capacity], 0, BuilderState.InitialMutable);
 	}
 
 	/// <summary>
@@ -233,7 +239,7 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public ValueSlice<T> AsValueSlice() => new ValueSlice<T>(UnsafeHelpers.GetBackingArray(this.items), 0, this.Count);
+	public ValueSlice<T> AsValueSlice() => new ValueSlice<T>(this.items, 0, this.size);
 
 	/// <summary>
 	/// Access the list's contents using a <see cref="ReadOnlySpan{T}"/>.
@@ -337,7 +343,7 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	{
 		if (minimumCapacity < 0)
 		{
-			throw new ArgumentOutOfRangeException(nameof(minimumCapacity));
+			ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.capacity);
 		}
 
 		var capacity = Math.Max(minimumCapacity, this.Count);
@@ -392,7 +398,7 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	{
 		if (array is null)
 		{
-			throw new ArgumentNullException(nameof(array));
+			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.array);
 		}
 
 		this.AsValueSlice().CopyTo(array.AsSpan().Slice(arrayIndex));
@@ -510,8 +516,8 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal Enumerator(ValueList<T> list)
 		{
-			this.items = UnsafeHelpers.GetBackingArray(list.items);
-			this.end = list.Count;
+			this.items = list.items;
+			this.end = list.size;
 			this.current = -1;
 		}
 
@@ -532,7 +538,7 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 			// FYI, we don't need to compare with the current `state` (version)
 			// of the list, because this enumerator type can only be accessed
 			// after the list has already been built and is therefore immutable.
-			return ++this.current < this.end;
+			return (uint)++this.current < this.end;
 		}
 	}
 #pragma warning restore CA1815 // Override equals and operator equals on value types
@@ -572,19 +578,21 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	}
 
 	/// <inheritdoc/>
-	void ICollection<T>.Add(T item) => throw CreateImmutableException();
+	void ICollection<T>.Add(T item) => ThrowHelpers.ThrowNotSupportedException_CollectionImmutable();
 
 	/// <inheritdoc/>
-	void ICollection<T>.Clear() => throw CreateImmutableException();
+	void ICollection<T>.Clear() => ThrowHelpers.ThrowNotSupportedException_CollectionImmutable();
 
 	/// <inheritdoc/>
-	void IList<T>.Insert(int index, T item) => throw CreateImmutableException();
+	void IList<T>.Insert(int index, T item) => ThrowHelpers.ThrowNotSupportedException_CollectionImmutable();
 
 	/// <inheritdoc/>
-	bool ICollection<T>.Remove(T item) => throw CreateImmutableException();
+	bool ICollection<T>.Remove(T item)
+	{
+		ThrowHelpers.ThrowNotSupportedException_CollectionImmutable();
+		return false;
+	}
 
 	/// <inheritdoc/>
-	void IList<T>.RemoveAt(int index) => throw CreateImmutableException();
-
-	private static NotSupportedException CreateImmutableException() => new NotSupportedException("Collection is immutable");
+	void IList<T>.RemoveAt(int index) => ThrowHelpers.ThrowNotSupportedException_CollectionImmutable();
 }
