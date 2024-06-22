@@ -280,21 +280,34 @@ public sealed partial class ValueList<T>
 		/// </remarks>
 		public Builder AddRange(IEnumerable<T> items)
 		{
-			if (items is ICollection<T> collection)
-			{
-				return this.AddRangeCollection(collection);
-			}
-
 			if (items is null)
 			{
 				throw new ArgumentNullException(nameof(items));
 			}
 
-			var list = this.Mutate();
+			if (items is ICollection<T> collection)
+			{
+				var list = this.Mutate();
+
+				if (checked(list.Count + collection.Count) < list.Count)
+				{
+					throw new OverflowException();
+				}
+
+				list.AddRange(items);
+			}
+			else
+			{
+				this.AddRangeEnumerable(items);
+			}
+
+			return this;
+		}
+
+		private void AddRangeEnumerable(IEnumerable<T> items)
+		{
 			foreach (var item in items)
 			{
-				list.Add(item);
-
 				// Something not immediately obvious from just the code itself is that
 				// nothing prevents consumers from calling this method with an `items`
 				// argument that is (indirectly) derived from `this`. e.g.
@@ -303,23 +316,8 @@ public sealed partial class ValueList<T>
 				// infinite memory growth.
 				// We "protect" our consumers from this by invalidating the enumerator
 				// on each iteration such that an exception will be thrown.
-				this.version++;
+				this.Mutate().Add(item);
 			}
-
-			return this;
-		}
-
-		private Builder AddRangeCollection(ICollection<T> items)
-		{
-			var list = this.Mutate();
-
-			if (checked(list.Count + items.Count) < list.Count)
-			{
-				throw new OverflowException();
-			}
-
-			list.AddRange(items);
-			return this;
 		}
 
 		/// <summary>
@@ -383,21 +381,34 @@ public sealed partial class ValueList<T>
 		/// </remarks>
 		public Builder InsertRange(int index, IEnumerable<T> items)
 		{
-			if (items is ICollection<T> collection)
-			{
-				return this.InsertRangeCollection(index, collection);
-			}
-
 			if (items is null)
 			{
 				throw new ArgumentNullException(nameof(items));
 			}
 
-			var list = this.Mutate();
+			if (items is ICollection<T> collection)
+			{
+				var list = this.Mutate();
+
+				if (checked(list.Count + collection.Count) < list.Count)
+				{
+					throw new OverflowException();
+				}
+
+				list.InsertRange(index, items);
+			}
+			else
+			{
+				this.InsertRangeEnumerable(index, items);
+			}
+
+			return this;
+		}
+
+		private void InsertRangeEnumerable(int index, IEnumerable<T> items)
+		{
 			foreach (var item in items)
 			{
-				list.Insert(index++, item);
-
 				// Something not immediately obvious from just the code itself is that
 				// nothing prevents consumers from calling this method with an `items`
 				// argument that is (indirectly) derived from `this`. e.g.
@@ -406,23 +417,8 @@ public sealed partial class ValueList<T>
 				// infinite memory growth.
 				// We "protect" our consumers from this by invalidating the enumerator
 				// on each iteration such that an exception will be thrown.
-				this.version++;
+				this.Mutate().Insert(index++, item);
 			}
-
-			return this;
-		}
-
-		private Builder InsertRangeCollection(int index, ICollection<T> items)
-		{
-			var list = this.Mutate();
-
-			if (checked(list.Count + items.Count) < list.Count)
-			{
-				throw new OverflowException();
-			}
-
-			list.InsertRange(index, items);
-			return this;
 		}
 
 		/// <summary>
