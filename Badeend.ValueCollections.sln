@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Badeend.ValueCollections.Sy
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Badeend.ValueCollections.NewtonsoftJson", "Badeend.ValueCollections.NewtonsoftJson\Badeend.ValueCollections.NewtonsoftJson.csproj", "{824B389A-D7F1-49EF-B026-6C123E15159E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Badeend.ValueCollections.Benchmarks", "Badeend.ValueCollections.Benchmarks\Badeend.ValueCollections.Benchmarks.csproj", "{F94C9A16-F49B-4638-A601-7DDB512D9C9F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{824B389A-D7F1-49EF-B026-6C123E15159E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{824B389A-D7F1-49EF-B026-6C123E15159E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{824B389A-D7F1-49EF-B026-6C123E15159E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F94C9A16-F49B-4638-A601-7DDB512D9C9F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F94C9A16-F49B-4638-A601-7DDB512D9C9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F94C9A16-F49B-4638-A601-7DDB512D9C9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F94C9A16-F49B-4638-A601-7DDB512D9C9F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
