@@ -119,6 +119,7 @@ public sealed partial class ValueList<T>
 			return ValueList.CreateBuilder<T>(list.Count).AddRange(list.AsSpan());
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private ValueList<T> Mutate()
 		{
 			var list = this.list;
@@ -259,6 +260,7 @@ public sealed partial class ValueList<T>
 		/// <summary>
 		/// Add an <paramref name="item"/> to the end of the list.
 		/// </summary>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Builder Add(T item)
 		{
 			var list = this.Mutate();
