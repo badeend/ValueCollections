@@ -1072,21 +1072,21 @@ public sealed partial class ValueList<T>
 		{
 			private readonly ValueList<T> list;
 			private readonly int expectedState;
-			private ValueList<T>.Enumerator inner;
+			private int current;
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			internal Enumerator(ValueList<T> list)
 			{
 				this.list = list;
 				this.expectedState = list.state;
-				this.inner = list.GetEnumerator();
+				this.current = -1;
 			}
 
 			/// <inheritdoc/>
 			public readonly T Current
 			{
 				[MethodImpl(MethodImplOptions.AggressiveInlining)]
-				get => this.inner.Current;
+				get => this.list.items![this.current];
 			}
 
 			/// <inheritdoc/>
@@ -1098,7 +1098,7 @@ public sealed partial class ValueList<T>
 					this.MoveNextSlow();
 				}
 
-				return this.inner.MoveNext();
+				return (uint)++this.current < this.list.size;
 			}
 
 			private void MoveNextSlow()
