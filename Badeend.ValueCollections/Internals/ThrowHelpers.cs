@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace Badeend.ValueCollections;
+namespace Badeend.ValueCollections.Internals;
 
 internal static class ThrowHelpers
 {

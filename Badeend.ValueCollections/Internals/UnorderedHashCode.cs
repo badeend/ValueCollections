@@ -1,4 +1,4 @@
-namespace Badeend.ValueCollections;
+namespace Badeend.ValueCollections.Internals;
 
 internal struct UnorderedHashCode
 {

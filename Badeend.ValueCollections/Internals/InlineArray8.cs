@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
-namespace Badeend.ValueCollections;
+namespace Badeend.ValueCollections.Internals;
 
 [SuppressMessage("Performance", "CA1823:Avoid unused private fields", Justification = "They're accessed using Unsafe")]
 [SuppressMessage("Style", "IDE0044:Add readonly modifier", Justification = "They're modified using Unsafe")]

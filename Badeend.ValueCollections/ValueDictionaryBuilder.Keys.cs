@@ -2,6 +2,7 @@ using System.Collections;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Badeend.ValueCollections.Internals;
 
 namespace Badeend.ValueCollections;
 

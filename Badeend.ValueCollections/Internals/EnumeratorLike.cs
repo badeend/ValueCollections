@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Runtime.CompilerServices;
 
-namespace Badeend.ValueCollections;
+namespace Badeend.ValueCollections.Internals;
 
 internal static class EnumeratorLike
 {

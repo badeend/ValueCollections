@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
-namespace Badeend.ValueCollections;
+namespace Badeend.ValueCollections.Internals;
 
 /// <summary>
 /// A `state` field represents one of two things depending on its sign:

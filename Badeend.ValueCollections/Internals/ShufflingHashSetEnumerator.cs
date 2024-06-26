@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Badeend.ValueCollections;
+namespace Badeend.ValueCollections.Internals;
 
 /// <summary>
 /// An enumerator that deliberately messes up the enumeration order to prevent
