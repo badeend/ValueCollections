@@ -113,6 +113,11 @@ public sealed partial class ValueDictionaryBuilder<TKey, TValue>
 			this.snapshot = snapshot;
 		}
 
+		/// <summary>
+		/// The builder these keys belong to.
+		/// </summary>
+		public ValueDictionaryBuilder<TKey, TValue> Builder => this.snapshot.Read();
+
 		/// <inheritdoc/>
 		IEnumerator<TKey> IEnumerable<TKey>.GetEnumerator()
 		{

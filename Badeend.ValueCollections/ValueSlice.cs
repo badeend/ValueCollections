@@ -433,6 +433,11 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 			this.slice = slice;
 		}
 
+		/// <summary>
+		/// The slice that this collection represents.
+		/// </summary>
+		public ValueSlice<T> ValueSlice => this.slice;
+
 		/// <inheritdoc/>
 		T IReadOnlyList<T>.this[int index] => this.slice[index];
 

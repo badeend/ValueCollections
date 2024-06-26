@@ -97,6 +97,11 @@ public sealed partial class ValueDictionary<TKey, TValue>
 			this.dictionary = dictionary;
 		}
 
+		/// <summary>
+		/// The dictionary these values belong to.
+		/// </summary>
+		public ValueDictionary<TKey, TValue> ValueDictionary => this.dictionary;
+
 		/// <inheritdoc/>
 		IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator()
 		{
