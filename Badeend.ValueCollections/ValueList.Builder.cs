@@ -238,13 +238,40 @@ public sealed partial class ValueList<T>
 				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.items);
 			}
 
-			var builder = Create();
-			foreach (var item in items)
+			// On newer runtimes, Enumerable.ToArray() is faster than simply
+			// looping the enumerable ourselves, because the LINQ method has
+			// access to an internal optimization to forgo the double virtual
+			// interface call per iteration.
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
+			var newItems = items.ToArray();
+			return new(ValueList<T>.CreateMutableFromArrayUnsafe(newItems, newItems.Length));
+#else
+			if (items is ICollection<T> collection)
 			{
-				builder.Add(item);
-			}
+				int count = collection.Count;
+				if (count == 0)
+				{
+					return Create();
+				}
 
-			return builder;
+				var newItems = new T[count];
+				collection.CopyTo(newItems, 0);
+				return new(ValueList<T>.CreateMutableFromArrayUnsafe(newItems, count));
+			}
+			else
+			{
+				var builder = Create();
+				var list = builder.list;
+				Debug.Assert(list is not null);
+
+				foreach (var item in items)
+				{
+					AddUnsafe(list!, item);
+				}
+
+				return builder;
+			}
+#endif
 		}
 
 		/// <summary>
@@ -260,11 +287,19 @@ public sealed partial class ValueList<T>
 		/// <summary>
 		/// Add an <paramref name="item"/> to the end of the list.
 		/// </summary>
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Builder Add(T item)
 		{
 			var list = this.Mutate();
 
+			AddUnsafe(list, item);
+
+			return this;
+		}
+
+		// Add item to the list without checking for mutability.
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static void AddUnsafe(ValueList<T> list, T item)
+		{
 			T[] items = list.items;
 			int size = list.size;
 			if ((uint)size < (uint)items.Length)
@@ -276,8 +311,6 @@ public sealed partial class ValueList<T>
 			{
 				AddWithResize(list, item);
 			}
-
-			return this;
 		}
 
 		// Non-inline from List.Add to improve its code quality as uncommon path

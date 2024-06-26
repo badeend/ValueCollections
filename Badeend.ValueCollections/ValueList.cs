@@ -172,6 +172,19 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 			return list;
 		}
 
+		// On newer runtimes, Enumerable.ToArray() is faster than simply
+		// looping the enumerable ourselves, because the LINQ method has
+		// access to an internal optimization to forgo the double virtual
+		// interface call per iteration.
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
+		var newItems = items.ToArray();
+		if (newItems.Length == 0)
+		{
+			return Empty;
+		}
+
+		return new(newItems, newItems.Length, BuilderState.InitialImmutable);
+#else
 		if (items is ICollection<T> collection)
 		{
 			int count = collection.Count;
@@ -184,14 +197,25 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 			collection.CopyTo(newItems, 0);
 			return new(newItems, count, BuilderState.InitialImmutable);
 		}
-
-		var builder = ValueList.CreateBuilder<T>();
-		foreach (var item in items)
+		else
 		{
-			builder.Add(item);
-		}
+			var newList = new ValueList<T>([], 0, BuilderState.InitialImmutable);
 
-		return builder.Build();
+			foreach (var item in items)
+			{
+				Builder.AddUnsafe(newList, item);
+			}
+
+			if (newList.Count == 0)
+			{
+				// Too bad we've just performed a useless allocation.
+				// Better drop it now while it's still in the youngest GC generation.
+				return Empty;
+			}
+
+			return newList;
+		}
+#endif
 	}
 
 	internal static ValueList<T> CreateImmutableFromSpan(ReadOnlySpan<T> items)
@@ -232,6 +256,11 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 		}
 
 		return new(new T[capacity], 0, BuilderState.InitialMutable);
+	}
+
+	internal static ValueList<T> CreateMutableFromArrayUnsafe(T[] items, int count)
+	{
+		return new(items, count, BuilderState.InitialMutable);
 	}
 
 	/// <summary>
