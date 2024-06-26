@@ -95,7 +95,7 @@ var newList = existingList.ToBuilder()
     .Add(4)
     .Add(5)
     .Add(6)
-    .RemoveFirst(4)
+    .Remove(4)
     .Build();
 ```
 
@@ -129,6 +129,7 @@ b.AddRange(...);
 b.Clear();
 b.Insert(42);
 b.InsertRange(...);
+b.Remove(42);
 b.Reverse();
 b.Sort();
 // etc...

@@ -92,7 +92,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             T defaultValue = default;
             ValueList<T>.Builder list = GenericListFactory(count);
             IndexOfDelegate IndexOf = IndexOfDelegateFromType(indexOfMethod);
-            while (list.TryRemoveFirst(defaultValue))
+            while (list.TryRemove(defaultValue))
                 count--;
             list.Add(defaultValue);
             Assert.Equal(count, IndexOf(list, defaultValue));

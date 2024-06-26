@@ -639,7 +639,7 @@ public sealed partial class ValueList<T>
 		/// Attempt to remove the first occurrence of a specific object from the list.
 		/// Returns <see langword="false"/> when the element wasn't found.
 		/// </summary>
-		public bool TryRemoveFirst(T item)
+		public bool TryRemove(T item)
 		{
 			var list = this.Mutate();
 
@@ -657,7 +657,7 @@ public sealed partial class ValueList<T>
 		/// Attempt to remove the first element that matches the predicate.
 		/// Returns <see langword="false"/> when the element wasn't found.
 		/// </summary>
-		public bool TryRemoveFirst(Predicate<T> match)
+		public bool TryRemove(Predicate<T> match)
 		{
 			var list = this.Mutate();
 
@@ -682,18 +682,18 @@ public sealed partial class ValueList<T>
 		/// <summary>
 		/// Remove the first occurrence of a specific object from the list.
 		/// </summary>
-		public Builder RemoveFirst(T item)
+		public Builder Remove(T item)
 		{
-			_ = this.TryRemoveFirst(item);
+			_ = this.TryRemove(item);
 			return this;
 		}
 
 		/// <summary>
 		/// Remove the first element that matches the predicate.
 		/// </summary>
-		public Builder RemoveFirst(Predicate<T> match)
+		public Builder Remove(Predicate<T> match)
 		{
-			_ = this.TryRemoveFirst(match);
+			_ = this.TryRemove(match);
 			return this;
 		}
 
@@ -1078,7 +1078,7 @@ public sealed partial class ValueList<T>
 			void IList<T>.Insert(int index, T item) => this.builder.Insert(index, item);
 
 			/// <inheritdoc/>
-			bool ICollection<T>.Remove(T item) => this.builder.TryRemoveFirst(item);
+			bool ICollection<T>.Remove(T item) => this.builder.TryRemove(item);
 
 			/// <inheritdoc/>
 			void IList<T>.RemoveAt(int index) => this.builder.RemoveAt(index);

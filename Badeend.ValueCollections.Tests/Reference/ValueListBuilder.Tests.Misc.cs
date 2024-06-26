@@ -186,7 +186,7 @@ namespace Badeend.ValueCollections.Tests.Reference
                 ValueList<T>.Builder list = ValueList.CreateBuilder<T>(items);
                 for (int i = 0; i < items.Length; i++)
                 {
-                    list.RemoveFirst(items[i]);
+                    list.Remove(items[i]);
                     Assert.False(list.Contains(items[i])); //"Should not contain item"
                 }
             }
@@ -197,7 +197,7 @@ namespace Badeend.ValueCollections.Tests.Reference
                 for (int i = 0; i < items.Length; i++)
                 {
                     list.Add(items[i]);
-                    list.RemoveFirst(items[i]);
+                    list.Remove(items[i]);
                     list.Add(items[i]);
                     Assert.True(list.Contains(items[i])); //"Should contain item."
                 }
@@ -215,7 +215,7 @@ namespace Badeend.ValueCollections.Tests.Reference
                 for (int i = 0; i < times + 1; i++)
                 {
                     Assert.True(list.Contains(items[items.Length / 2])); //"Should contain item."
-                    list.RemoveFirst(items[items.Length / 2]);
+                    list.Remove(items[items.Length / 2]);
                 }
                 Assert.False(list.Contains(items[items.Length / 2])); //"Should not contain item"
             }

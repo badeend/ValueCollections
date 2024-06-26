@@ -20,7 +20,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             var listAsCollection = list.AsCollection();
             foreach (T item in list)
                 while (listAsCollection.Count((value) => value.Equals(item)) > 1)
-                    list.RemoveFirst(item);
+                    list.Remove(item);
             list.Sort();
             ValueList<T>.Builder beforeList = list.ToValueListBuilder();
 
