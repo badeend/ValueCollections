@@ -15,10 +15,10 @@ namespace Badeend.ValueCollections;
 public sealed partial class ValueList<T>
 {
 	/// <summary>
-	/// A mutable list that can be used to efficiently construct new immutable lists.
+	/// A mutable list builder that can be used to efficiently construct new immutable lists.
 	/// </summary>
 	/// <remarks>
-	/// Most mutating methods on this class return `this`, allowing the caller to
+	/// Most mutating methods on this type return `this`, allowing the caller to
 	/// chain multiple mutations in a row.
 	///
 	/// When you're done building, call <see cref="Build()"/> to extract the
