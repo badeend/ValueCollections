@@ -98,7 +98,7 @@ public sealed partial class ValueDictionary<TKey, TValue>
 		}
 
 		/// <inheritdoc/>
-		public IEnumerator<TValue> GetEnumerator()
+		IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator()
 		{
 			if (this.dictionary.Count == 0)
 			{
@@ -111,10 +111,13 @@ public sealed partial class ValueDictionary<TKey, TValue>
 		}
 
 		/// <inheritdoc/>
-		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		IEnumerator IEnumerable.GetEnumerator() => (this as IEnumerable<TValue>).GetEnumerator();
 
 		/// <inheritdoc/>
-		public int Count => this.dictionary.Count;
+		int ICollection<TValue>.Count => this.dictionary.Count;
+
+		/// <inheritdoc/>
+		int IReadOnlyCollection<TValue>.Count => this.dictionary.Count;
 
 		/// <inheritdoc/>
 		bool ICollection<TValue>.IsReadOnly => true;

@@ -83,11 +83,11 @@ public class ValueDictionaryBuilderTests
         a.Add("d", 4);
 
         Assert.Throws<InvalidOperationException>(() => keys.MoveNext());
-        Assert.Throws<InvalidOperationException>(() => keys.AsCollection().Count);
+        Assert.Throws<InvalidOperationException>(() => keys.AsCollection().Count());
         Assert.Throws<InvalidOperationException>(() => keys.AsCollection().Contains("a"));
         Assert.Throws<InvalidOperationException>(() => keys.AsCollection().OrderBy(x => x).ToValueList());
         Assert.Throws<InvalidOperationException>(() => values.MoveNext());
-        Assert.Throws<InvalidOperationException>(() => values.AsCollection().Count);
+        Assert.Throws<InvalidOperationException>(() => values.AsCollection().Count());
         Assert.Throws<InvalidOperationException>(() => values.AsCollection().Contains(1));
         Assert.Throws<InvalidOperationException>(() => values.AsCollection().ToValueList());
         Assert.Throws<InvalidOperationException>(() => values.AsCollection().OrderBy(x => x).ToValueList());

@@ -102,7 +102,7 @@ public sealed partial class ValueDictionary<TKey, TValue>
 		}
 
 		/// <inheritdoc/>
-		public IEnumerator<TKey> GetEnumerator()
+		IEnumerator<TKey> IEnumerable<TKey>.GetEnumerator()
 		{
 			if (this.dictionary.Count == 0)
 			{
@@ -115,16 +115,19 @@ public sealed partial class ValueDictionary<TKey, TValue>
 		}
 
 		/// <inheritdoc/>
-		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		IEnumerator IEnumerable.GetEnumerator() => (this as IEnumerable<TKey>).GetEnumerator();
 
 		/// <inheritdoc/>
-		public int Count => this.dictionary.Count;
+		int ICollection<TKey>.Count => this.dictionary.Count;
+
+		/// <inheritdoc/>
+		int IReadOnlyCollection<TKey>.Count => this.dictionary.Count;
 
 		/// <inheritdoc/>
 		bool ICollection<TKey>.IsReadOnly => true;
 
 		/// <inheritdoc/>
-		public bool Contains(TKey item) => this.dictionary.ContainsKey(item);
+		bool ICollection<TKey>.Contains(TKey item) => this.dictionary.ContainsKey(item);
 
 		/// <inheritdoc/>
 		void ICollection<TKey>.CopyTo(TKey[] array, int index) => this.dictionary.Keys_CopyTo(array, index);
@@ -148,6 +151,9 @@ public sealed partial class ValueDictionary<TKey, TValue>
 		bool ISet<TKey>.SetEquals(IEnumerable<TKey> other) => this.dictionary.Keys_SetEquals(other);
 
 #if NET5_0_OR_GREATER
+		/// <inheritdoc/>
+		bool IReadOnlySet<TKey>.Contains(TKey item) => this.dictionary.ContainsKey(item);
+
 		/// <inheritdoc/>
 		bool IReadOnlySet<TKey>.IsProperSubsetOf(IEnumerable<TKey> other) => this.dictionary.Keys_IsProperSubsetOf(other);
 

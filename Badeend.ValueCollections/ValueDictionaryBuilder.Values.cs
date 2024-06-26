@@ -110,7 +110,7 @@ public sealed partial class ValueDictionaryBuilder<TKey, TValue>
 		}
 
 		/// <inheritdoc/>
-		public IEnumerator<TValue> GetEnumerator()
+		IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator()
 		{
 			var builder = this.snapshot.Read();
 			if (builder.Count == 0)
@@ -124,10 +124,13 @@ public sealed partial class ValueDictionaryBuilder<TKey, TValue>
 		}
 
 		/// <inheritdoc/>
-		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		IEnumerator IEnumerable.GetEnumerator() => (this as IEnumerable<TValue>).GetEnumerator();
 
 		/// <inheritdoc/>
-		public int Count => this.snapshot.Read().Count;
+		int ICollection<TValue>.Count => this.snapshot.Read().Count;
+
+		/// <inheritdoc/>
+		int IReadOnlyCollection<TValue>.Count => this.snapshot.Read().Count;
 
 		/// <inheritdoc/>
 		bool ICollection<TValue>.IsReadOnly => true;
