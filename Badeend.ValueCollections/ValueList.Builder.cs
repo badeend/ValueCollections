@@ -74,13 +74,7 @@ public sealed partial class ValueList<T>
 		/// </exception>
 		public ValueList<T> Build()
 		{
-			_ = this.Mutate();
-			var list = this.Read();
-
-			if (BuilderState.IsImmutable(list.state))
-			{
-				ThrowHelpers.ThrowInvalidOperationException_AlreadyBuilt();
-			}
+			var list = this.Mutate();
 
 			list.state = BuilderState.InitialImmutable;
 
