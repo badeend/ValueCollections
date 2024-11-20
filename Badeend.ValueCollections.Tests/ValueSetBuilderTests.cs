@@ -22,7 +22,7 @@ public class ValueSetBuilderTests
     [Fact]
     public void FluentInterface()
     {
-        _ = ValueSet.Builder<int>()
+        _ = ValueSet.CreateBuilder<int>()
             .Add(1)
             .Add(2)
             .Add(3)
@@ -70,7 +70,7 @@ public class ValueSetBuilderTests
         Span<int> d = [1, 2, 3];
         ReadOnlySpan<int> e = [1, 2, 3];
 
-        var builder = ValueSet.Builder<int>();
+        var builder = ValueSet.CreateBuilder<int>();
 
         builder.UnionWith(a);
         builder.UnionWith(b);

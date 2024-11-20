@@ -317,7 +317,7 @@ public sealed class ValueSetBuilder<T> : ISet<T>, IReadOnlyCollection<T>
 	/// <paramref name="items"/> as its initial content.
 	/// </summary>
 	/// <remarks>
-	/// Use <see cref="ValueSet.Builder{T}(ReadOnlySpan{T})"/> to construct a
+	/// Use <see cref="ValueSet.CreateBuilder{T}(ReadOnlySpan{T})"/> to construct a
 	/// ValueSetBuilder from a span.
 	/// </remarks>
 	public ValueSetBuilder(IEnumerable<T> items)

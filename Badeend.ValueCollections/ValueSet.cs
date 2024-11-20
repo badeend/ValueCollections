@@ -26,7 +26,7 @@ public static class ValueSet
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueSetBuilder<T> Builder<T>() => new();
+	public static ValueSetBuilder<T> CreateBuilder<T>() => new();
 
 	/// <summary>
 	/// Create a new <see cref="ValueSetBuilder{T}"/> with the provided
@@ -34,7 +34,7 @@ public static class ValueSet
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueSetBuilder<T> Builder<T>(ReadOnlySpan<T> items) => ValueSetBuilder<T>.FromReadOnlySpan(items);
+	public static ValueSetBuilder<T> CreateBuilder<T>(ReadOnlySpan<T> items) => ValueSetBuilder<T>.FromReadOnlySpan(items);
 }
 
 /// <summary>
@@ -45,7 +45,7 @@ public static class ValueSet
 /// particular order.
 ///
 /// Constructing new instances can be done using
-/// <see cref="ValueSet.Builder{T}()"/> or <see cref="ValueSet{T}.ToBuilder()"/>.
+/// <see cref="ValueSet.CreateBuilder{T}()"/> or <see cref="ValueSet{T}.ToBuilder()"/>.
 /// For creating ValueSets, <see cref="ValueSetBuilder{T}"/> is generally more
 /// efficient than <see cref="HashSet{T}"/>.
 ///
