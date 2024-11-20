@@ -147,4 +147,34 @@ public class ValueListTests
         Assert.Equal("[42]", b.ToString());
         Assert.Equal("[A, null, B]", c.ToString());
     }
+
+    [Fact]
+    public void Span()
+    {
+        ValueList<int> a = [1, 2, 3];
+
+        ReadOnlySpan<int> implicitSpan = a;
+        ReadOnlySpan<int> explicitSpan = a.AsSpan();
+
+        Assert.True(implicitSpan == explicitSpan);
+        Assert.Equal(3, explicitSpan.Length);
+        Assert.Equal(1, explicitSpan[0]);
+        Assert.Equal(2, explicitSpan[1]);
+        Assert.Equal(3, explicitSpan[2]);
+    }
+
+    [Fact]
+    public void Memory()
+    {
+        ValueList<int> a = [1, 2, 3];
+
+        ReadOnlyMemory<int> implicitMemory = a;
+        ReadOnlyMemory<int> explicitMemory = a.AsMemory();
+
+        Assert.True(implicitMemory.Span == explicitMemory.Span);
+        Assert.Equal(3, explicitMemory.Span.Length);
+        Assert.Equal(1, explicitMemory.Span[0]);
+        Assert.Equal(2, explicitMemory.Span[1]);
+        Assert.Equal(3, explicitMemory.Span[2]);
+    }
 }

@@ -407,6 +407,22 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	[Pure]
 	public static bool operator !=(ValueSlice<T> left, ValueSlice<T> right) => !SequenceEqual(left, right);
 
+#pragma warning disable CA2225 // Operator overloads have named alternates
+	/// <summary>
+	/// Access the slice as a <see cref="ReadOnlySpan{T}"/>.
+	/// </summary>
+	[Pure]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static implicit operator ReadOnlySpan<T>(ValueSlice<T> slice) => slice.Span;
+
+	/// <summary>
+	/// Access the slice as a <see cref="ReadOnlyMemory{T}"/>.
+	/// </summary>
+	[Pure]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static implicit operator ReadOnlyMemory<T>(ValueSlice<T> slice) => slice.Memory;
+#pragma warning restore CA2225 // Operator overloads have named alternates
+
 	private static readonly Collection EmptyCollection = new([]);
 
 	/// <summary>

@@ -507,10 +507,25 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 
 #pragma warning disable CA2225 // Operator overloads have named alternates
 	/// <summary>
-	/// Convert list to slice.
+	/// Access the list as a <see cref="ValueSlice{T}"/>.
 	/// </summary>
 	[Pure]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static implicit operator ValueSlice<T>(ValueList<T> list) => list.AsValueSlice();
+
+	/// <summary>
+	/// Access the list as a <see cref="ReadOnlySpan{T}"/>.
+	/// </summary>
+	[Pure]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static implicit operator ReadOnlySpan<T>(ValueList<T> list) => list.AsSpan();
+
+	/// <summary>
+	/// Access the list as a <see cref="ReadOnlyMemory{T}"/>.
+	/// </summary>
+	[Pure]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static implicit operator ReadOnlyMemory<T>(ValueList<T> list) => list.AsMemory();
 #pragma warning restore CA2225 // Operator overloads have named alternates
 
 	/// <summary>
