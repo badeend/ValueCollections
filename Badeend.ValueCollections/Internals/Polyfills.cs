@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
 
 namespace Badeend.ValueCollections.Internals;
 
@@ -20,6 +22,96 @@ internal static class Polyfills
 		return Enum.GetName(typeof(TEnum), value);
 #endif
 	}
+
+	// Adapted from: https://github.com/dotnet/runtime/blob/6be24fd37e7d9f04c7fa903b8b6912c3eafe7198/src/libraries/System.Security.Cryptography/src/System/Security/Cryptography/RandomNumberGenerator.cs#L289
+	internal static void Shuffle<T>(Span<T> values)
+	{
+#if NET8_0_OR_GREATER
+		RandomNumberGenerator.Shuffle(values);
+#else
+		int n = values.Length;
+
+		for (int i = 0; i < n - 1; i++)
+		{
+			int j = GetRandomInt32(i, n);
+
+			if (i != j)
+			{
+				var temp = values[i];
+				values[i] = values[j];
+				values[j] = temp;
+			}
+		}
+#endif
+	}
+
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP3_0_OR_GREATER
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private static int GetRandomInt32(int fromInclusive, int toExclusive) => RandomNumberGenerator.GetInt32(fromInclusive, toExclusive);
+#else
+	[ThreadStatic]
+	private static Csprng? csprng;
+
+	// Adapted from: https://github.com/dotnet/runtime/blob/6be24fd37e7d9f04c7fa903b8b6912c3eafe7198/src/libraries/System.Security.Cryptography/src/System/Security/Cryptography/RandomNumberGenerator.cs#L103
+	private static int GetRandomInt32(int fromInclusive, int toExclusive)
+	{
+		Debug.Assert(fromInclusive < toExclusive);
+
+		// The total possible range is [0, 4,294,967,295).
+		// Subtract one to account for zero being an actual possibility.
+		uint range = (uint)toExclusive - (uint)fromInclusive - 1;
+
+		// If there is only one possible choice, nothing random will actually happen, so return
+		// the only possibility.
+		if (range == 0)
+		{
+			return fromInclusive;
+		}
+
+		// Create a mask for the bits that we care about for the range. The other bits will be
+		// masked away.
+		uint mask = range;
+		mask |= mask >> 1;
+		mask |= mask >> 2;
+		mask |= mask >> 4;
+		mask |= mask >> 8;
+		mask |= mask >> 16;
+
+		csprng ??= new Csprng();
+
+		uint result;
+		do
+		{
+			result = mask & (uint)csprng.Next();
+		}
+		while (result > range);
+
+		return (int)result + fromInclusive;
+	}
+
+	private sealed class Csprng
+	{
+		private const int BufferSize = 256;
+		private const int ElementSize = sizeof(int);
+
+		private readonly RNGCryptoServiceProvider provider = new();
+		private readonly byte[] buffer = new byte[BufferSize * ElementSize];
+		private int nextIndex = BufferSize;
+
+		internal int Next()
+		{
+			if (this.nextIndex >= BufferSize)
+			{
+				this.provider.GetBytes(this.buffer);
+				this.nextIndex = 0;
+			}
+
+			var result = BitConverter.ToInt32(this.buffer, this.nextIndex * ElementSize);
+			this.nextIndex++;
+			return result;
+		}
+	}
+#endif
 
 #if NETSTANDARD2_0
 	/*

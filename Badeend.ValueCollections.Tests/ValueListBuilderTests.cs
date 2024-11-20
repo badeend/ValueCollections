@@ -232,6 +232,7 @@ public class ValueListBuilderTests
 
         Assert.True(builder.IsReadOnly);
         Assert.Throws<InvalidOperationException>(() => builder.Add(3));
+        Assert.Throws<InvalidOperationException>(() => builder.Shuffle());
 
         Assert.Throws<InvalidOperationException>(() => builder.Build());
     }
@@ -281,5 +282,38 @@ public class ValueListBuilderTests
         Assert.Equal("[]", a.ToString());
         Assert.Equal("[42]", b.ToString());
         Assert.Equal("[A, null, B]", c.ToString());
+    }
+
+    [Fact]
+    public void ShuffleAndSort()
+    {
+        var b = Enumerable.Range(1, 10_000).ToValueListBuilder();
+
+        Assert.True(IsSequential(b));
+
+        b.Shuffle();
+
+        Assert.False(IsSequential(b));
+
+        b.Sort();
+
+        Assert.True(IsSequential(b));
+
+        static bool IsSequential(ValueList<int>.Builder values)
+        {
+            var previous = 0;
+
+            foreach (var value in values)
+            {
+                if (value != previous + 1)
+                {
+                    return false;
+                }
+
+                previous = value;
+            }
+
+            return true;
+        }
     }
 }

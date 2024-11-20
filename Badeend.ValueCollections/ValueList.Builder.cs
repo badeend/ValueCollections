@@ -779,6 +779,19 @@ public sealed partial class ValueList<T>
 			return this;
 		}
 
+		/// <summary>
+		/// Performs an in-place shuffle of all elements in the list using
+		/// a cryptographically secure pseudorandom number generator (CPRNG).
+		/// </summary>
+		public Builder Shuffle()
+		{
+			var span = this.AsSpanUnsafe();
+
+			Polyfills.Shuffle(span);
+
+			return this;
+		}
+
 		/// <inheritdoc cref="ValueCollectionsMarshal.AsSpan"/>
 		internal Span<T> AsSpanUnsafe()
 		{
