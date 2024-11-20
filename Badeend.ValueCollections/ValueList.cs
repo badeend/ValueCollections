@@ -256,7 +256,13 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 			ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.capacity);
 		}
 
-		return new(new T[capacity], 0, BuilderState.InitialMutable);
+		var items = capacity switch
+		{
+			0 => Array.Empty<T>(),
+			_ => new T[capacity],
+		};
+
+		return new(items, 0, BuilderState.InitialMutable);
 	}
 
 	internal static ValueList<T> CreateMutableFromArrayUnsafe(T[] items, int count)
