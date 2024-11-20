@@ -150,16 +150,17 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 
 	/// <summary>
 	/// Create a subslice, starting at <paramref name="offset"/>.
-	///
-	/// This does not allocate any memory.
-	///
-	/// Similar to <see cref="ReadOnlySpan{T}.Slice(int)"/>.
 	/// </summary>
 	/// <param name="offset">The index at which to begin the subslice.</param>
 	/// <exception cref="ArgumentOutOfRangeException">
 	///   <paramref name="offset"/> is below <c>0</c> or greater than the
 	///   current slice's length.
 	/// </exception>
+	/// <remarks>
+	/// This is an <c>O(1)</c> operation and does not allocates any memory.
+	///
+	/// Similar to <see cref="ReadOnlySpan{T}.Slice(int)"/>.
+	/// </remarks>
 	[Pure]
 	public ValueSlice<T> Slice(int offset)
 	{
@@ -174,10 +175,6 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// <summary>
 	/// Create a subslice with a specified <paramref name="length"/>,
 	/// starting at <paramref name="offset"/>.
-	///
-	/// This does not allocate any memory.
-	///
-	/// Similar to <see cref="ReadOnlySpan{T}.Slice(int, int)"/>.
 	/// </summary>
 	/// <param name="offset">The index at which to begin the subslice.</param>
 	/// <param name="length">The length of the new subslice.</param>
@@ -189,6 +186,11 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	///   <paramref name="length"/> is below <c>0</c> or would extend beyond the
 	///   current slice's length.
 	/// </exception>
+	/// <remarks>
+	/// This is an <c>O(1)</c> operation and does not allocates any memory.
+	///
+	/// Similar to <see cref="ReadOnlySpan{T}.Slice(int, int)"/>.
+	/// </remarks>
 	[Pure]
 	public ValueSlice<T> Slice(int offset, int length)
 	{

@@ -293,14 +293,15 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 
 	/// <summary>
 	/// Create a subslice, starting at <paramref name="offset"/>.
-	///
-	/// This does not allocate any memory.
 	/// </summary>
 	/// <param name="offset">The index at which to begin the subslice.</param>
 	/// <exception cref="ArgumentOutOfRangeException">
 	///   <paramref name="offset"/> is below <c>0</c> or greater than the
 	///   current list's length.
 	/// </exception>
+	/// <remarks>
+	/// This is an <c>O(1)</c> operation and does not allocates any memory.
+	/// </remarks>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public ValueSlice<T> Slice(int offset) => this.AsValueSlice().Slice(offset);
@@ -308,8 +309,6 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	/// <summary>
 	/// Create a subslice with a specified <paramref name="length"/>,
 	/// starting at <paramref name="offset"/>.
-	///
-	/// This does not allocate any memory.
 	/// </summary>
 	/// <param name="offset">The index at which to begin the subslice.</param>
 	/// <param name="length">The length of the new subslice.</param>
@@ -321,6 +320,9 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	///   <paramref name="length"/> is below <c>0</c> or would extend beyond the
 	///   current list's length.
 	/// </exception>
+	/// <remarks>
+	/// This is an <c>O(1)</c> operation and does not allocates any memory.
+	/// </remarks>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public ValueSlice<T> Slice(int offset, int length) => this.AsValueSlice().Slice(offset, length);
