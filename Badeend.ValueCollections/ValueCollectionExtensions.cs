@@ -54,17 +54,18 @@ public static class ValueCollectionExtensions
 	/// </remarks>
 	public static ValueList<T>.Builder ToValueListBuilder<T>(this IEnumerable<T> items, int minimumCapacity)
 	{
-		if (items is ValueList<T> list)
-		{
-			return list.ToBuilder(minimumCapacity);
-		}
-
 		if (minimumCapacity < 0)
 		{
 			throw new ArgumentOutOfRangeException(nameof(minimumCapacity));
 		}
 
-		return ValueList.CreateBuilder<T>(minimumCapacity).AddRange(items);
+		var initialCapacity = items switch
+		{
+			ICollection<T> collection => Math.Max(minimumCapacity, collection.Count),
+			_ => minimumCapacity,
+		};
+
+		return ValueList.CreateBuilder<T>(initialCapacity).AddRange(items);
 	}
 
 	/// <summary>
@@ -154,17 +155,18 @@ public static class ValueCollectionExtensions
 	/// </remarks>
 	public static ValueSetBuilder<T> ToValueSetBuilder<T>(this IEnumerable<T> items, int minimumCapacity)
 	{
-		if (items is ValueSet<T> list)
-		{
-			return list.ToBuilder(minimumCapacity);
-		}
-
 		if (minimumCapacity < 0)
 		{
 			throw new ArgumentOutOfRangeException(nameof(minimumCapacity));
 		}
 
-		return new ValueSetBuilder<T>(minimumCapacity).UnionWith(items);
+		var initialCapacity = items switch
+		{
+			ICollection<T> collection => Math.Max(minimumCapacity, collection.Count),
+			_ => minimumCapacity,
+		};
+
+		return new ValueSetBuilder<T>(initialCapacity).UnionWith(items);
 	}
 #endif
 
@@ -320,17 +322,18 @@ public static class ValueCollectionExtensions
 	public static ValueDictionaryBuilder<TKey, TValue> ToValueDictionaryBuilder<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> items, int minimumCapacity)
 		where TKey : notnull
 	{
-		if (items is ValueDictionary<TKey, TValue> list)
-		{
-			return list.ToBuilder(minimumCapacity);
-		}
-
 		if (minimumCapacity < 0)
 		{
 			throw new ArgumentOutOfRangeException(nameof(minimumCapacity));
 		}
 
-		return new ValueDictionaryBuilder<TKey, TValue>(minimumCapacity).AddRange(items);
+		var initialCapacity = items switch
+		{
+			ICollection<KeyValuePair<TKey, TValue>> collection => Math.Max(minimumCapacity, collection.Count),
+			_ => minimumCapacity,
+		};
+
+		return new ValueDictionaryBuilder<TKey, TValue>(initialCapacity).AddRange(items);
 	}
 #endif
 

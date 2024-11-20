@@ -765,7 +765,7 @@ public sealed partial class ValueList<T>
 		}
 
 		/// <summary>
-		/// Sort all  elements in the list.
+		/// Sort all elements in the list.
 		/// </summary>
 		public Builder Sort()
 		{
