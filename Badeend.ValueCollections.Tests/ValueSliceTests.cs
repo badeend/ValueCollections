@@ -48,8 +48,8 @@ public class ValueSliceTests
 
         Assert.True(a.IsEmpty == true);
         Assert.True(a.Length == 0);
-        Assert.True(a.Span.Length == 0);
-        Assert.True(a.Memory.Length == 0);
+        Assert.True(a.AsSpan().Length == 0);
+        Assert.True(a.AsMemory().Length == 0);
         Assert.True(a.Slice(0).Length == 0);
         Assert.True(a.Slice(0, 0).Length == 0);
     }
@@ -212,7 +212,7 @@ public class ValueSliceTests
         ValueSlice<int> a = [1, 2, 3];
 
         ReadOnlySpan<int> implicitSpan = a;
-        ReadOnlySpan<int> explicitSpan = a.Span;
+        ReadOnlySpan<int> explicitSpan = a.AsSpan();
 
         Assert.True(implicitSpan == explicitSpan);
         Assert.Equal(3, explicitSpan.Length);
@@ -227,7 +227,7 @@ public class ValueSliceTests
         ValueSlice<int> a = [1, 2, 3];
 
         ReadOnlyMemory<int> implicitMemory = a;
-        ReadOnlyMemory<int> explicitMemory = a.Memory;
+        ReadOnlyMemory<int> explicitMemory = a.AsMemory();
 
         Assert.True(implicitMemory.Span == explicitMemory.Span);
         Assert.Equal(3, explicitMemory.Span.Length);

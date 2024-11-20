@@ -113,21 +113,15 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// Access the slice's contents using a <see cref="ReadOnlySpan{T}"/>.
 	/// </summary>
 	[Pure]
-	public ReadOnlySpan<T> Span
-	{
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		get => this.items.AsSpan(this.offset, this.length);
-	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public ReadOnlySpan<T> AsSpan() => this.items.AsSpan(this.offset, this.length);
 
 	/// <summary>
 	/// Access the slice's contents using a <see cref="ReadOnlyMemory{T}"/>.
 	/// </summary>
 	[Pure]
-	public ReadOnlyMemory<T> Memory
-	{
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		get => this.items.AsMemory(this.offset, this.length);
-	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public ReadOnlyMemory<T> AsMemory() => this.items.AsMemory(this.offset, this.length);
 
 	/// <summary>
 	/// Get an item from the slice at the specified <paramref name="index"/>.
@@ -227,7 +221,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 			return ValueList<T>.CreateImmutableFromArrayUnsafe(this.items!, this.length);
 		}
 
-		return ValueList<T>.CreateImmutableFromSpan(this.Span);
+		return ValueList<T>.CreateImmutableFromSpan(this.AsSpan());
 	}
 
 	/// <summary>
@@ -236,7 +230,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// Similar to <see cref="ReadOnlySpan{T}.ToArray"/>.
 	/// </summary>
 	[Pure]
-	public T[] ToArray() => this.Span.ToArray();
+	public T[] ToArray() => this.AsSpan().ToArray();
 
 	/// <summary>
 	/// Copy the contents of the slice into an existing <see cref="Span{T}"/>.
@@ -246,7 +240,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// <exception cref="ArgumentException">
 	///   <paramref name="destination"/> is shorter than the source slice.
 	/// </exception>
-	public void CopyTo(Span<T> destination) => this.Span.CopyTo(destination);
+	public void CopyTo(Span<T> destination) => this.AsSpan().CopyTo(destination);
 
 	/// <summary>
 	/// Attempt to copy the contents of the slice into an existing
@@ -255,7 +249,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	///
 	/// Similar to <see cref="ReadOnlySpan{T}.TryCopyTo"/>.
 	/// </summary>
-	public bool TryCopyTo(Span<T> destination) => this.Span.TryCopyTo(destination);
+	public bool TryCopyTo(Span<T> destination) => this.AsSpan().TryCopyTo(destination);
 
 	/// <summary>
 	/// Return the index of the first occurrence of <paramref name="item"/> in
@@ -413,14 +407,14 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static implicit operator ReadOnlySpan<T>(ValueSlice<T> slice) => slice.Span;
+	public static implicit operator ReadOnlySpan<T>(ValueSlice<T> slice) => slice.AsSpan();
 
 	/// <summary>
 	/// Access the slice as a <see cref="ReadOnlyMemory{T}"/>.
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static implicit operator ReadOnlyMemory<T>(ValueSlice<T> slice) => slice.Memory;
+	public static implicit operator ReadOnlyMemory<T>(ValueSlice<T> slice) => slice.AsMemory();
 #pragma warning restore CA2225 // Operator overloads have named alternates
 
 	private static readonly Collection EmptyCollection = new([]);
@@ -529,8 +523,8 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 
 	private static bool SequenceEqual(ValueSlice<T> left, ValueSlice<T> right)
 	{
-		var leftSpan = left.Span;
-		var rightSpan = right.Span;
+		var leftSpan = left.AsSpan();
+		var rightSpan = right.AsSpan();
 
 #if NET6_0_OR_GREATER
 		return System.MemoryExtensions.SequenceEqual(leftSpan, rightSpan);

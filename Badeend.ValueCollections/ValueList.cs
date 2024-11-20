@@ -282,14 +282,14 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public ReadOnlySpan<T> AsSpan() => this.AsValueSlice().Span;
+	public ReadOnlySpan<T> AsSpan() => this.AsValueSlice().AsSpan();
 
 	/// <summary>
 	/// Access the list's contents using a <see cref="ReadOnlyMemory{T}"/>.
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public ReadOnlyMemory<T> AsMemory() => this.AsValueSlice().Memory;
+	public ReadOnlyMemory<T> AsMemory() => this.AsValueSlice().AsMemory();
 
 	/// <summary>
 	/// Create a subslice, starting at <paramref name="offset"/>.
