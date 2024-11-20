@@ -138,7 +138,6 @@ namespace Badeend.ValueCollections.Tests.Reference
 
         protected override void AddToCollection(ICollection<KeyValuePair<TKey, TValue>> collection, int numberOfItemsToAdd)
         {
-            Assert.False(IsReadOnly);
             int seed = 12353;
             IDictionary<TKey, TValue> casted = (IDictionary<TKey, TValue>)collection;
             int initialCount = casted.Count;
@@ -166,6 +165,11 @@ namespace Badeend.ValueCollections.Tests.Reference
         /// </summary>
         protected override IEnumerable<ModifyEnumerable> GetModifyEnumerables(ModifyOperation operations)
         {
+            if (IsReadOnly)
+            {
+                yield break;
+            }
+
             if ((operations & ModifyOperation.Add) == ModifyOperation.Add)
             {
                 yield return (IEnumerable<KeyValuePair<TKey, TValue>> enumerable) =>
