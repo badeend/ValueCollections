@@ -436,6 +436,30 @@ public sealed partial class ValueSet<T>
 			_ => throw UnreachableException(),
 		};
 
+		/// <summary>
+		/// Copy the contents of the set into an existing <see cref="Span{T}"/>.
+		/// </summary>
+		/// <exception cref="ArgumentException">
+		///   <paramref name="destination"/> is shorter than the source slice.
+		/// </exception>
+		/// <remarks>
+		/// The order in which the elements are copied is undefined.
+		/// </remarks>
+		public void CopyTo(Span<T> destination)
+		{
+			if (destination.Length < this.Count)
+			{
+				throw new ArgumentException("Destination too short", nameof(destination));
+			}
+
+			var index = 0;
+			foreach (var item in this)
+			{
+				destination[index] = item;
+				index++;
+			}
+		}
+
 		/// <inheritdoc/>
 		void ICollection<T>.CopyTo(T[] array, int arrayIndex)
 		{
@@ -444,22 +468,7 @@ public sealed partial class ValueSet<T>
 				throw new ArgumentNullException(nameof(array));
 			}
 
-			if (arrayIndex < 0 || arrayIndex > array.Length)
-			{
-				throw new ArgumentOutOfRangeException(nameof(arrayIndex));
-			}
-
-			if (array.Length - arrayIndex < this.Count)
-			{
-				throw new ArgumentException("Destination too short", nameof(arrayIndex));
-			}
-
-			var index = arrayIndex;
-			foreach (var item in this)
-			{
-				array[index] = item;
-				index++;
-			}
+			this.CopyTo(array.AsSpan(arrayIndex));
 		}
 
 		/// <inheritdoc/>
