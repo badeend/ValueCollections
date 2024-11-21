@@ -267,18 +267,18 @@ public sealed partial class ValueDictionaryBuilder<TKey, TValue> : IDictionary<T
 	/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
 	/// </remarks>
 	/// <exception cref="ArgumentOutOfRangeException">
-	///   <paramref name="capacity"/> is less than 0.
+	///   <paramref name="minimumCapacity"/> is less than 0.
 	/// </exception>
 	[Pure]
-	public ValueDictionaryBuilder(int capacity)
+	public ValueDictionaryBuilder(int minimumCapacity)
 	{
-		if (capacity == 0)
+		if (minimumCapacity == 0)
 		{
 			this.items = ValueDictionary<TKey, TValue>.Empty;
 		}
 		else
 		{
-			this.items = new Dictionary<TKey, TValue>(capacity);
+			this.items = new Dictionary<TKey, TValue>(minimumCapacity);
 		}
 	}
 
@@ -316,28 +316,28 @@ public sealed partial class ValueDictionaryBuilder<TKey, TValue> : IDictionary<T
 	/// <remarks>
 	/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
 	/// </remarks>
-	public ValueDictionaryBuilder<TKey, TValue> EnsureCapacity(int capacity)
+	public ValueDictionaryBuilder<TKey, TValue> EnsureCapacity(int minimumCapacity)
 	{
-		this.Mutate().EnsureCapacity(capacity);
+		this.Mutate().EnsureCapacity(minimumCapacity);
 		return this;
 	}
 
 	/// <summary>
 	/// Reduce the capacity of the dictionary to roughly the specified value. If the
 	/// current capacity is already smaller than the requested capacity, this
-	/// method does nothing. The specified <paramref name="capacity"/> is only
+	/// method does nothing. The specified <paramref name="targetCapacity"/> is only
 	/// a hint. After this method returns, the <see cref="Capacity"/> may be
 	/// rounded up to a nearby, implementation-specific value.
 	/// </summary>
 	/// <exception cref="ArgumentOutOfRangeException">
-	/// <paramref name="capacity"/> is less than <see cref="Count"/>.
+	/// <paramref name="targetCapacity"/> is less than <see cref="Count"/>.
 	/// </exception>
 	/// <remarks>
 	/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
 	/// </remarks>
-	public ValueDictionaryBuilder<TKey, TValue> TrimExcess(int capacity)
+	public ValueDictionaryBuilder<TKey, TValue> TrimExcess(int targetCapacity)
 	{
-		this.Mutate().TrimExcess(capacity);
+		this.Mutate().TrimExcess(targetCapacity);
 		return this;
 	}
 #endif

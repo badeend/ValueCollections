@@ -31,12 +31,12 @@ public static class ValueList
 
 	/// <summary>
 	/// Create a new empty <see cref="ValueList{T}.Builder"/> with the specified
-	/// initial <paramref name="capacity"/>. This builder can then be used to
+	/// initial <paramref name="minimumCapacity"/>. This builder can then be used to
 	/// efficiently construct an immutable <see cref="ValueList{T}"/>.
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueList<T>.Builder CreateBuilder<T>(int capacity) => ValueList<T>.Builder.CreateWithCapacity(capacity);
+	public static ValueList<T>.Builder CreateBuilder<T>(int minimumCapacity) => ValueList<T>.Builder.CreateWithCapacity(minimumCapacity);
 
 	/// <summary>
 	/// Create a new <see cref="ValueList{T}.Builder"/> with the provided
@@ -249,17 +249,17 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 		return new(Array.Empty<T>(), 0, BuilderState.InitialMutable);
 	}
 
-	internal static ValueList<T> CreateMutableWithCapacity(int capacity)
+	internal static ValueList<T> CreateMutableWithCapacity(int minimumCapacity)
 	{
-		if (capacity < 0)
+		if (minimumCapacity < 0)
 		{
-			ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.capacity);
+			ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.minimumCapacity);
 		}
 
-		var items = capacity switch
+		var items = minimumCapacity switch
 		{
 			0 => Array.Empty<T>(),
-			_ => new T[capacity],
+			_ => new T[minimumCapacity],
 		};
 
 		return new(items, 0, BuilderState.InitialMutable);
@@ -381,7 +381,7 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	{
 		if (minimumCapacity < 0)
 		{
-			ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.capacity);
+			ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.minimumCapacity);
 		}
 
 		var capacity = Math.Max(minimumCapacity, this.Count);

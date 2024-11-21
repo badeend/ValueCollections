@@ -192,18 +192,18 @@ public sealed partial class ValueSet<T>
 		/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
 		/// </remarks>
 		/// <exception cref="ArgumentOutOfRangeException">
-		///   <paramref name="capacity"/> is less than 0.
+		///   <paramref name="minimumCapacity"/> is less than 0.
 		/// </exception>
 		[Pure]
-		public Builder(int capacity)
+		public Builder(int minimumCapacity)
 		{
-			if (capacity == 0)
+			if (minimumCapacity == 0)
 			{
 				this.items = ValueSet<T>.Empty;
 			}
 			else
 			{
-				this.items = new HashSet<T>(capacity);
+				this.items = new HashSet<T>(minimumCapacity);
 			}
 		}
 
@@ -241,30 +241,30 @@ public sealed partial class ValueSet<T>
 		/// <remarks>
 		/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
 		/// </remarks>
-		public Builder EnsureCapacity(int capacity)
+		public Builder EnsureCapacity(int minimumCapacity)
 		{
 			// FYI, earlier .NET Core versions also had EnsureCapacity, but those
 			// implementations were buggy and result in an `IndexOutOfRangeException`
 			// inside their internal `SetCapacity` method.
 			// From .NET 5 onwards it seems to work fine.
 #if NET5_0_OR_GREATER
-			this.Mutate().EnsureCapacity(capacity);
+			this.Mutate().EnsureCapacity(minimumCapacity);
 #else
 			var hashSet = this.Mutate();
 
-			if (capacity < 0)
+			if (minimumCapacity < 0)
 			{
-				throw new ArgumentOutOfRangeException(nameof(capacity));
+				throw new ArgumentOutOfRangeException("capacity"); // TODO: use parameter name
 			}
 
 			var currentCapacity = hashSet.EnsureCapacity(0);
-			if (currentCapacity >= capacity)
+			if (currentCapacity >= minimumCapacity)
 			{
 				// Nothing to do.
 				return this;
 			}
 
-			this.items = CopyWithCapacity(hashSet, capacity);
+			this.items = CopyWithCapacity(hashSet, minimumCapacity);
 			this.version++;
 #endif
 			return this;
@@ -273,36 +273,36 @@ public sealed partial class ValueSet<T>
 		/// <summary>
 		/// Reduce the capacity of the set to roughly the specified value. If the
 		/// current capacity is already smaller than the requested capacity, this
-		/// method does nothing. The specified <paramref name="capacity"/> is only
+		/// method does nothing. The specified <paramref name="targetCapacity"/> is only
 		/// a hint. After this method returns, the <see cref="Capacity"/> may be
 		/// rounded up to a nearby, implementation-specific value.
 		/// </summary>
 		/// <exception cref="ArgumentOutOfRangeException">
-		/// <paramref name="capacity"/> is less than <see cref="Count"/>.
+		/// <paramref name="targetCapacity"/> is less than <see cref="Count"/>.
 		/// </exception>
 		/// <remarks>
 		/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
 		/// </remarks>
-		public Builder TrimExcess(int capacity)
+		public Builder TrimExcess(int targetCapacity)
 		{
 #if NET9_0_OR_GREATER
-			this.Mutate().TrimExcess(capacity);
+			this.Mutate().TrimExcess(targetCapacity);
 #else
 			var hashSet = this.Mutate();
 
-			if (capacity < hashSet.Count)
+			if (targetCapacity < hashSet.Count)
 			{
-				throw new ArgumentOutOfRangeException(nameof(capacity));
+				throw new ArgumentOutOfRangeException(nameof(targetCapacity));
 			}
 
 			var currentCapacity = hashSet.EnsureCapacity(0);
-			if (capacity >= currentCapacity)
+			if (targetCapacity >= currentCapacity)
 			{
 				// Nothing to do.
 				return this;
 			}
 
-			this.items = CopyWithCapacity(hashSet, capacity);
+			this.items = CopyWithCapacity(hashSet, targetCapacity);
 			this.version++;
 #endif
 			return this;

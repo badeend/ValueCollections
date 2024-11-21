@@ -23,7 +23,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void EnsureCapacity_NegativeCapacityRequested_Throws()
         {
             var list = ValueList.CreateBuilder<T>();
-            AssertExtensions.Throws<ArgumentOutOfRangeException>("capacity", () => list.EnsureCapacity(-1));
+            AssertExtensions.Throws<ArgumentOutOfRangeException>("minimumCapacity", () => list.EnsureCapacity(-1));
         }
 
         public static IEnumerable<object[]> EnsureCapacity_LargeCapacity_Throws_MemberData()

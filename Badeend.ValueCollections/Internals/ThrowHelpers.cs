@@ -7,7 +7,7 @@ internal static class ThrowHelpers
 	[SuppressMessage("StyleCop.CSharp.NamingRules", "SA1300:Element should begin with upper-case letter", Justification = "Can't. Uses reflection for exact name.")]
 	internal enum Argument
 	{
-		capacity,
+		minimumCapacity,
 		value,
 		index,
 		offset,

@@ -221,9 +221,9 @@ public sealed partial class ValueList<T>
 			return new(ValueList<T>.CreateMutable());
 		}
 
-		internal static Builder CreateWithCapacity(int capacity)
+		internal static Builder CreateWithCapacity(int minimumCapacity)
 		{
-			return new(ValueList<T>.CreateMutableWithCapacity(capacity));
+			return new(ValueList<T>.CreateMutableWithCapacity(minimumCapacity));
 		}
 
 		internal static Builder CreateFromEnumerable(IEnumerable<T> items)
@@ -843,18 +843,18 @@ public sealed partial class ValueList<T>
 		/// If the current capacity is less than capacity, it is increased to at
 		/// least the specified capacity.
 		/// </summary>
-		public Builder EnsureCapacity(int capacity)
+		public Builder EnsureCapacity(int minimumCapacity)
 		{
 			var list = this.Mutate();
 
-			if (capacity < 0)
+			if (minimumCapacity < 0)
 			{
-				ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.capacity);
+				ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.minimumCapacity);
 			}
 
-			if (list.items.Length < capacity)
+			if (list.items.Length < minimumCapacity)
 			{
-				Grow(list, capacity);
+				Grow(list, minimumCapacity);
 			}
 
 			return this;
@@ -900,7 +900,7 @@ public sealed partial class ValueList<T>
 		{
 			if (capacity < list.size)
 			{
-				ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.capacity);
+				ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.minimumCapacity);
 			}
 
 			if (capacity != list.items.Length)
