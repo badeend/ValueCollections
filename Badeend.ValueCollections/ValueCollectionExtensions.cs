@@ -102,7 +102,7 @@ public static class ValueCollectionExtensions
 			return set;
 		}
 
-		if (items is ValueSetBuilder<T> builder)
+		if (items is ValueSet<T>.Builder builder)
 		{
 			return builder.ToValueSet();
 		}
@@ -111,34 +111,34 @@ public static class ValueCollectionExtensions
 	}
 
 	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueSetBuilder{T}"/>.
+	/// Copy the <paramref name="items"/> into a new <see cref="ValueSet{T}.Builder"/>.
 	/// </summary>
 	[Pure]
 	[Obsolete("Use .ToBuilder() instead.")]
 	[Browsable(false)]
 	[EditorBrowsable(EditorBrowsableState.Never)]
-	public static ValueSetBuilder<T> ToValueSetBuilder<T>(this ValueSet<T> items) => items.ToBuilder();
+	public static ValueSet<T>.Builder ToValueSetBuilder<T>(this ValueSet<T> items) => items.ToBuilder();
 
 	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueSetBuilder{T}"/>.
+	/// Copy the <paramref name="items"/> into a new <see cref="ValueSet{T}.Builder"/>.
 	/// </summary>
 	/// <remarks>
 	/// The capacity of the returned builder may be larger than the size of the
 	/// input collection. How much larger exactly is undefined.
 	/// </remarks>
-	public static ValueSetBuilder<T> ToValueSetBuilder<T>(this IEnumerable<T> items)
+	public static ValueSet<T>.Builder ToValueSetBuilder<T>(this IEnumerable<T> items)
 	{
 		if (items is ValueSet<T> set)
 		{
 			return set.ToBuilder();
 		}
 
-		return ValueSetBuilder<T>.FromHashSetUnsafe(new HashSet<T>(items));
+		return ValueSet<T>.Builder.FromHashSetUnsafe(new HashSet<T>(items));
 	}
 
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
 	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueSetBuilder{T}"/>
+	/// Copy the <paramref name="items"/> into a new <see cref="ValueSet{T}.Builder"/>
 	/// with a minimum capacity of <paramref name="minimumCapacity"/>.
 	/// </summary>
 	/// <exception cref="ArgumentOutOfRangeException">
@@ -153,7 +153,7 @@ public static class ValueCollectionExtensions
 	///
 	/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
 	/// </remarks>
-	public static ValueSetBuilder<T> ToValueSetBuilder<T>(this IEnumerable<T> items, int minimumCapacity)
+	public static ValueSet<T>.Builder ToValueSetBuilder<T>(this IEnumerable<T> items, int minimumCapacity)
 	{
 		if (minimumCapacity < 0)
 		{
@@ -166,7 +166,7 @@ public static class ValueCollectionExtensions
 			_ => minimumCapacity,
 		};
 
-		return new ValueSetBuilder<T>(initialCapacity).UnionWith(items);
+		return new ValueSet<T>.Builder(initialCapacity).UnionWith(items);
 	}
 #endif
 
@@ -177,7 +177,7 @@ public static class ValueCollectionExtensions
 	/// This overload is an extension method to avoid call site ambiguity.
 	/// </remarks>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueSetBuilder<T> UnionWith<T>(this ValueSetBuilder<T> builder, ReadOnlySpan<T> items)
+	public static ValueSet<T>.Builder UnionWith<T>(this ValueSet<T>.Builder builder, ReadOnlySpan<T> items)
 	{
 		if (builder is null)
 		{
@@ -194,7 +194,7 @@ public static class ValueCollectionExtensions
 	/// This overload is an extension method to avoid call site ambiguity.
 	/// </remarks>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueSetBuilder<T> ExceptWith<T>(this ValueSetBuilder<T> builder, ReadOnlySpan<T> items)
+	public static ValueSet<T>.Builder ExceptWith<T>(this ValueSet<T>.Builder builder, ReadOnlySpan<T> items)
 	{
 		if (builder is null)
 		{

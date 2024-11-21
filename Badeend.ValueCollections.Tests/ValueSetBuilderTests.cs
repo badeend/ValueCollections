@@ -5,13 +5,13 @@ public class ValueSetBuilderTests
     [Fact]
     public void CollectionExpression()
     {
-        ValueSetBuilder<int> _ = [1, 2, 3];
+        ValueSet<int>.Builder _ = [1, 2, 3];
     }
 
     [Fact]
     public void CollectionInitializer()
     {
-        _ = new ValueSetBuilder<int>
+        _ = new ValueSet<int>.Builder
         {
             1,
             2,
@@ -32,8 +32,8 @@ public class ValueSetBuilderTests
     [Fact]
     public void ReferenceSemantics()
     {
-        ValueSetBuilder<int> a = [1, 2, 3];
-        ValueSetBuilder<int> b = [1, 2, 3];
+        ValueSet<int>.Builder a = [1, 2, 3];
+        ValueSet<int>.Builder b = [1, 2, 3];
 
         Assert.True(a != b);
     }
@@ -41,7 +41,7 @@ public class ValueSetBuilderTests
     [Fact]
     public void ToValueSetPerformsCopy()
     {
-        ValueSetBuilder<int> builder = [1, 2, 3];
+        ValueSet<int>.Builder builder = [1, 2, 3];
 
         var list = builder.ToValueSet();
 
@@ -53,7 +53,7 @@ public class ValueSetBuilderTests
     [Fact]
     public void ValueSetIsCached()
     {
-        ValueSetBuilder<int> builder = [1, 2, 3];
+        ValueSet<int>.Builder builder = [1, 2, 3];
 
         var list1 = builder.ToValueSet();
         var list2 = builder.Build();
@@ -90,7 +90,7 @@ public class ValueSetBuilderTests
     [Fact]
     public void BuildIsFinal()
     {
-        var builder = new ValueSetBuilder<int>();
+        var builder = new ValueSet<int>.Builder();
 
         Assert.False(builder.IsReadOnly);
         builder.Add(1);
@@ -126,9 +126,9 @@ public class ValueSetBuilderTests
     [Fact]
     public void SerializeToString()
     {
-        ValueSetBuilder<int> a = [];
-        ValueSetBuilder<int> b = [42];
-        ValueSetBuilder<string?> c = ["A", null, "B"];
+        ValueSet<int>.Builder a = [];
+        ValueSet<int>.Builder b = [42];
+        ValueSet<string?>.Builder c = ["A", null, "B"];
 
         Assert.Equal("[]", a.ToString());
         Assert.Equal("[42]", b.ToString());
@@ -178,7 +178,7 @@ public class ValueSetBuilderTests
             return a;
         });
 
-        static void AssertEnumerationOrder(int[] input, Func<ValueSetBuilder<int>, int[]> transform)
+        static void AssertEnumerationOrder(int[] input, Func<ValueSet<int>.Builder, int[]> transform)
         {
             var referenceSet = input.ToValueSetBuilder();
             var referenceOrder = referenceSet.ToArray();

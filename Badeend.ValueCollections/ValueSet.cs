@@ -21,20 +21,20 @@ public static class ValueSet
 	public static ValueSet<T> Create<T>(ReadOnlySpan<T> items) => ValueSet<T>.FromReadOnlySpan(items);
 
 	/// <summary>
-	/// Create a new empty <see cref="ValueSetBuilder{T}"/>. This builder can
+	/// Create a new empty <see cref="ValueSet{T}.Builder"/>. This builder can
 	/// then be used to efficiently construct an immutable <see cref="ValueSet{T}"/>.
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueSetBuilder<T> CreateBuilder<T>() => new();
+	public static ValueSet<T>.Builder CreateBuilder<T>() => new();
 
 	/// <summary>
-	/// Create a new <see cref="ValueSetBuilder{T}"/> with the provided
+	/// Create a new <see cref="ValueSet{T}.Builder"/> with the provided
 	/// <paramref name="items"/> as its initial content.
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueSetBuilder<T> CreateBuilder<T>(ReadOnlySpan<T> items) => ValueSetBuilder<T>.FromReadOnlySpan(items);
+	public static ValueSet<T>.Builder CreateBuilder<T>(ReadOnlySpan<T> items) => ValueSet<T>.Builder.FromReadOnlySpan(items);
 }
 
 /// <summary>
@@ -46,7 +46,7 @@ public static class ValueSet
 ///
 /// Constructing new instances can be done using
 /// <see cref="ValueSet.CreateBuilder{T}()"/> or <see cref="ValueSet{T}.ToBuilder()"/>.
-/// For creating ValueSets, <see cref="ValueSetBuilder{T}"/> is generally more
+/// For creating ValueSets, <see cref="ValueSet{T}.Builder"/> is generally more
 /// efficient than <see cref="HashSet{T}"/>.
 ///
 /// ValueSets have "structural equality". This means that two sets
@@ -58,9 +58,9 @@ public static class ValueSet
 /// <typeparam name="T">The type of items in the set.</typeparam>
 [CollectionBuilder(typeof(ValueSet), nameof(ValueSet.Create))]
 #if NET5_0_OR_GREATER
-public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<ValueSet<T>>, IReadOnlySet<T>
+public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<ValueSet<T>>, IReadOnlySet<T>
 #else
-public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<ValueSet<T>>
+public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<ValueSet<T>>
 #endif
 {
 	private const int UninitializedHashCode = 0;
@@ -165,7 +165,7 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 	}
 
 	/// <summary>
-	/// Create a new <see cref="ValueSetBuilder{T}"/> with this set as its
+	/// Create a new <see cref="ValueSet{T}.Builder"/> with this set as its
 	/// initial content. This builder can then be used to efficiently construct
 	/// a new immutable <see cref="ValueSet{T}"/>.
 	/// </summary>
@@ -174,11 +174,11 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 	/// set. How much larger exactly is undefined.
 	/// </remarks>
 	[Pure]
-	public ValueSetBuilder<T> ToBuilder() => ValueSetBuilder<T>.FromValueSet(this);
+	public ValueSet<T>.Builder ToBuilder() => ValueSet<T>.Builder.FromValueSet(this);
 
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
 	/// <summary>
-	/// Create a new <see cref="ValueSetBuilder{T}"/> with a capacity of at
+	/// Create a new <see cref="ValueSet{T}.Builder"/> with a capacity of at
 	/// least <paramref name="minimumCapacity"/> and with this set as its
 	/// initial content. This builder can then be used to efficiently construct
 	/// a new immutable <see cref="ValueSet{T}"/>.
@@ -196,7 +196,7 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 	/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
 	/// </remarks>
 	[Pure]
-	public ValueSetBuilder<T> ToBuilder(int minimumCapacity)
+	public ValueSet<T>.Builder ToBuilder(int minimumCapacity)
 	{
 		if (minimumCapacity < 0)
 		{
@@ -205,11 +205,11 @@ public sealed class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<Va
 
 		if (minimumCapacity <= this.Count)
 		{
-			return ValueSetBuilder<T>.FromValueSet(this);
+			return ValueSet<T>.Builder.FromValueSet(this);
 		}
 		else
 		{
-			return new ValueSetBuilder<T>(minimumCapacity).UnionWith(this);
+			return new ValueSet<T>.Builder(minimumCapacity).UnionWith(this);
 		}
 	}
 #endif
