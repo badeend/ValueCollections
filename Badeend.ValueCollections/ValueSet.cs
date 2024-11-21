@@ -165,7 +165,7 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	}
 
 	/// <summary>
-	/// Create a new <see cref="ValueSet{T}.Builder"/> with this set as its
+	/// Create a new <see cref="Builder"/> with this set as its
 	/// initial content. This builder can then be used to efficiently construct
 	/// a new immutable <see cref="ValueSet{T}"/>.
 	/// </summary>
@@ -174,11 +174,11 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	/// set. How much larger exactly is undefined.
 	/// </remarks>
 	[Pure]
-	public ValueSet<T>.Builder ToBuilder() => ValueSet<T>.Builder.FromValueSet(this);
+	public Builder ToBuilder() => Builder.FromValueSet(this);
 
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
 	/// <summary>
-	/// Create a new <see cref="ValueSet{T}.Builder"/> with a capacity of at
+	/// Create a new <see cref="Builder"/> with a capacity of at
 	/// least <paramref name="minimumCapacity"/> and with this set as its
 	/// initial content. This builder can then be used to efficiently construct
 	/// a new immutable <see cref="ValueSet{T}"/>.
@@ -196,7 +196,7 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
 	/// </remarks>
 	[Pure]
-	public ValueSet<T>.Builder ToBuilder(int minimumCapacity)
+	public Builder ToBuilder(int minimumCapacity)
 	{
 		if (minimumCapacity < 0)
 		{
@@ -205,11 +205,11 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 
 		if (minimumCapacity <= this.Count)
 		{
-			return ValueSet<T>.Builder.FromValueSet(this);
+			return Builder.FromValueSet(this);
 		}
 		else
 		{
-			return new ValueSet<T>.Builder(minimumCapacity).UnionWith(this);
+			return new Builder(minimumCapacity).UnionWith(this);
 		}
 	}
 #endif

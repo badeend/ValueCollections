@@ -241,7 +241,7 @@ public sealed partial class ValueSet<T>
 		/// <remarks>
 		/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
 		/// </remarks>
-		public ValueSet<T>.Builder EnsureCapacity(int capacity)
+		public Builder EnsureCapacity(int capacity)
 		{
 			// FYI, earlier .NET Core versions also had EnsureCapacity, but those
 			// implementations were buggy and result in an `IndexOutOfRangeException`
@@ -283,7 +283,7 @@ public sealed partial class ValueSet<T>
 		/// <remarks>
 		/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
 		/// </remarks>
-		public ValueSet<T>.Builder TrimExcess(int capacity)
+		public Builder TrimExcess(int capacity)
 		{
 #if NET9_0_OR_GREATER
 			this.Mutate().TrimExcess(capacity);
@@ -346,11 +346,11 @@ public sealed partial class ValueSet<T>
 			this.items = items;
 		}
 
-		internal static ValueSet<T>.Builder FromValueSet(ValueSet<T> items) => new(items);
+		internal static Builder FromValueSet(ValueSet<T> items) => new(items);
 
-		internal static ValueSet<T>.Builder FromHashSetUnsafe(HashSet<T> items) => new(items);
+		internal static Builder FromHashSetUnsafe(HashSet<T> items) => new(items);
 
-		internal static ValueSet<T>.Builder FromReadOnlySpan(ReadOnlySpan<T> items)
+		internal static Builder FromReadOnlySpan(ReadOnlySpan<T> items)
 		{
 			if (items.Length == 0)
 			{
@@ -378,7 +378,7 @@ public sealed partial class ValueSet<T>
 		/// Use <see cref="TryAdd"/> if you want to know whether the element was
 		/// actually added.
 		/// </remarks>
-		public ValueSet<T>.Builder Add(T item)
+		public Builder Add(T item)
 		{
 			this.TryAdd(item);
 			return this;
@@ -393,7 +393,7 @@ public sealed partial class ValueSet<T>
 		/// <summary>
 		/// Remove all elements from the set.
 		/// </summary>
-		public ValueSet<T>.Builder Clear()
+		public Builder Clear()
 		{
 			this.Mutate().Clear();
 			return this;
@@ -419,7 +419,7 @@ public sealed partial class ValueSet<T>
 		/// Use <see cref="TryRemove"/> if you want to know whether any element was
 		/// actually removed.
 		/// </remarks>
-		public ValueSet<T>.Builder Remove(T item)
+		public Builder Remove(T item)
 		{
 			this.TryRemove(item);
 			return this;
@@ -431,7 +431,7 @@ public sealed partial class ValueSet<T>
 		/// <summary>
 		/// Remove all elements that match the predicate.
 		/// </summary>
-		public ValueSet<T>.Builder RemoveWhere(Predicate<T> match)
+		public Builder RemoveWhere(Predicate<T> match)
 		{
 			this.Mutate().RemoveWhere(match);
 			return this;
@@ -452,7 +452,7 @@ public sealed partial class ValueSet<T>
 		/// Excessive use of this method most likely introduces more performance
 		/// problems than it solves.
 		/// </remarks>
-		public ValueSet<T>.Builder TrimExcess()
+		public Builder TrimExcess()
 		{
 			this.Mutate().TrimExcess();
 			return this;
@@ -521,7 +521,7 @@ public sealed partial class ValueSet<T>
 		/// <see cref="ValueCollectionExtensions.ExceptWith">More overloads</see> are
 		/// available as extension methods.
 		/// </remarks>
-		public ValueSet<T>.Builder ExceptWith(IEnumerable<T> other)
+		public Builder ExceptWith(IEnumerable<T> other)
 		{
 			var set = this.Mutate();
 
@@ -542,7 +542,7 @@ public sealed partial class ValueSet<T>
 		void ISet<T>.ExceptWith(IEnumerable<T> other) => this.ExceptWith(other);
 
 		// Accessible through an extension method.
-		internal ValueSet<T>.Builder ExceptWithSpan(ReadOnlySpan<T> items)
+		internal Builder ExceptWithSpan(ReadOnlySpan<T> items)
 		{
 			var set = this.Mutate();
 
@@ -558,7 +558,7 @@ public sealed partial class ValueSet<T>
 		/// Remove all elements that appear in both <see langword="this"/>
 		/// <em>and</em> the <paramref name="other"/> collection.
 		/// </summary>
-		public ValueSet<T>.Builder SymmetricExceptWith(IEnumerable<T> other)
+		public Builder SymmetricExceptWith(IEnumerable<T> other)
 		{
 			var set = this.Mutate();
 
@@ -583,7 +583,7 @@ public sealed partial class ValueSet<T>
 		/// both <see langword="this"/> <em>and</em> the <paramref name="other"/>
 		/// collection.
 		/// </summary>
-		public ValueSet<T>.Builder IntersectWith(IEnumerable<T> other)
+		public Builder IntersectWith(IEnumerable<T> other)
 		{
 			var set = this.Mutate();
 
@@ -606,7 +606,7 @@ public sealed partial class ValueSet<T>
 		/// <see cref="ValueCollectionExtensions.UnionWith">More overloads</see> are
 		/// available as extension methods.
 		/// </remarks>
-		public ValueSet<T>.Builder UnionWith(IEnumerable<T> other)
+		public Builder UnionWith(IEnumerable<T> other)
 		{
 			var set = this.Mutate();
 
@@ -623,7 +623,7 @@ public sealed partial class ValueSet<T>
 		void ISet<T>.UnionWith(IEnumerable<T> other) => this.UnionWith(other);
 
 		// Accessible through an extension method.
-		internal ValueSet<T>.Builder UnionWithSpan(ReadOnlySpan<T> items)
+		internal Builder UnionWithSpan(ReadOnlySpan<T> items)
 		{
 			var set = this.Mutate();
 
@@ -669,12 +669,12 @@ public sealed partial class ValueSet<T>
 		[StructLayout(LayoutKind.Auto)]
 		public struct Enumerator : IEnumeratorLike<T>
 		{
-			private readonly ValueSet<T>.Builder builder;
+			private readonly Builder builder;
 			private readonly int version;
 			private ShufflingHashSetEnumerator<T> enumerator;
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			internal Enumerator(ValueSet<T>.Builder builder)
+			internal Enumerator(Builder builder)
 			{
 				var innerHashSet = builder.items switch
 				{
