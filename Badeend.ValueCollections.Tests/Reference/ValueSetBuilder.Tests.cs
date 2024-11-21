@@ -173,7 +173,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(0, 20, 7)]
         [InlineData(10, 20, 10)]
         [InlineData(10, 20, 13)]
-        public void HashHet_Generic_TrimExcess_LargePopulatedValueSetBuilder_TrimReducesSize(int initialCount, int initialCapacity, int trimCapacity)
+        public void ValueSetBuilder_Generic_TrimExcess_LargePopulatedValueSetBuilder_TrimReducesSize(int initialCount, int initialCapacity, int trimCapacity)
         {
             ValueSet<T>.Builder set = CreateValueSetBuilderSetWithCapacity(initialCount, initialCapacity);
             ValueSet<T>.Builder clone = set.ToValueSetBuilder();
@@ -191,7 +191,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Theory]
         [InlineData(10, 20, 0)]
         [InlineData(10, 20, 7)]
-        public void HashHet_Generic_TrimExcess_LargePopulatedValueSetBuilder_TrimCapacityIsLessThanCount_ThrowsArgumentOutOfRangeException(int initialCount, int initialCapacity, int trimCapacity)
+        public void ValueSetBuilder_Generic_TrimExcess_LargePopulatedValueSetBuilder_TrimCapacityIsLessThanCount_ThrowsArgumentOutOfRangeException(int initialCount, int initialCapacity, int trimCapacity)
         {
             ValueSet<T>.Builder set = CreateValueSetBuilderSetWithCapacity(initialCount, initialCapacity);
 
