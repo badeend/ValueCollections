@@ -241,6 +241,9 @@ public sealed partial class ValueSet<T>
 		/// <remarks>
 		/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
 		/// </remarks>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="minimumCapacity"/> is less than 0.
+		/// </exception>
 		public Builder EnsureCapacity(int minimumCapacity)
 		{
 			// FYI, earlier .NET Core versions also had EnsureCapacity, but those

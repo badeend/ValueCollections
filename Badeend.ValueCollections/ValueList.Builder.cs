@@ -843,6 +843,9 @@ public sealed partial class ValueList<T>
 		/// If the current capacity is less than capacity, it is increased to at
 		/// least the specified capacity.
 		/// </summary>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="minimumCapacity"/> is less than 0.
+		/// </exception>
 		public Builder EnsureCapacity(int minimumCapacity)
 		{
 			var list = this.Mutate();

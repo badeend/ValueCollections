@@ -316,6 +316,9 @@ public sealed partial class ValueDictionaryBuilder<TKey, TValue> : IDictionary<T
 	/// <remarks>
 	/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
 	/// </remarks>
+	/// <exception cref="ArgumentOutOfRangeException">
+	/// <paramref name="minimumCapacity"/> is less than 0.
+	/// </exception>
 	public ValueDictionaryBuilder<TKey, TValue> EnsureCapacity(int minimumCapacity)
 	{
 		this.Mutate().EnsureCapacity(minimumCapacity);

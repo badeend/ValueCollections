@@ -34,6 +34,9 @@ public static class ValueList
 	/// initial <paramref name="minimumCapacity"/>. This builder can then be used to
 	/// efficiently construct an immutable <see cref="ValueList{T}"/>.
 	/// </summary>
+	/// <exception cref="ArgumentOutOfRangeException">
+	/// <paramref name="minimumCapacity"/> is less than 0.
+	/// </exception>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueList<T>.Builder CreateBuilder<T>(int minimumCapacity) => ValueList<T>.Builder.CreateWithCapacity(minimumCapacity);
