@@ -18,7 +18,7 @@ public static class ValueSet
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueSet<T> Create<T>(ReadOnlySpan<T> items) => ValueSet<T>.FromReadOnlySpan(items);
+	public static ValueSet<T> Create<T>(ReadOnlySpan<T> items) => ValueSet<T>.CreateImmutableFromSpan(items);
 
 	/// <summary>
 	/// Create a new empty <see cref="ValueSet{T}.Builder"/>. This builder can
@@ -26,7 +26,7 @@ public static class ValueSet
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueSet<T>.Builder CreateBuilder<T>() => ValueSet<T>.Builder.FromValueSet(ValueSet<T>.Empty);
+	public static ValueSet<T>.Builder CreateBuilder<T>() => ValueSet<T>.Builder.Create();
 
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
 	/// <summary>
@@ -48,7 +48,7 @@ public static class ValueSet
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueSet<T>.Builder CreateBuilder<T>(ReadOnlySpan<T> items) => ValueSet<T>.Builder.FromReadOnlySpan(items);
+	public static ValueSet<T>.Builder CreateBuilder<T>(ReadOnlySpan<T> items) => ValueSet<T>.Builder.CreateFromSpan(items);
 }
 
 /// <summary>
@@ -77,28 +77,30 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<ValueSet<T>>
 #endif
 {
-	private const int UninitializedHashCode = 0;
-
 	/// <summary>
 	/// Get an empty set.
 	///
 	/// This does not allocate any memory.
 	/// </summary>
 	[Pure]
-	public static ValueSet<T> Empty { get; } = new ValueSet<T>(new HashSet<T>());
+	public static ValueSet<T> Empty { get; } = new(new HashSet<T>(), BuilderState.InitialImmutable);
 
-	private readonly HashSet<T> items;
+	private HashSet<T> items;
 
-	/// <summary>
-	/// Warning! This class promises to be thread-safe, yet this is a mutable field.
-	/// </summary>
-	private int hashCode = UninitializedHashCode;
+	// See the BuilderState utility class for more info.
+	private int state;
 
-	internal HashSet<T> Items
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
+	internal int Capacity
 	{
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		get => this.items;
+		[Pure]
+#if NET9_0_OR_GREATER
+		get => this.items.Capacity;
+#else
+		get => this.items.EnsureCapacity(0);
+#endif
 	}
+#endif
 
 	/// <summary>
 	/// Number of items in the set.
@@ -123,22 +125,63 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	/// <inheritdoc/>
 	bool ICollection<T>.IsReadOnly => true;
 
-	private ValueSet(HashSet<T> items)
+	private ValueSet(HashSet<T> items, int state)
 	{
 		this.items = items;
+		this.state = state;
 	}
 
-	internal static ValueSet<T> FromReadOnlySpan(ReadOnlySpan<T> items)
+	internal static ValueSet<T> CreateImmutableFromEnumerable(IEnumerable<T> items)
+	{
+		if (items is ICollection collection)
+		{
+			if (collection.Count == 0)
+			{
+				return Empty;
+			}
+
+			if (collection is ValueSet<T> set)
+			{
+				return set;
+			}
+		}
+
+		return new(new HashSet<T>(items), BuilderState.InitialImmutable);
+	}
+
+	internal static ValueSet<T> CreateImmutableFromSpan(ReadOnlySpan<T> items)
 	{
 		if (items.Length == 0)
 		{
 			return Empty;
 		}
 
-		return new(SpanToHashSet(items));
+		return new(SpanToHashSet(items), BuilderState.InitialImmutable);
 	}
 
-	internal static HashSet<T> SpanToHashSet(ReadOnlySpan<T> items)
+	private static ValueSet<T> CreateMutable()
+	{
+		return new(new HashSet<T>(), BuilderState.InitialMutable);
+	}
+
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
+	private static ValueSet<T> CreateMutableWithCapacity(int minimumCapacity)
+	{
+		return new(new HashSet<T>(minimumCapacity), BuilderState.InitialMutable);
+	}
+#endif
+
+	private static ValueSet<T> CreateMutableFromEnumerable(IEnumerable<T> items)
+	{
+		return new(new HashSet<T>(items), BuilderState.InitialMutable);
+	}
+
+	private static ValueSet<T> CreateMutableFromSpan(ReadOnlySpan<T> items)
+	{
+		return new(SpanToHashSet(items), BuilderState.InitialMutable);
+	}
+
+	private static HashSet<T> SpanToHashSet(ReadOnlySpan<T> items)
 	{
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
 		var set = new HashSet<T>(items.Length);
@@ -168,16 +211,6 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 #endif
 	}
 
-	internal static ValueSet<T> FromHashSetUnsafe(HashSet<T> items)
-	{
-		if (items.Count == 0)
-		{
-			return Empty;
-		}
-
-		return new(items);
-	}
-
 	/// <summary>
 	/// Create a new <see cref="Builder"/> with this set as its
 	/// initial content. This builder can then be used to efficiently construct
@@ -188,7 +221,7 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	/// set. How much larger exactly is undefined.
 	/// </remarks>
 	[Pure]
-	public Builder ToBuilder() => Builder.FromValueSet(this);
+	public Builder ToBuilder() => Builder.CreateFromEnumerable(this.items);
 
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
 	/// <summary>
@@ -217,14 +250,9 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 			throw new ArgumentOutOfRangeException(nameof(minimumCapacity));
 		}
 
-		if (minimumCapacity <= this.Count)
-		{
-			return Builder.FromValueSet(this);
-		}
-		else
-		{
-			return ValueSet.CreateBuilder<T>(minimumCapacity).UnionWith(this);
-		}
+		var capacity = Math.Max(minimumCapacity, this.Count);
+
+		return ValueSet.CreateBuilder<T>(capacity).UnionWith(this.items);
 	}
 #endif
 
@@ -340,15 +368,12 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	[Pure]
 	public sealed override int GetHashCode()
 	{
-		var hashCode = Volatile.Read(ref this.hashCode);
-		if (hashCode != UninitializedHashCode)
+		if (BuilderState.ReadHashCode(ref this.state, out var hashCode))
 		{
 			return hashCode;
 		}
 
-		hashCode = this.ComputeHashCode();
-		Volatile.Write(ref this.hashCode, hashCode);
-		return hashCode;
+		return BuilderState.AdjustAndStoreHashCode(ref this.state, this.ComputeHashCode());
 	}
 
 	private int ComputeHashCode()
@@ -365,14 +390,7 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 		hasher.Add(this.Count);
 		hasher.AddUnordered(ref contentHasher);
 
-		var hashCode = hasher.ToHashCode();
-		if (hashCode == UninitializedHashCode)
-		{
-			// Never return 0, as that is our placeholder value.
-			hashCode = 1;
-		}
-
-		return hashCode;
+		return hasher.ToHashCode();
 	}
 
 	/// <summary>

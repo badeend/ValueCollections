@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
@@ -44,35 +45,24 @@ public sealed partial class ValueSet<T>
 	[CollectionBuilder(typeof(ValueSet), nameof(ValueSet.CreateBuilder))]
 	public sealed class Builder
 	{
-		private const int VersionBuilt = -1;
-
 		/// <summary>
-		/// Can be one of:
-		/// - ValueSet{T}: when copy-on-write hasn't kicked in yet.
-		/// - HashSet{T}: we're actively building a set.
+		/// Only access this field through .Read() or .Mutate().
 		/// </summary>
-		private ISet<T> items;
-
-		/// <summary>
-		/// Mutation counter.
-		/// `-1` means: Collection has been built and the builder is now read-only.
-		/// </summary>
-		private int version;
+		private readonly ValueSet<T>? set;
 
 		/// <summary>
 		/// Returns <see langword="true"/> when this instance has been built and is
 		/// now read-only.
 		/// </summary>
 		[Pure]
-		public bool IsReadOnly => this.version == VersionBuilt;
+		public bool IsReadOnly => BuilderState.IsImmutable(this.Read().state);
 
 		/// <summary>
 		/// Finalize the builder and export its contents as a <see cref="ValueSet{T}"/>.
 		/// This makes the builder read-only. Any future attempt to mutate the
 		/// builder will throw.
 		///
-		/// This is an <c>O(1)</c> operation and performs only a small fixed-size
-		/// memory allocation. This does not perform a bulk copy of the contents.
+		/// This is an <c>O(1)</c> operation and performs no heap allocations.
 		/// </summary>
 		/// <remarks>
 		/// If you need an intermediate snapshot of the contents while keeping the
@@ -83,14 +73,11 @@ public sealed partial class ValueSet<T>
 		/// </exception>
 		public ValueSet<T> Build()
 		{
-			if (this.version == VersionBuilt)
-			{
-				throw BuiltException();
-			}
+			var set = this.Mutate();
 
-			this.version = VersionBuilt;
+			set.state = BuilderState.InitialImmutable;
 
-			return this.ToValueSet();
+			return set;
 		}
 
 		/// <summary>
@@ -103,19 +90,16 @@ public sealed partial class ValueSet<T>
 		[Pure]
 		public ValueSet<T> ToValueSet()
 		{
-			if (this.items is HashSet<T> set)
-			{
-				var newValueSet = ValueSet<T>.FromHashSetUnsafe(set);
-				this.items = newValueSet;
-				return newValueSet;
-			}
+			var set = this.Read();
 
-			if (this.items is ValueSet<T> valueSet)
+			if (BuilderState.IsImmutable(set.state))
 			{
-				return valueSet;
+				return set;
 			}
-
-			throw UnreachableException();
+			else
+			{
+				return ValueSet<T>.CreateImmutableFromEnumerable(set);
+			}
 		}
 
 		/// <summary>
@@ -124,42 +108,44 @@ public sealed partial class ValueSet<T>
 		[Pure]
 		public Builder ToValueSetBuilder()
 		{
-			var set = this.Read();
-
-			var builder = ValueSet.CreateBuilder<T>(); // TODO: preallocate capacity
-			foreach (var item in set)
-			{
-				builder.Add(item);
-			}
-
-			return builder;
+			return Builder.CreateFromEnumerable(this.Read());
 		}
 
-		private HashSet<T> Mutate()
+		private ValueSet<T> Mutate()
 		{
-			if (this.version == VersionBuilt)
+			var set = this.set;
+			if (set is null || (uint)set.state >= BuilderState.LastMutableVersion)
 			{
-				throw BuiltException();
+				SlowPath(set);
 			}
 
-			this.version++;
+			set.state++;
 
-			if (this.items is HashSet<T> set)
+			Debug.Assert(BuilderState.IsMutable(set.state));
+
+			return set;
+
+			[MethodImpl(MethodImplOptions.NoInlining)]
+			static void SlowPath([NotNull] ValueSet<T>? set)
 			{
-				return set;
-			}
+				if (set is null)
+				{
+					ThrowHelpers.ThrowInvalidOperationException_UninitializedBuiler();
+				}
+				else if (set.state == BuilderState.LastMutableVersion)
+				{
+					set.state = BuilderState.InitialMutable;
+				}
+				else
+				{
+					Debug.Assert(BuilderState.IsImmutable(set.state));
 
-			if (this.items is ValueSet<T> valueSet)
-			{
-				var newHashSet = new HashSet<T>(valueSet.Items);
-				this.items = newHashSet;
-				return newHashSet;
+					ThrowHelpers.ThrowInvalidOperationException_AlreadyBuilt();
+				}
 			}
-
-			throw UnreachableException();
 		}
 
-		private ISet<T> Read() => this.items;
+		private ValueSet<T> Read() => this.set ?? Empty;
 
 		/// <summary>
 		/// Try to get the underlying HashSet as enumerable.
@@ -170,7 +156,7 @@ public sealed partial class ValueSet<T>
 		{
 			if (input is ValueSet<T> valueSet)
 			{
-				return valueSet.Items;
+				return valueSet.items;
 			}
 
 			return input;
@@ -199,25 +185,8 @@ public sealed partial class ValueSet<T>
 		/// <remarks>
 		/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
 		/// </remarks>
-		public int Capacity
-		{
-			[Pure]
-			get
-			{
-				var hashSet = this.items switch
-				{
-					HashSet<T> items => items,
-					ValueSet<T> items => items.Items,
-					_ => throw UnreachableException(),
-				};
-
-#if NET9_0_OR_GREATER
-				return hashSet.Capacity;
-#else
-				return hashSet.EnsureCapacity(0);
-#endif
-			}
-		}
+		[Pure]
+		public int Capacity => this.Read().Capacity;
 
 		/// <summary>
 		/// Ensures that the capacity of this set is at least the specified capacity.
@@ -237,24 +206,23 @@ public sealed partial class ValueSet<T>
 			// inside their internal `SetCapacity` method.
 			// From .NET 5 onwards it seems to work fine.
 #if NET5_0_OR_GREATER
-			this.Mutate().EnsureCapacity(minimumCapacity);
+			this.Mutate().items.EnsureCapacity(minimumCapacity);
 #else
-			var hashSet = this.Mutate();
+			var set = this.Mutate();
 
 			if (minimumCapacity < 0)
 			{
 				throw new ArgumentOutOfRangeException("capacity"); // TODO: use parameter name
 			}
 
-			var currentCapacity = hashSet.EnsureCapacity(0);
+			var currentCapacity = set.items.EnsureCapacity(0);
 			if (currentCapacity >= minimumCapacity)
 			{
 				// Nothing to do.
 				return this;
 			}
 
-			this.items = CopyWithCapacity(hashSet, minimumCapacity);
-			this.version++;
+			set.items = CopyWithCapacity(set.items, minimumCapacity);
 #endif
 			return this;
 		}
@@ -277,22 +245,21 @@ public sealed partial class ValueSet<T>
 #if NET9_0_OR_GREATER
 			this.Mutate().TrimExcess(targetCapacity);
 #else
-			var hashSet = this.Mutate();
+			var set = this.Mutate();
 
-			if (targetCapacity < hashSet.Count)
+			if (targetCapacity < set.Count)
 			{
 				throw new ArgumentOutOfRangeException(nameof(targetCapacity));
 			}
 
-			var currentCapacity = hashSet.EnsureCapacity(0);
+			var currentCapacity = set.items.EnsureCapacity(0);
 			if (targetCapacity >= currentCapacity)
 			{
 				// Nothing to do.
 				return this;
 			}
 
-			this.items = CopyWithCapacity(hashSet, targetCapacity);
-			this.version++;
+			set.items = CopyWithCapacity(set.items, targetCapacity);
 #endif
 			return this;
 		}
@@ -305,43 +272,34 @@ public sealed partial class ValueSet<T>
 		}
 #endif
 
-		private Builder(ValueSet<T> items)
+		private Builder(ValueSet<T> set)
 		{
-			this.items = items;
+			Debug.Assert(BuilderState.IsMutable(set.state));
+
+			this.set = set;
 		}
 
-		private Builder(HashSet<T> items)
+		internal static Builder Create()
 		{
-			this.items = items;
-		}
-
-		internal static Builder FromValueSet(ValueSet<T> items) => new(items);
-
-		internal static Builder FromHashSetUnsafe(HashSet<T> items) => new(items);
-
-		internal static Builder FromReadOnlySpan(ReadOnlySpan<T> items)
-		{
-			if (items.Length == 0)
-			{
-				return new(ValueSet<T>.Empty);
-			}
-
-			return new(ValueSet<T>.SpanToHashSet(items));
+			return new(ValueSet<T>.CreateMutable());
 		}
 
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
 		internal static Builder CreateWithCapacity(int minimumCapacity)
 		{
-			if (minimumCapacity == 0)
-			{
-				return FromValueSet(ValueSet<T>.Empty);
-			}
-			else
-			{
-				return FromHashSetUnsafe(new HashSet<T>(minimumCapacity));
-			}
+			return new(ValueSet<T>.CreateMutableWithCapacity(minimumCapacity));
 		}
 #endif
+
+		internal static Builder CreateFromEnumerable(IEnumerable<T> items)
+		{
+			return new(ValueSet<T>.CreateMutableFromEnumerable(items));
+		}
+
+		internal static Builder CreateFromSpan(ReadOnlySpan<T> items)
+		{
+			return new(ValueSet<T>.CreateMutableFromSpan(items));
+		}
 
 		/// <summary>
 		/// Attempt to add the <paramref name="item"/> to the set.
@@ -351,7 +309,7 @@ public sealed partial class ValueSet<T>
 		/// <remarks>
 		/// This is the equivalent of <see cref="HashSet{T}.Add(T)">HashSet.Add</see>.
 		/// </remarks>
-		public bool TryAdd(T item) => this.Mutate().Add(item);
+		public bool TryAdd(T item) => this.Mutate().items.Add(item);
 
 		/// <summary>
 		/// Add the <paramref name="item"/> to the set if it isn't already present.
@@ -372,7 +330,7 @@ public sealed partial class ValueSet<T>
 		/// </summary>
 		public Builder Clear()
 		{
-			this.Mutate().Clear();
+			this.Mutate().items.Clear();
 			return this;
 		}
 
@@ -383,7 +341,7 @@ public sealed partial class ValueSet<T>
 		/// <remarks>
 		/// This is the equivalent of <see cref="HashSet{T}.Remove(T)">HashSet.Remove</see>.
 		/// </remarks>
-		public bool TryRemove(T item) => this.Mutate().Remove(item);
+		public bool TryRemove(T item) => this.Mutate().items.Remove(item);
 
 		/// <summary>
 		/// Remove a specific element from the set if it exists.
@@ -404,7 +362,7 @@ public sealed partial class ValueSet<T>
 		/// </summary>
 		public Builder RemoveWhere(Predicate<T> match)
 		{
-			this.Mutate().RemoveWhere(match);
+			this.Mutate().items.RemoveWhere(match);
 			return this;
 		}
 
@@ -425,7 +383,7 @@ public sealed partial class ValueSet<T>
 		/// </remarks>
 		public Builder TrimExcess()
 		{
-			this.Mutate().TrimExcess();
+			this.Mutate().items.TrimExcess();
 			return this;
 		}
 
@@ -434,12 +392,7 @@ public sealed partial class ValueSet<T>
 		/// <paramref name="item"/>.
 		/// </summary>
 		[Pure]
-		public bool Contains(T item) => this.items switch
-		{
-			HashSet<T> items => items.Contains(item),
-			ValueSet<T> items => items.Contains(item),
-			_ => throw UnreachableException(),
-		};
+		public bool Contains(T item) => this.Read().Contains(item);
 
 		/// <summary>
 		/// Copy the contents of the set into an existing <see cref="Span{T}"/>.
@@ -468,22 +421,22 @@ public sealed partial class ValueSet<T>
 		/// <summary>
 		/// Check whether <c>this</c> set is a proper subset of the provided collection.
 		/// </summary>
-		public bool IsProperSubsetOf(IEnumerable<T> other) => this.Read().IsProperSubsetOf(PreferHashSet(other));
+		public bool IsProperSubsetOf(IEnumerable<T> other) => this.Read().IsProperSubsetOf(other);
 
 		/// <summary>
 		/// Check whether <c>this</c> set is a proper superset of the provided collection.
 		/// </summary>
-		public bool IsProperSupersetOf(IEnumerable<T> other) => this.Read().IsProperSupersetOf(PreferHashSet(other));
+		public bool IsProperSupersetOf(IEnumerable<T> other) => this.Read().IsProperSupersetOf(other);
 
 		/// <summary>
 		/// Check whether <c>this</c> set is a subset of the provided collection.
 		/// </summary>
-		public bool IsSubsetOf(IEnumerable<T> other) => this.Read().IsSubsetOf(PreferHashSet(other));
+		public bool IsSubsetOf(IEnumerable<T> other) => this.Read().IsSubsetOf(other);
 
 		/// <summary>
 		/// Check whether <c>this</c> set is a superset of the provided collection.
 		/// </summary>
-		public bool IsSupersetOf(IEnumerable<T> other) => this.Read().IsSupersetOf(PreferHashSet(other));
+		public bool IsSupersetOf(IEnumerable<T> other) => this.Read().IsSupersetOf(other);
 
 		/// <summary>
 		/// Check whether <c>this</c> set and the provided collection share any common elements.
@@ -494,7 +447,7 @@ public sealed partial class ValueSet<T>
 		/// Check whether <c>this</c> set and the provided collection contain
 		/// the same elements, ignoring duplicates and the order of the elements.
 		/// </summary>
-		public bool SetEquals(IEnumerable<T> other) => this.Read().SetEquals(PreferHashSet(other));
+		public bool SetEquals(IEnumerable<T> other) => this.Read().SetEquals(other);
 
 		private bool ReferenceEqualsEnumerable(IEnumerable<T> other)
 		{
@@ -515,11 +468,11 @@ public sealed partial class ValueSet<T>
 			// Special case; a set minus itself is always an empty set.
 			if (this.ReferenceEqualsEnumerable(other))
 			{
-				set.Clear();
+				set.items.Clear();
 			}
 			else
 			{
-				set.ExceptWith(other);
+				set.items.ExceptWith(other);
 			}
 
 			return this;
@@ -532,7 +485,7 @@ public sealed partial class ValueSet<T>
 
 			foreach (var item in items)
 			{
-				set.Remove(item);
+				set.items.Remove(item);
 			}
 
 			return this;
@@ -549,11 +502,11 @@ public sealed partial class ValueSet<T>
 			// Special case; a set minus itself is always an empty set.
 			if (this.ReferenceEqualsEnumerable(other))
 			{
-				set.Clear();
+				set.items.Clear();
 			}
 			else
 			{
-				set.SymmetricExceptWith(PreferHashSet(other));
+				set.items.SymmetricExceptWith(PreferHashSet(other));
 			}
 
 			return this;
@@ -571,7 +524,7 @@ public sealed partial class ValueSet<T>
 			// Special case; intersection of two identical sets is the same set.
 			if (!this.ReferenceEqualsEnumerable(other))
 			{
-				set.IntersectWith(PreferHashSet(other));
+				set.items.IntersectWith(PreferHashSet(other));
 			}
 
 			return this;
@@ -591,7 +544,7 @@ public sealed partial class ValueSet<T>
 			// Special case; union of two identical sets is the same set.
 			if (!this.ReferenceEqualsEnumerable(other))
 			{
-				set.UnionWith(other);
+				set.items.UnionWith(other);
 			}
 
 			return this;
@@ -604,7 +557,7 @@ public sealed partial class ValueSet<T>
 
 			foreach (var item in items)
 			{
-				set.Add(item);
+				set.items.Add(item);
 			}
 
 			return this;
@@ -757,7 +710,7 @@ public sealed partial class ValueSet<T>
 		/// </summary>
 		[Pure]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public Enumerator GetEnumerator() => new Enumerator(this);
+		public Enumerator GetEnumerator() => new Enumerator(this.Read());
 
 		/// <summary>
 		/// Enumerator for <see cref="ValueSet{T}.Builder"/>.
@@ -767,41 +720,50 @@ public sealed partial class ValueSet<T>
 		[StructLayout(LayoutKind.Auto)]
 		public struct Enumerator : IEnumeratorLike<T>
 		{
-			private readonly Builder builder;
-			private readonly int version;
-			private ShufflingHashSetEnumerator<T> enumerator;
+			private readonly ValueSet<T> set;
+			private readonly int expectedState;
+			private ValueSet<T>.Enumerator inner;
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			internal Enumerator(Builder builder)
+			internal Enumerator(ValueSet<T> set)
 			{
-				var innerHashSet = builder.items switch
-				{
-					HashSet<T> items => items,
-					ValueSet<T> items => items.Items,
-					_ => throw UnreachableException(),
-				};
-
-				this.builder = builder;
-				this.version = builder.version;
-				this.enumerator = new(innerHashSet, initialSeed: builder.version);
+				this.set = set;
+				this.expectedState = set.state;
+				this.inner = set.GetEnumerator();
 			}
 
 			/// <inheritdoc/>
 			public readonly T Current
 			{
 				[MethodImpl(MethodImplOptions.AggressiveInlining)]
-				get => this.enumerator.Current;
+				get => this.inner.Current;
 			}
 
 			/// <inheritdoc/>
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public bool MoveNext()
 			{
-				if (this.version != this.builder.version)
+				if (this.expectedState != this.set.state)
 				{
-					throw new InvalidOperationException("Collection was modified during enumeration.");
+					this.MoveNextSlow();
 				}
 
-				return this.enumerator.MoveNext();
+				return this.inner.MoveNext();
+			}
+
+			private void MoveNextSlow()
+			{
+				// The only valid reason for ending up here is when the enumerator
+				// was obtained in an already-built state and the hash code was
+				// materialized during enumeration.
+				if (BuilderState.IsImmutable(this.expectedState))
+				{
+					Debug.Assert(BuilderState.IsImmutable(this.set.state));
+
+					return;
+				}
+
+				ThrowHelpers.ThrowInvalidOperationException_CollectionModifiedDuringEnumeration();
 			}
 		}
 #pragma warning restore CA1815 // Override equals and operator equals on value types

@@ -44,8 +44,8 @@ public class ValueSetBuilderTests
     {
         ValueSet<int>.Builder builder = [1, 2, 3];
 
-        var list1 = builder.ToValueSet();
-        var list2 = builder.Build();
+        var list1 = builder.Build();
+        var list2 = builder.ToValueSet();
 
         Assert.True(object.ReferenceEquals(list1, list2));
     }

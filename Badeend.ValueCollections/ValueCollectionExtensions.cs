@@ -97,12 +97,7 @@ public static class ValueCollectionExtensions
 	/// </summary>
 	public static ValueSet<T> ToValueSet<T>(this IEnumerable<T> items)
 	{
-		if (items is ValueSet<T> set)
-		{
-			return set;
-		}
-
-		return ValueSet<T>.FromHashSetUnsafe(new HashSet<T>(items));
+		return ValueSet<T>.CreateImmutableFromEnumerable(items);
 	}
 
 	/// <summary>
@@ -123,12 +118,7 @@ public static class ValueCollectionExtensions
 	/// </remarks>
 	public static ValueSet<T>.Builder ToValueSetBuilder<T>(this IEnumerable<T> items)
 	{
-		if (items is ValueSet<T> set)
-		{
-			return set.ToBuilder();
-		}
-
-		return ValueSet<T>.Builder.FromHashSetUnsafe(new HashSet<T>(items));
+		return ValueSet<T>.Builder.CreateFromEnumerable(items);
 	}
 
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
