@@ -26,10 +26,17 @@ namespace Badeend.ValueCollections.Tests.Reference
 
         protected override ISet<T> GenericISetFactory()
         {
-            return ValueSet.CreateBuilder<T>();
+            return ValueSet.CreateBuilder<T>().AsCollection();
         }
 
-        
+        private ValueSet<T>.Builder BuilderFactory(int count)
+        {
+            var builder = ValueSet.CreateBuilder<T>();
+            AddToCollection(builder.AsCollection(), count);
+            return builder;
+        }
+
+
 
         private static IEnumerable<int> NonSquares(int limit)
         {
@@ -44,7 +51,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void ValueSetBuilder_Generic_Constructor()
         {
-            ValueSet<T>.Builder set = ValueSet.CreateBuilder<T>();
+            var set = ValueSet.CreateBuilder<T>().AsCollection();
             Assert.Empty(set);
         }
 
@@ -66,7 +73,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             IEnumerable<T> items = CreateEnumerable(EnumerableType.List, null, count, 0, 0);
             ValueSet<T>.Builder hashSetFromDuplicates = ValueSet.CreateBuilder<T>(Enumerable.Range(0, 40).SelectMany(i => items).ToArray());
             ValueSet<T>.Builder hashSetFromNoDuplicates = items.ToValueSetBuilder();
-            Assert.True(hashSetFromNoDuplicates.SetEquals(hashSetFromDuplicates));
+            Assert.True(hashSetFromNoDuplicates.SetEquals(hashSetFromDuplicates.AsCollection()));
         }
 
         [Theory]
@@ -74,13 +81,13 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void ValueSetBuilder_Generic_Constructor_ValueSetBuilder_SparselyFilled(int count)
         {
             ValueSet<T>.Builder source = CreateEnumerable(EnumerableType.HashSet, null, count, 0, 0).ToValueSetBuilder();
-            List<T> sourceElements = source.ToList();
+            List<T> sourceElements = source.AsCollection().ToList();
             foreach (int i in NonSquares(count))
                 source.Remove(sourceElements[i]);// Unevenly spaced survivors increases chance of catching any spacing-related bugs.
 
 
             ValueSet<T>.Builder set = source.ToValueSetBuilder();
-            Assert.True(set.SetEquals(source));
+            Assert.True(set.SetEquals(source.AsCollection()));
         }
 
         [Fact]
@@ -102,7 +109,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void ValueSetBuilderResized_CapacityChanged()
         {
-            var hashSet = (ValueSet<T>.Builder)GenericISetFactory(3);
+            var hashSet = BuilderFactory(3);
             int initialCapacity = hashSet.Capacity;
 
             int seed = 85877;
@@ -120,7 +127,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void ValueSetBuilder_Generic_RemoveWhere_AllElements(int setLength)
         {
-            ValueSet<T>.Builder set = (ValueSet<T>.Builder)GenericISetFactory(setLength);
+            ValueSet<T>.Builder set = BuilderFactory(setLength);
             int removedCount = set.RemoveAndCountWhere((value) => { return true; });
             Assert.Equal(setLength, removedCount);
         }
@@ -129,7 +136,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void ValueSetBuilder_Generic_RemoveWhere_NoElements(int setLength)
         {
-            ValueSet<T>.Builder set = (ValueSet<T>.Builder)GenericISetFactory(setLength);
+            ValueSet<T>.Builder set = BuilderFactory(setLength);
             int removedCount = set.RemoveAndCountWhere((value) => { return false; });
             Assert.Equal(0, removedCount);
             Assert.Equal(setLength, set.Count);
@@ -145,7 +152,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             set.Add(obj);
             set.Remove(obj);
             foreach (object o in set) { }
-            (set as ICollection<object>).CopyTo(array, 0);
+            (set.AsCollection() as ICollection<object>).CopyTo(array, 0);
             set.RemoveWhere((element) => { return false; });
         }
 
@@ -153,7 +160,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void ValueSetBuilder_Generic_RemoveWhere_NullMatchPredicate(int setLength)
         {
-            ValueSet<T>.Builder set = (ValueSet<T>.Builder)GenericISetFactory(setLength);
+            ValueSet<T>.Builder set = BuilderFactory(setLength);
             Assert.Throws<ArgumentNullException>(() => set.RemoveWhere(null));
         }
 
@@ -164,7 +171,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(2, 1)]
         public void ValueSetBuilder_TrimAccessWithInvalidArg_ThrowOutOfRange(int size, int newCapacity)
         {
-            ValueSet<T>.Builder hashSet = (ValueSet<T>.Builder)GenericISetFactory(size);
+            ValueSet<T>.Builder hashSet = BuilderFactory(size);
 
             AssertExtensions.Throws<ArgumentOutOfRangeException>(() => hashSet.TrimExcess(newCapacity));
         }
@@ -185,7 +192,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             Assert.True(trimCapacity <= set.Capacity && set.Capacity < initialCapacity);
             Assert.Equal(initialCount, set.Count);
-            Assert.Equal(clone, set);
+            Assert.Equal(clone.AsCollection(), set.AsCollection());
         }
 
         [Theory]
@@ -208,7 +215,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void ValueSetBuilder_Generic_TrimExcess_OnValidSetThatHasntBeenRemovedFrom(int setLength)
         {
-            ValueSet<T>.Builder set = (ValueSet<T>.Builder)GenericISetFactory(setLength);
+            ValueSet<T>.Builder set = BuilderFactory(setLength);
             set.TrimExcess();
         }
 
@@ -216,8 +223,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void ValueSetBuilder_Generic_TrimExcess_Repeatedly(int setLength)
         {
-            ValueSet<T>.Builder set = (ValueSet<T>.Builder)GenericISetFactory(setLength);
-            List<T> expected = set.ToList();
+            ValueSet<T>.Builder set = BuilderFactory(setLength);
+            List<T> expected = set.AsCollection().ToList();
             set.TrimExcess();
             set.TrimExcess();
             set.TrimExcess();
@@ -230,9 +237,9 @@ namespace Badeend.ValueCollections.Tests.Reference
         {
             if (setLength > 0)
             {
-                ValueSet<T>.Builder set = (ValueSet<T>.Builder)GenericISetFactory(setLength);
-                List<T> expected = set.ToList();
-                T elementToRemove = set.ElementAt(0);
+                ValueSet<T>.Builder set = BuilderFactory(setLength);
+                List<T> expected = set.AsCollection().ToList();
+                T elementToRemove = set.AsCollection().ElementAt(0);
 
                 set.TrimExcess();
                 Assert.True(set.TryRemove(elementToRemove));
@@ -249,13 +256,13 @@ namespace Badeend.ValueCollections.Tests.Reference
         {
             if (setLength > 0)
             {
-                ValueSet<T>.Builder set = (ValueSet<T>.Builder)GenericISetFactory(setLength);
+                ValueSet<T>.Builder set = BuilderFactory(setLength);
                 set.TrimExcess();
                 set.Clear();
                 set.TrimExcess();
                 Assert.Equal(0, set.Count);
 
-                AddToCollection(set, setLength / 10);
+                AddToCollection(set.AsCollection(), setLength / 10);
                 set.TrimExcess();
                 Assert.Equal(setLength / 10, set.Count);
             }
@@ -267,13 +274,13 @@ namespace Badeend.ValueCollections.Tests.Reference
         {
             if (setLength > 0)
             {
-                ValueSet<T>.Builder set = (ValueSet<T>.Builder)GenericISetFactory(setLength);
+                ValueSet<T>.Builder set = BuilderFactory(setLength);
                 set.TrimExcess();
                 set.Clear();
                 set.TrimExcess();
                 Assert.Equal(0, set.Count);
 
-                AddToCollection(set, setLength);
+                AddToCollection(set.AsCollection(), setLength);
                 set.TrimExcess();
                 Assert.Equal(setLength, set.Count);
             }
@@ -283,7 +290,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void CanBeCastedToISet()
         {
             ValueSet<T>.Builder set = ValueSet.CreateBuilder<T>();
-            ISet<T> iset = (set as ISet<T>);
+            ISet<T> iset = (set.AsCollection() as ISet<T>);
             Assert.NotNull(iset);
         }
 
@@ -302,10 +309,10 @@ namespace Badeend.ValueCollections.Tests.Reference
         {
             ValueSet<T>.Builder set = ValueSet.CreateBuilder<T>(capacity);
 
-            AddToCollection(set, capacity);
+            AddToCollection(set.AsCollection(), capacity);
             Assert.Equal(capacity, set.Count);
 
-            AddToCollection(set, capacity + 1);
+            AddToCollection(set.AsCollection(), capacity + 1);
             Assert.Equal(capacity + 1, set.Count);
         }
 
@@ -376,7 +383,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             var set = ValueSet.CreateBuilder<T>(capacity);
             Assert.Equal(capacity, set.EnsureAndGetCapacity(capacity));
 
-            set = (ValueSet<T>.Builder)GenericISetFactory(capacity);
+            set = BuilderFactory(capacity);
             Assert.Equal(capacity, set.EnsureAndGetCapacity(capacity));
         }
 
@@ -388,15 +395,15 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(4)]
         public void EnsureCapacity_Generic_EnsureCapacityCalledTwice_ReturnsSameValue(int setLength)
         {
-            ValueSet<T>.Builder set = (ValueSet<T>.Builder)GenericISetFactory(setLength);
+            ValueSet<T>.Builder set = BuilderFactory(setLength);
             int capacity = set.Capacity;
             Assert.Equal(capacity, set.EnsureAndGetCapacity(0));
 
-            set = (ValueSet<T>.Builder)GenericISetFactory(setLength);
+            set = BuilderFactory(setLength);
             capacity = set.EnsureAndGetCapacity(setLength);
             Assert.Equal(capacity, set.EnsureAndGetCapacity(setLength));
 
-            set = (ValueSet<T>.Builder)GenericISetFactory(setLength);
+            set = BuilderFactory(setLength);
             capacity = set.EnsureAndGetCapacity(setLength + 1);
             Assert.Equal(capacity, set.EnsureAndGetCapacity(setLength + 1));
         }
@@ -408,7 +415,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(8)]
         public void EnsureCapacity_Generic_HashsetNotEmpty_RequestedSmallerThanCount_ReturnsAtLeastSizeOfCount(int setLength)
         {
-            ValueSet<T>.Builder set = (ValueSet<T>.Builder)GenericISetFactory(setLength);
+            ValueSet<T>.Builder set = BuilderFactory(setLength);
             Assert.InRange(set.EnsureAndGetCapacity(setLength - 1), setLength, int.MaxValue);
         }
 
@@ -417,7 +424,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(20)]
         public void EnsureCapacity_Generic_HashsetNotEmpty_SetsToAtLeastTheRequested(int setLength)
         {
-            ValueSet<T>.Builder set = (ValueSet<T>.Builder)GenericISetFactory(setLength);
+            ValueSet<T>.Builder set = BuilderFactory(setLength);
 
             // get current capacity
             int currentCapacity = set.Capacity;
@@ -445,10 +452,10 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(10)]
         public void EnsureCapacity_Generic_GrowCapacityWithFreeList(int setLength)
         {
-            ValueSet<T>.Builder set = (ValueSet<T>.Builder)GenericISetFactory(setLength);
+            ValueSet<T>.Builder set = BuilderFactory(setLength);
 
             // Remove the first element to ensure we have a free list.
-            Assert.True(set.TryRemove(set.ElementAt(0)));
+            Assert.True(set.TryRemove(set.AsCollection().ElementAt(0)));
 
             int currentCapacity = set.Capacity;
             Assert.True(currentCapacity > 0);

@@ -11,13 +11,13 @@ internal sealed class ValueSetBuilderConverter<T> : JsonConverter<ValueSet<T>.Bu
 	internal override ValueSet<T>.Builder ReadJson(JsonReader reader, JsonSerializer serializer)
 	{
 		var builder = ValueSet.CreateBuilder<T>();
-		serializer.Populate(reader, builder);
+		serializer.Populate(reader, builder.AsCollection());
 		return builder;
 	}
 
 	internal override void WriteJson(JsonWriter writer, ValueSet<T>.Builder set, JsonSerializer serializer)
 	{
-		var wrapper = set.IsEmpty ? EmptyQueryable : set.AsQueryable();
+		var wrapper = set.IsEmpty ? EmptyQueryable : set.AsCollection().AsQueryable();
 
 		serializer.Serialize(writer, wrapper);
 	}

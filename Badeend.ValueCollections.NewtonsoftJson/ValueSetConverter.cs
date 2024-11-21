@@ -11,7 +11,7 @@ internal sealed class ValueSetConverter<T> : JsonConverter<ValueSet<T>>
 	internal override ValueSet<T> ReadJson(JsonReader reader, JsonSerializer serializer)
 	{
 		var builder = ValueSet.CreateBuilder<T>();
-		serializer.Populate(reader, builder);
+		serializer.Populate(reader, builder.AsCollection());
 		return builder.Build();
 	}
 

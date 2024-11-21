@@ -34,7 +34,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         protected override ISet<T> GenericISetFactory(int count)
         {
             var collection = ValueSet.CreateBuilder<T>();
-            AddToCollection(collection, count);
+            AddToCollection(collection.AsCollection(), count);
             return collection.Build();
         }
 
@@ -76,13 +76,13 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void ValueSet_Generic_Constructor_ValueSet_SparselyFilled(int count)
         {
             ValueSet<T>.Builder source = CreateEnumerable(EnumerableType.HashSet, null, count, 0, 0).ToValueSetBuilder();
-            List<T> sourceElements = source.ToList();
+            List<T> sourceElements = source.AsCollection().ToList();
             foreach (int i in NonSquares(count))
                 source.Remove(sourceElements[i]);// Unevenly spaced survivors increases chance of catching any spacing-related bugs.
 
 
             ValueSet<T> set = source.ToValueSet();
-            Assert.True(set.SetEquals(source));
+            Assert.True(set.SetEquals(source.AsCollection()));
         }
 
         [Fact]

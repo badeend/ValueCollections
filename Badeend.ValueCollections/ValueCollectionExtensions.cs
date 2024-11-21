@@ -102,11 +102,6 @@ public static class ValueCollectionExtensions
 			return set;
 		}
 
-		if (items is ValueSet<T>.Builder builder)
-		{
-			return builder.ToValueSet();
-		}
-
 		return ValueSet<T>.FromHashSetUnsafe(new HashSet<T>(items));
 	}
 

@@ -34,15 +34,15 @@ public sealed partial class ValueSet<T>
 	///
 	/// The order in which the elements are enumerated is undefined.
 	///
+	/// To prevent accidental boxing, this type does not implement commonly used
+	/// interfaces such as <see cref="IEnumerable{T}"/> and
+	/// <see cref="ISet{T}"/>. You can still use these interfaces by
+	/// manually calling <see cref="AsCollection"/> instead.
+	///
 	/// Unlike ValueSet, its Builder is <em>not</em> thread-safe.
 	/// </remarks>
-	[SuppressMessage("Naming", "CA1710:Identifiers should have correct suffix", Justification = "Not applicable for Builder type.")]
 	[CollectionBuilder(typeof(ValueSet), nameof(ValueSet.CreateBuilder))]
-#if NET5_0_OR_GREATER
-	public sealed class Builder : ISet<T>, IReadOnlyCollection<T>, IReadOnlySet<T>
-#else
-	public sealed class Builder : ISet<T>, IReadOnlyCollection<T>
-#endif
+	public sealed class Builder
 	{
 		private const int VersionBuilt = -1;
 
@@ -116,6 +116,23 @@ public sealed partial class ValueSet<T>
 			}
 
 			throw UnreachableException();
+		}
+
+		/// <summary>
+		/// Copy the current contents of the builder into a new <see cref="ValueSet{T}.Builder"/>.
+		/// </summary>
+		[Pure]
+		public Builder ToValueSetBuilder()
+		{
+			var set = this.Read();
+
+			var builder = ValueSet.CreateBuilder<T>(); // TODO: preallocate capacity
+			foreach (var item in set)
+			{
+				builder.Add(item);
+			}
+
+			return builder;
 		}
 
 		private HashSet<T> Mutate()
@@ -350,12 +367,6 @@ public sealed partial class ValueSet<T>
 			return this;
 		}
 
-		/// <inheritdoc/>
-		bool ISet<T>.Add(T item) => this.TryAdd(item);
-
-		/// <inheritdoc/>
-		void ICollection<T>.Add(T item) => this.TryAdd(item);
-
 		/// <summary>
 		/// Remove all elements from the set.
 		/// </summary>
@@ -364,9 +375,6 @@ public sealed partial class ValueSet<T>
 			this.Mutate().Clear();
 			return this;
 		}
-
-		/// <inheritdoc/>
-		void ICollection<T>.Clear() => this.Clear();
 
 		/// <summary>
 		/// Attempt to remove a specific element from the set.
@@ -390,9 +398,6 @@ public sealed partial class ValueSet<T>
 			this.TryRemove(item);
 			return this;
 		}
-
-		/// <inheritdoc/>
-		bool ICollection<T>.Remove(T item) => this.TryRemove(item);
 
 		/// <summary>
 		/// Remove all elements that match the predicate.
@@ -460,17 +465,6 @@ public sealed partial class ValueSet<T>
 			}
 		}
 
-		/// <inheritdoc/>
-		void ICollection<T>.CopyTo(T[] array, int arrayIndex)
-		{
-			if (array is null)
-			{
-				throw new ArgumentNullException(nameof(array));
-			}
-
-			this.CopyTo(array.AsSpan(arrayIndex));
-		}
-
 		/// <summary>
 		/// Check whether <c>this</c> set is a proper subset of the provided collection.
 		/// </summary>
@@ -502,6 +496,11 @@ public sealed partial class ValueSet<T>
 		/// </summary>
 		public bool SetEquals(IEnumerable<T> other) => this.Read().SetEquals(PreferHashSet(other));
 
+		private bool ReferenceEqualsEnumerable(IEnumerable<T> other)
+		{
+			return other is ValueSet<T>.Builder.Collection vsbc && vsbc.Builder == this;
+		}
+
 		/// <summary>
 		/// Remove all elements that appear in the <paramref name="other"/> collection.
 		/// </summary>
@@ -514,7 +513,7 @@ public sealed partial class ValueSet<T>
 			var set = this.Mutate();
 
 			// Special case; a set minus itself is always an empty set.
-			if (this == other)
+			if (this.ReferenceEqualsEnumerable(other))
 			{
 				set.Clear();
 			}
@@ -525,9 +524,6 @@ public sealed partial class ValueSet<T>
 
 			return this;
 		}
-
-		/// <inheritdoc/>
-		void ISet<T>.ExceptWith(IEnumerable<T> other) => this.ExceptWith(other);
 
 		// Accessible through an extension method.
 		internal Builder ExceptWithSpan(ReadOnlySpan<T> items)
@@ -551,7 +547,7 @@ public sealed partial class ValueSet<T>
 			var set = this.Mutate();
 
 			// Special case; a set minus itself is always an empty set.
-			if (this == other)
+			if (this.ReferenceEqualsEnumerable(other))
 			{
 				set.Clear();
 			}
@@ -563,9 +559,6 @@ public sealed partial class ValueSet<T>
 			return this;
 		}
 
-		/// <inheritdoc/>
-		void ISet<T>.SymmetricExceptWith(IEnumerable<T> other) => this.SymmetricExceptWith(other);
-
 		/// <summary>
 		/// Modify the current builder to contain only elements that are present in
 		/// both <see langword="this"/> <em>and</em> the <paramref name="other"/>
@@ -576,16 +569,13 @@ public sealed partial class ValueSet<T>
 			var set = this.Mutate();
 
 			// Special case; intersection of two identical sets is the same set.
-			if (this != other)
+			if (!this.ReferenceEqualsEnumerable(other))
 			{
 				set.IntersectWith(PreferHashSet(other));
 			}
 
 			return this;
 		}
-
-		/// <inheritdoc/>
-		void ISet<T>.IntersectWith(IEnumerable<T> other) => this.IntersectWith(other);
 
 		/// <summary>
 		/// Add all elements from the <paramref name="other"/> collection.
@@ -599,16 +589,13 @@ public sealed partial class ValueSet<T>
 			var set = this.Mutate();
 
 			// Special case; union of two identical sets is the same set.
-			if (this != other)
+			if (!this.ReferenceEqualsEnumerable(other))
 			{
 				set.UnionWith(other);
 			}
 
 			return this;
 		}
-
-		/// <inheritdoc/>
-		void ISet<T>.UnionWith(IEnumerable<T> other) => this.UnionWith(other);
 
 		// Accessible through an extension method.
 		internal Builder UnionWithSpan(ReadOnlySpan<T> items)
@@ -623,21 +610,144 @@ public sealed partial class ValueSet<T>
 			return this;
 		}
 
-		/// <inheritdoc/>
-		IEnumerator<T> IEnumerable<T>.GetEnumerator()
-		{
-			if (this.Count == 0)
-			{
-				return EnumeratorLike.Empty<T>();
-			}
-			else
-			{
-				return EnumeratorLike.AsIEnumerator<T, Enumerator>(new Enumerator(this));
-			}
-		}
+		/// <summary>
+		/// Create a new heap-allocated live view of the builder.
+		/// </summary>
+		/// <remarks>
+		/// This method is an <c>O(1)</c> operation and allocates a new fixed-size
+		/// collection instance. The items are not copied. Changes made to the
+		/// builder are visible in the collection and vice versa.
+		/// </remarks>
+		public Collection AsCollection() => new Collection(this);
 
-		/// <inheritdoc/>
-		IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<T>)this).GetEnumerator();
+#pragma warning disable CA1034 // Nested types should not be visible
+		/// <summary>
+		/// A heap-allocated live view of a builder. Changes made to the
+		/// collection are visible in the builder and vice versa.
+		/// </summary>
+#if NET5_0_OR_GREATER
+		public sealed class Collection : ISet<T>, IReadOnlyCollection<T>, IReadOnlySet<T>
+#else
+		public sealed class Collection : ISet<T>, IReadOnlyCollection<T>
+#endif
+		{
+			private readonly Builder builder;
+
+			/// <summary>
+			/// The underlying builder.
+			/// </summary>
+			public Builder Builder => this.builder;
+
+			internal Collection(Builder builder)
+			{
+				this.builder = builder;
+			}
+
+			/// <inheritdoc/>
+			int ICollection<T>.Count => this.builder.Count;
+
+			/// <inheritdoc/>
+			int IReadOnlyCollection<T>.Count => this.builder.Count;
+
+			/// <inheritdoc/>
+			bool ICollection<T>.IsReadOnly => this.builder.IsReadOnly;
+
+			/// <inheritdoc/>
+			void ICollection<T>.Add(T item) => this.builder.TryAdd(item);
+
+			/// <inheritdoc/>
+			void ICollection<T>.Clear() => this.builder.Clear();
+
+			/// <inheritdoc/>
+			bool ICollection<T>.Contains(T item) => this.builder.Contains(item);
+
+			/// <inheritdoc/>
+			void ICollection<T>.CopyTo(T[] array, int arrayIndex)
+			{
+				if (array is null)
+				{
+					ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.array);
+				}
+
+				this.builder.CopyTo(array.AsSpan(arrayIndex));
+			}
+
+			/// <inheritdoc/>
+			IEnumerator<T> IEnumerable<T>.GetEnumerator()
+			{
+				if (this.builder.Count == 0)
+				{
+					return EnumeratorLike.Empty<T>();
+				}
+				else
+				{
+					return EnumeratorLike.AsIEnumerator<T, Enumerator>(this.builder.GetEnumerator());
+				}
+			}
+
+			/// <inheritdoc/>
+			IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<T>)this).GetEnumerator();
+
+			/// <inheritdoc/>
+			bool ICollection<T>.Remove(T item) => this.builder.TryRemove(item);
+
+			/// <inheritdoc/>
+			bool ISet<T>.Add(T item) => this.builder.TryAdd(item);
+
+			/// <inheritdoc/>
+			void ISet<T>.ExceptWith(IEnumerable<T> other) => this.builder.ExceptWith(other);
+
+			/// <inheritdoc/>
+			void ISet<T>.IntersectWith(IEnumerable<T> other) => this.builder.IntersectWith(other);
+
+			/// <inheritdoc/>
+			bool ISet<T>.IsProperSubsetOf(IEnumerable<T> other) => this.builder.IsProperSubsetOf(other);
+
+			/// <inheritdoc/>
+			bool ISet<T>.IsProperSupersetOf(IEnumerable<T> other) => this.builder.IsProperSupersetOf(other);
+
+			/// <inheritdoc/>
+			bool ISet<T>.IsSubsetOf(IEnumerable<T> other) => this.builder.IsSubsetOf(other);
+
+			/// <inheritdoc/>
+			bool ISet<T>.IsSupersetOf(IEnumerable<T> other) => this.builder.IsSupersetOf(other);
+
+			/// <inheritdoc/>
+			bool ISet<T>.Overlaps(IEnumerable<T> other) => this.builder.Overlaps(other);
+
+			/// <inheritdoc/>
+			bool ISet<T>.SetEquals(IEnumerable<T> other) => this.builder.SetEquals(other);
+
+			/// <inheritdoc/>
+			void ISet<T>.SymmetricExceptWith(IEnumerable<T> other) => this.builder.SymmetricExceptWith(other);
+
+			/// <inheritdoc/>
+			void ISet<T>.UnionWith(IEnumerable<T> other) => this.builder.UnionWith(other);
+
+#if NET5_0_OR_GREATER
+			/// <inheritdoc/>
+			bool IReadOnlySet<T>.Contains(T item) => this.builder.Contains(item);
+
+			/// <inheritdoc/>
+			bool IReadOnlySet<T>.IsProperSubsetOf(IEnumerable<T> other) => this.builder.IsProperSubsetOf(other);
+
+			/// <inheritdoc/>
+			bool IReadOnlySet<T>.IsProperSupersetOf(IEnumerable<T> other) => this.builder.IsProperSupersetOf(other);
+
+			/// <inheritdoc/>
+			bool IReadOnlySet<T>.IsSubsetOf(IEnumerable<T> other) => this.builder.IsSubsetOf(other);
+
+			/// <inheritdoc/>
+			bool IReadOnlySet<T>.IsSupersetOf(IEnumerable<T> other) => this.builder.IsSupersetOf(other);
+
+			/// <inheritdoc/>
+			bool IReadOnlySet<T>.Overlaps(IEnumerable<T> other) => this.builder.Overlaps(other);
+
+			/// <inheritdoc/>
+			bool IReadOnlySet<T>.SetEquals(IEnumerable<T> other) => this.builder.SetEquals(other);
+#endif
+		}
+#pragma warning restore CA1034 // Nested types should not be visible
 
 		/// <summary>
 		/// Returns an enumerator for this <see cref="ValueSet{T}.Builder"/>.

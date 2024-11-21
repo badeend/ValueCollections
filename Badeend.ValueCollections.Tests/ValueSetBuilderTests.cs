@@ -143,10 +143,10 @@ public class ValueSetBuilderTests
         var input = Enumerable.Range(1, length).ToArray();
 
         // ToArray
-        AssertEnumerationOrder(input, s => s.ToArray());
+        AssertEnumerationOrder(input, s => s.AsCollection().ToArray());
 
         // IEnumerable.GetEnumerator
-        AssertEnumerationOrder(input, s => s.Select(x => x).ToArray());
+        AssertEnumerationOrder(input, s => s.AsCollection().Select(x => x).ToArray());
 
         // GetEnumerator
         AssertEnumerationOrder(input, s =>
@@ -159,18 +159,26 @@ public class ValueSetBuilderTests
             return list.ToArray();
         });
 
+        // CopyTo
+        AssertEnumerationOrder(input, s =>
+        {
+            var a = new int[s.Count];
+            s.CopyTo(a);
+            return a;
+        });
+
         // ICollection<T>.CopyTo
         AssertEnumerationOrder(input, s =>
         {
             var a = new int[s.Count];
-            (s as ICollection<int>).CopyTo(a, 0);
+            (s.AsCollection() as ICollection<int>).CopyTo(a, 0);
             return a;
         });
 
         static void AssertEnumerationOrder(int[] input, Func<ValueSet<int>.Builder, int[]> transform)
         {
             var referenceSet = input.ToValueSetBuilder();
-            var referenceOrder = referenceSet.ToArray();
+            var referenceOrder = referenceSet.AsCollection().ToArray();
             var changeCounter = 0;
 
             // Because we're dealing with randomness, run the tests a few times to reduce false positives.
