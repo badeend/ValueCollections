@@ -33,6 +33,11 @@ public sealed partial class ValueList<T>
 	///
 	/// Unlike the resulting ValueList, its Builder is <em>not</em> thread-safe.
 	///
+	/// To prevent accidental boxing, this type does not implement commonly used
+	/// interfaces such as <see cref="IEnumerable{T}"/> and
+	/// <see cref="IList{T}"/>. You can still use these interfaces by
+	/// manually calling <see cref="AsCollection"/> instead.
+	///
 	/// The <c>default</c> value is an empty read-only builder.
 	/// </remarks>
 	[CollectionBuilder(typeof(ValueList), nameof(ValueList.CreateBuilder))]
