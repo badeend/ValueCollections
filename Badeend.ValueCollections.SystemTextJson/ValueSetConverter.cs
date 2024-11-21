@@ -11,7 +11,7 @@ internal sealed class ValueSetConverter<T>(JsonConverter<T> valueConverter) : Js
 
 	public override ValueSet<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 	{
-		var builder = new ValueSet<T>.Builder();
+		var builder = ValueSet.CreateBuilder<T>();
 		this.inner.ReadInto(ref reader, builder, options);
 		return builder.Build();
 	}

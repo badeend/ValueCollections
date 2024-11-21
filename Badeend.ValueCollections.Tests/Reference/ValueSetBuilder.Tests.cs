@@ -26,7 +26,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
         protected override ISet<T> GenericISetFactory()
         {
-            return new ValueSet<T>.Builder();
+            return ValueSet.CreateBuilder<T>();
         }
 
         
@@ -44,7 +44,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void ValueSetBuilder_Generic_Constructor()
         {
-            ValueSet<T>.Builder set = new ValueSet<T>.Builder();
+            ValueSet<T>.Builder set = ValueSet.CreateBuilder<T>();
             Assert.Empty(set);
         }
 
@@ -55,7 +55,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             _ = setLength;
             _ = numberOfMatchingElements;
             IEnumerable<T> enumerable = CreateEnumerable(enumerableType, null, enumerableLength, 0, numberOfDuplicateElements);
-            ValueSet<T>.Builder set = new ValueSet<T>.Builder(enumerable);
+            ValueSet<T>.Builder set = enumerable.ToValueSetBuilder();
             Assert.True(set.SetEquals(enumerable));
         }
 
@@ -64,8 +64,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void ValueSetBuilder_Generic_Constructor_IEnumerable_WithManyDuplicates(int count)
         {
             IEnumerable<T> items = CreateEnumerable(EnumerableType.List, null, count, 0, 0);
-            ValueSet<T>.Builder hashSetFromDuplicates = new ValueSet<T>.Builder(Enumerable.Range(0, 40).SelectMany(i => items).ToArray());
-            ValueSet<T>.Builder hashSetFromNoDuplicates = new ValueSet<T>.Builder(items);
+            ValueSet<T>.Builder hashSetFromDuplicates = ValueSet.CreateBuilder<T>(Enumerable.Range(0, 40).SelectMany(i => items).ToArray());
+            ValueSet<T>.Builder hashSetFromNoDuplicates = items.ToValueSetBuilder();
             Assert.True(hashSetFromNoDuplicates.SetEquals(hashSetFromDuplicates));
         }
 
@@ -79,14 +79,14 @@ namespace Badeend.ValueCollections.Tests.Reference
                 source.Remove(sourceElements[i]);// Unevenly spaced survivors increases chance of catching any spacing-related bugs.
 
 
-            ValueSet<T>.Builder set = new ValueSet<T>.Builder(source);
+            ValueSet<T>.Builder set = source.ToValueSetBuilder();
             Assert.True(set.SetEquals(source));
         }
 
         [Fact]
         public void ValueSetBuilder_Generic_Constructor_IEnumerable_Null()
         {
-            Assert.Throws<ArgumentNullException>(() => new ValueSet<T>.Builder((IEnumerable<T>)null));
+            Assert.Throws<ArgumentNullException>(() => ((IEnumerable<T>)null!).ToValueSetBuilder());
         }
 
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
@@ -95,7 +95,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(100)]
         public void ValueSetBuilder_CreateWithCapacity_CapacityAtLeastPassedValue(int capacity)
         {
-            var hashSet = new ValueSet<T>.Builder(capacity);
+            var hashSet = ValueSet.CreateBuilder<T>(capacity);
             Assert.True(capacity <= hashSet.Capacity);
         }
 
@@ -140,7 +140,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         {
             object[] array = new object[2];
             object obj = new object();
-            var set = new ValueSet<object>.Builder();
+            var set = ValueSet.CreateBuilder<object>();
 
             set.Add(obj);
             set.Remove(obj);
@@ -176,7 +176,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void HashHet_Generic_TrimExcess_LargePopulatedValueSetBuilder_TrimReducesSize(int initialCount, int initialCapacity, int trimCapacity)
         {
             ValueSet<T>.Builder set = CreateValueSetBuilderSetWithCapacity(initialCount, initialCapacity);
-            ValueSet<T>.Builder clone = new(set);
+            ValueSet<T>.Builder clone = set.ToValueSetBuilder();
 
             Assert.True(set.Capacity >= initialCapacity);
             Assert.Equal(initialCount, set.Count);
@@ -282,7 +282,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void CanBeCastedToISet()
         {
-            ValueSet<T>.Builder set = new ValueSet<T>.Builder();
+            ValueSet<T>.Builder set = ValueSet.CreateBuilder<T>();
             ISet<T> iset = (set as ISet<T>);
             Assert.NotNull(iset);
         }
@@ -292,7 +292,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void ValueSetBuilder_Generic_Constructor_int(int capacity)
         {
-            ValueSet<T>.Builder set = new ValueSet<T>.Builder(capacity);
+            ValueSet<T>.Builder set = ValueSet.CreateBuilder<T>(capacity);
             Assert.Equal(0, set.Count);
         }
 
@@ -300,7 +300,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void ValueSetBuilder_Generic_Constructor_int_AddUpToAndBeyondCapacity(int capacity)
         {
-            ValueSet<T>.Builder set = new ValueSet<T>.Builder(capacity);
+            ValueSet<T>.Builder set = ValueSet.CreateBuilder<T>(capacity);
 
             AddToCollection(set, capacity);
             Assert.Equal(capacity, set.Count);
@@ -314,7 +314,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         {
             // Highest pre-computed number + 1.
             const int Capacity = 7199370;
-            var set = new ValueSet<T>.Builder(Capacity);
+            var set = ValueSet.CreateBuilder<T>(Capacity);
 
             // Assert that the HashTable's capacity is set to the descendant prime number of the given one.
             const int NextPrime = 7199371;
@@ -324,21 +324,21 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void ValueSetBuilder_Generic_Constructor_int_Negative_ThrowsArgumentOutOfRangeException()
         {
-            AssertExtensions.Throws<ArgumentOutOfRangeException>("capacity", () => new ValueSet<T>.Builder(-1));
-            AssertExtensions.Throws<ArgumentOutOfRangeException>("capacity", () => new ValueSet<T>.Builder(int.MinValue));
+            AssertExtensions.Throws<ArgumentOutOfRangeException>("capacity", () => ValueSet.CreateBuilder<T>(-1));
+            AssertExtensions.Throws<ArgumentOutOfRangeException>("capacity", () => ValueSet.CreateBuilder<T>(int.MinValue));
         }
 
         [Fact]
         public void EnsureCapacity_Generic_NegativeCapacityRequested_Throws()
         {
-            var set = new ValueSet<T>.Builder();
+            var set = ValueSet.CreateBuilder<T>();
             AssertExtensions.Throws<ArgumentOutOfRangeException>("capacity", () => set.EnsureCapacity(-1));
         }
 
         [Fact]
         public void EnsureCapacity_Generic_HashsetNotInitialized_RequestedZero_ReturnsZero()
         {
-            var set = new ValueSet<T>.Builder();
+            var set = ValueSet.CreateBuilder<T>();
             Assert.Equal(0, set.Capacity);
         }
 
@@ -349,7 +349,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(4)]
         public void EnsureCapacity_Generic_HashsetNotInitialized_RequestedNonZero_CapacityIsSetToAtLeastTheRequested(int requestedCapacity)
         {
-            var set = new ValueSet<T>.Builder();
+            var set = ValueSet.CreateBuilder<T>();
             Assert.InRange(set.EnsureAndGetCapacity(requestedCapacity), requestedCapacity, int.MaxValue);
         }
 
@@ -363,7 +363,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             // assert capacity remains the same when ensuring a capacity smaller or equal than existing
             for (int i = 0; i <= currentCapacity; i++)
             {
-                set = new ValueSet<T>.Builder(currentCapacity);
+                set = ValueSet.CreateBuilder<T>(currentCapacity);
                 Assert.Equal(currentCapacity, set.EnsureAndGetCapacity(i));
             }
         }
@@ -373,7 +373,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(89)]
         public void EnsureCapacity_Generic_ExistingCapacityRequested_SameValueReturned(int capacity)
         {
-            var set = new ValueSet<T>.Builder(capacity);
+            var set = ValueSet.CreateBuilder<T>(capacity);
             Assert.Equal(capacity, set.EnsureAndGetCapacity(capacity));
 
             set = (ValueSet<T>.Builder)GenericISetFactory(capacity);
@@ -430,13 +430,13 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void EnsureCapacity_Generic_CapacityIsSetToPrimeNumberLargerOrEqualToRequested()
         {
-            var set = new ValueSet<T>.Builder();
+            var set = ValueSet.CreateBuilder<T>();
             Assert.Equal(17, set.EnsureAndGetCapacity(17));
 
-            set = new ValueSet<T>.Builder();
+            set = ValueSet.CreateBuilder<T>();
             Assert.Equal(17, set.EnsureAndGetCapacity(15));
 
-            set = new ValueSet<T>.Builder();
+            set = ValueSet.CreateBuilder<T>();
             Assert.Equal(17, set.EnsureAndGetCapacity(13));
         }
 
@@ -462,7 +462,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         /// </summary>
         protected ValueSet<T>.Builder CreateValueSetBuilderSetWithCapacity(int count, int capacity)
         {
-            var set = new ValueSet<T>.Builder(capacity);
+            var set = ValueSet.CreateBuilder<T>(capacity);
             int seed = 528;
 
             for (int i = 0; i < count; i++)

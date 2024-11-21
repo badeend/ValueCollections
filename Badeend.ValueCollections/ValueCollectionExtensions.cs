@@ -166,7 +166,7 @@ public static class ValueCollectionExtensions
 			_ => minimumCapacity,
 		};
 
-		return new ValueSet<T>.Builder(initialCapacity).UnionWith(items);
+		return ValueSet.CreateBuilder<T>(initialCapacity).UnionWith(items);
 	}
 #endif
 

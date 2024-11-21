@@ -26,7 +26,21 @@ public static class ValueSet
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueSet<T>.Builder CreateBuilder<T>() => new();
+	public static ValueSet<T>.Builder CreateBuilder<T>() => ValueSet<T>.Builder.FromValueSet(ValueSet<T>.Empty);
+
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
+	/// <summary>
+	/// Create a new empty <see cref="ValueSet{T}.Builder"/> with the specified
+	/// initial <paramref name="minimumCapacity"/>. This builder can then be
+	/// used to efficiently construct an immutable <see cref="ValueSet{T}"/>.
+	/// </summary>
+	/// <exception cref="ArgumentOutOfRangeException">
+	/// <paramref name="minimumCapacity"/> is less than 0.
+	/// </exception>
+	[Pure]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ValueSet<T>.Builder CreateBuilder<T>(int minimumCapacity) => ValueSet<T>.Builder.CreateWithCapacity(minimumCapacity);
+#endif
 
 	/// <summary>
 	/// Create a new <see cref="ValueSet{T}.Builder"/> with the provided
@@ -209,7 +223,7 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 		}
 		else
 		{
-			return new Builder(minimumCapacity).UnionWith(this);
+			return ValueSet.CreateBuilder<T>(minimumCapacity).UnionWith(this);
 		}
 	}
 #endif

@@ -37,6 +37,7 @@ public sealed partial class ValueSet<T>
 	/// Unlike ValueSet, its Builder is <em>not</em> thread-safe.
 	/// </remarks>
 	[SuppressMessage("Naming", "CA1710:Identifiers should have correct suffix", Justification = "Not applicable for Builder type.")]
+	[CollectionBuilder(typeof(ValueSet), nameof(ValueSet.CreateBuilder))]
 #if NET5_0_OR_GREATER
 	public sealed class Builder : ISet<T>, IReadOnlyCollection<T>, IReadOnlySet<T>
 #else
@@ -174,39 +175,7 @@ public sealed partial class ValueSet<T>
 			get => this.Count == 0;
 		}
 
-		/// <summary>
-		/// Construct a new empty set builder.
-		/// </summary>
-		[Pure]
-		public Builder()
-		{
-			this.items = ValueSet<T>.Empty;
-		}
-
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
-		/// <summary>
-		/// Construct a new empty set builder with at least the specified initial
-		/// capacity.
-		/// </summary>
-		/// <remarks>
-		/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
-		/// </remarks>
-		/// <exception cref="ArgumentOutOfRangeException">
-		///   <paramref name="minimumCapacity"/> is less than 0.
-		/// </exception>
-		[Pure]
-		public Builder(int minimumCapacity)
-		{
-			if (minimumCapacity == 0)
-			{
-				this.items = ValueSet<T>.Empty;
-			}
-			else
-			{
-				this.items = new HashSet<T>(minimumCapacity);
-			}
-		}
-
 		/// <summary>
 		/// The total number of elements the internal data structure can hold without resizing.
 		/// </summary>
@@ -319,26 +288,6 @@ public sealed partial class ValueSet<T>
 		}
 #endif
 
-		/// <summary>
-		/// Construct a new <see cref="ValueSet{T}.Builder"/> with the provided
-		/// <paramref name="items"/> as its initial content.
-		/// </summary>
-		/// <remarks>
-		/// Use <see cref="ValueSet.CreateBuilder{T}(ReadOnlySpan{T})"/> to construct a
-		/// Builder from a span.
-		/// </remarks>
-		public Builder(IEnumerable<T> items)
-		{
-			if (items is ValueSet<T> valueSet)
-			{
-				this.items = valueSet;
-			}
-			else
-			{
-				this.items = new HashSet<T>(items);
-			}
-		}
-
 		private Builder(ValueSet<T> items)
 		{
 			this.items = items;
@@ -357,11 +306,25 @@ public sealed partial class ValueSet<T>
 		{
 			if (items.Length == 0)
 			{
-				return new();
+				return new(ValueSet<T>.Empty);
 			}
 
 			return new(ValueSet<T>.SpanToHashSet(items));
 		}
+
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
+		internal static Builder CreateWithCapacity(int minimumCapacity)
+		{
+			if (minimumCapacity == 0)
+			{
+				return FromValueSet(ValueSet<T>.Empty);
+			}
+			else
+			{
+				return FromHashSetUnsafe(new HashSet<T>(minimumCapacity));
+			}
+		}
+#endif
 
 		/// <summary>
 		/// Attempt to add the <paramref name="item"/> to the set.

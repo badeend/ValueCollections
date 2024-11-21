@@ -17,6 +17,8 @@ public static class Configuration
 
 	private static readonly JsonConverter ValueSetConverterFactory = new JsonArrayConverterFactory(typeof(ValueSet<>), typeof(ValueSetConverter<>));
 
+	private static readonly JsonConverter ValueSetBuilderConverterFactory = new JsonArrayConverterFactory(typeof(ValueSet<>.Builder), typeof(ValueSetBuilderConverter<>));
+
 	private static readonly JsonConverter ValueDictionaryConverterFactory = new JsonObjectConverterFactory(typeof(ValueDictionary<,>), typeof(ValueDictionaryConverter<,>));
 
 	/// <summary>
@@ -57,6 +59,7 @@ public static class Configuration
 		converters.Add(ValueListConverterFactory);
 		converters.Add(ValueListBuilderConverterFactory);
 		converters.Add(ValueSetConverterFactory);
+		converters.Add(ValueSetBuilderConverterFactory);
 		converters.Add(ValueDictionaryConverterFactory);
 	}
 }

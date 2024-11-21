@@ -9,17 +9,6 @@ public class ValueSetBuilderTests
     }
 
     [Fact]
-    public void CollectionInitializer()
-    {
-        _ = new ValueSet<int>.Builder
-        {
-            1,
-            2,
-            3,
-        };
-    }
-
-    [Fact]
     public void FluentInterface()
     {
         _ = ValueSet.CreateBuilder<int>()
@@ -90,7 +79,7 @@ public class ValueSetBuilderTests
     [Fact]
     public void BuildIsFinal()
     {
-        var builder = new ValueSet<int>.Builder();
+        var builder = ValueSet.CreateBuilder<int>();
 
         Assert.False(builder.IsReadOnly);
         builder.Add(1);

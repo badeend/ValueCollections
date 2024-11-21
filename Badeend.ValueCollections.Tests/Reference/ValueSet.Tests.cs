@@ -33,7 +33,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
         protected override ISet<T> GenericISetFactory(int count)
         {
-            var collection = new ValueSet<T>.Builder();
+            var collection = ValueSet.CreateBuilder<T>();
             AddToCollection(collection, count);
             return collection.Build();
         }
