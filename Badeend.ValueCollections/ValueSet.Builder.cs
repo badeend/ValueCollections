@@ -471,22 +471,35 @@ public sealed partial class ValueSet<T>
 			this.CopyTo(array.AsSpan(arrayIndex));
 		}
 
-		/// <inheritdoc/>
+		/// <summary>
+		/// Check whether <c>this</c> set is a proper subset of the provided collection.
+		/// </summary>
 		public bool IsProperSubsetOf(IEnumerable<T> other) => this.Read().IsProperSubsetOf(PreferHashSet(other));
 
-		/// <inheritdoc/>
+		/// <summary>
+		/// Check whether <c>this</c> set is a proper superset of the provided collection.
+		/// </summary>
 		public bool IsProperSupersetOf(IEnumerable<T> other) => this.Read().IsProperSupersetOf(PreferHashSet(other));
 
-		/// <inheritdoc/>
+		/// <summary>
+		/// Check whether <c>this</c> set is a subset of the provided collection.
+		/// </summary>
 		public bool IsSubsetOf(IEnumerable<T> other) => this.Read().IsSubsetOf(PreferHashSet(other));
 
-		/// <inheritdoc/>
+		/// <summary>
+		/// Check whether <c>this</c> set is a superset of the provided collection.
+		/// </summary>
 		public bool IsSupersetOf(IEnumerable<T> other) => this.Read().IsSupersetOf(PreferHashSet(other));
 
-		/// <inheritdoc/>
+		/// <summary>
+		/// Check whether <c>this</c> set and the provided collection share any common elements.
+		/// </summary>
 		public bool Overlaps(IEnumerable<T> other) => this.Read().Overlaps(other);
 
-		/// <inheritdoc/>
+		/// <summary>
+		/// Check whether <c>this</c> set and the provided collection contain
+		/// the same elements, ignoring duplicates and the order of the elements.
+		/// </summary>
 		public bool SetEquals(IEnumerable<T> other) => this.Read().SetEquals(PreferHashSet(other));
 
 		/// <summary>
