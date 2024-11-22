@@ -164,11 +164,6 @@ public static class ValueCollectionExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueSet<T>.Builder UnionWith<T>(this ValueSet<T>.Builder builder, ReadOnlySpan<T> items)
 	{
-		if (builder is null)
-		{
-			throw new ArgumentNullException(nameof(builder));
-		}
-
 		return builder.UnionWithSpan(items);
 	}
 
@@ -181,11 +176,6 @@ public static class ValueCollectionExtensions
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueSet<T>.Builder ExceptWith<T>(this ValueSet<T>.Builder builder, ReadOnlySpan<T> items)
 	{
-		if (builder is null)
-		{
-			throw new ArgumentNullException(nameof(builder));
-		}
-
 		return builder.ExceptWithSpan(items);
 	}
 

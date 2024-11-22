@@ -23,8 +23,27 @@ public class ValueSetBuilderTests
     {
         ValueSet<int>.Builder a = [1, 2, 3];
         ValueSet<int>.Builder b = [1, 2, 3];
+        ValueSet<int>.Builder c = b;
 
         Assert.True(a != b);
+        Assert.True(b == c);
+    }
+
+    [Fact]
+    public void Default()
+    {
+        ValueSet<int>.Builder a = default;
+#pragma warning disable CS0618 // Type or member is obsolete
+		ValueSet<int>.Builder b = new();
+#pragma warning restore CS0618 // Type or member is obsolete
+
+		Assert.True(a == b);
+
+        Assert.Equal(0, a.Count);
+        Assert.Equal([], a.ToValueSet());
+
+        Assert.Throws<InvalidOperationException>(() => a.Add(1));
+        Assert.Throws<InvalidOperationException>(() => a.Build());
     }
 
     [Fact]

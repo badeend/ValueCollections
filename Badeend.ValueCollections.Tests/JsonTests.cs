@@ -143,11 +143,11 @@ public abstract class JsonTests
 		Assert.True(set!.Contains(null));
 		Assert.True(set!.Contains("b"));
 
-		var setBuilder = Deserialize<ValueSet<string?>.Builder?>(arrayJson)!;
-		Assert.True(setBuilder!.Count == 3);
-		Assert.True(setBuilder!.Contains("a"));
-		Assert.True(setBuilder!.Contains(null));
-		Assert.True(setBuilder!.Contains("b"));
+		var setBuilder = Deserialize<ValueSet<string?>.Builder>(arrayJson)!;
+		Assert.True(setBuilder.Count == 3);
+		Assert.True(setBuilder.Contains("a"));
+		Assert.True(setBuilder.Contains(null));
+		Assert.True(setBuilder.Contains("b"));
 
 		var systemDictionary = Deserialize<Dictionary<string, string?>?>(objectJson)!;
 		Assert.True(systemDictionary!.Count == 3);

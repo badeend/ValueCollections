@@ -1,4 +1,5 @@
 using System.Collections;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
@@ -28,7 +29,7 @@ public sealed partial class ValueSet<T>
 	/// resulting set.
 	///
 	/// For constructing <see cref="ValueSet{T}"/>s it is recommended to use this
-	/// class over e.g. <see cref="HashSet{T}"/>. This type can avoiding unnecessary
+	/// type over e.g. <see cref="HashSet{T}"/>. This type can avoiding unnecessary
 	/// copying by taking advantage of the immutability of its results. Whereas
 	/// calling <c>.ToValueSet()</c> on a regular <see cref="HashSet{T}"/>
 	/// <em>always</em> performs a full copy.
@@ -40,10 +41,12 @@ public sealed partial class ValueSet<T>
 	/// <see cref="ISet{T}"/>. You can still use these interfaces by
 	/// manually calling <see cref="AsCollection"/> instead.
 	///
-	/// Unlike ValueSet, its Builder is <em>not</em> thread-safe.
+	/// Unlike the resulting ValueSet, its Builder is <em>not</em> thread-safe.
+	///
+	/// The <c>default</c> value is an empty read-only builder.
 	/// </remarks>
 	[CollectionBuilder(typeof(ValueSet), nameof(ValueSet.CreateBuilder))]
-	public sealed class Builder
+	public readonly struct Builder : IEquatable<Builder>
 	{
 		/// <summary>
 		/// Only access this field through .Read() or .Mutate().
@@ -271,6 +274,22 @@ public sealed partial class ValueSet<T>
 			return copy;
 		}
 #endif
+
+		/// <summary>
+		/// Create a new uninitialized builder.
+		///
+		/// An uninitialized builder behaves the same as an already built set
+		/// with 0 items and 0 capacity. Reading from it will succeed, but
+		/// mutating it will throw.
+		///
+		/// This is the same as the <c>default</c> value.
+		/// </summary>
+		[Pure]
+		[Obsolete("This creates an uninitialized builder. Use ValueSet.CreateBuilder<T>() instead.")]
+		[EditorBrowsable(EditorBrowsableState.Never)]
+		public Builder()
+		{
+		}
 
 		private Builder(ValueSet<T> set)
 		{
@@ -801,5 +820,35 @@ public sealed partial class ValueSet<T>
 			builder.Append(']');
 			return builder.ToString();
 		}
+
+		/// <inheritdoc/>
+		[Pure]
+		public override int GetHashCode() => RuntimeHelpers.GetHashCode(this.set);
+
+		/// <summary>
+		/// Returns <see langword="true"/> when the two builders refer to the same allocation.
+		/// </summary>
+		[Pure]
+		public bool Equals(Builder other) => object.ReferenceEquals(this.set, other.set);
+
+#pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
+		/// <inheritdoc/>
+		[Pure]
+		[Obsolete("Avoid boxing. Use == instead.")]
+		[EditorBrowsable(EditorBrowsableState.Never)]
+		public override bool Equals(object? obj) => obj is Builder builder && obj.Equals(builder);
+#pragma warning restore CS0809 // Obsolete member overrides non-obsolete member
+
+		/// <summary>
+		/// Check for equality.
+		/// </summary>
+		[Pure]
+		public static bool operator ==(Builder left, Builder right) => left.Equals(right);
+
+		/// <summary>
+		/// Check for inequality.
+		/// </summary>
+		[Pure]
+		public static bool operator !=(Builder left, Builder right) => !left.Equals(right);
 	}
 }
