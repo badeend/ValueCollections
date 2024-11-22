@@ -801,9 +801,5 @@ public sealed partial class ValueSet<T>
 			builder.Append(']');
 			return builder.ToString();
 		}
-
-		private static InvalidOperationException UnreachableException() => new("Unreachable");
-
-		private static InvalidOperationException BuiltException() => new("Builder has already been built");
 	}
 }
