@@ -14,7 +14,7 @@ public static class ValueCollectionExtensions
 	/// </summary>
 	public static ValueList<T> ToValueList<T>(this IEnumerable<T> items)
 	{
-		return ValueList<T>.CreateImmutableFromEnumerable(items);
+		return ValueList<T>.CreateImmutable(new(items));
 	}
 
 	/// <summary>
