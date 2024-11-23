@@ -540,10 +540,11 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 		}
 
 		var length = leftSpan.Length;
+		var comparer = new DefaultEqualityComparer<T>();
 
 		for (int i = 0; i < length; i++)
 		{
-			if (!EqualityComparer<T>.Default.Equals(leftSpan[i], rightSpan[i]))
+			if (!comparer.Equals(leftSpan[i], rightSpan[i]))
 			{
 				return false;
 			}

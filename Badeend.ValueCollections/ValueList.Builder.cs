@@ -702,7 +702,7 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public Builder RemoveAll(T item)
 		{
-			return this.RemoveAll(x => EqualityComparer<T>.Default.Equals(x, item));
+			return this.RemoveAll(x => new DefaultEqualityComparer<T>().Equals(x, item));
 		}
 
 		/// <summary>
