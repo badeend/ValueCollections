@@ -117,12 +117,25 @@ public static class ValueCollectionExtensions
 		return builder.InsertRangeSpan(index, items);
 	}
 
+	// The returned set should never be mutated!
+	internal static ValueSet<T>? AsValueSetUnsafe<T>(this IEnumerable<T> items) => items switch
+	{
+		ValueSet<T> valueSet => valueSet,
+		ValueSet<T>.Builder.Collection collection => collection.Builder.set,
+		_ => null,
+	};
+
 	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueSet{T}"/>.
 	/// </summary>
 	public static ValueSet<T> ToValueSet<T>(this IEnumerable<T> items)
 	{
-		return ValueSet<T>.CreateImmutableFromEnumerable(items);
+		if (items.AsValueSetUnsafe() is { } valueSet)
+		{
+			return ValueSet<T>.CreateImmutableUnsafe(new(ref valueSet.inner));
+		}
+
+		return ValueSet<T>.CreateImmutableUnsafe(new(items));
 	}
 
 	/// <summary>
@@ -143,10 +156,14 @@ public static class ValueCollectionExtensions
 	/// </remarks>
 	public static ValueSet<T>.Builder ToValueSetBuilder<T>(this IEnumerable<T> items)
 	{
-		return ValueSet<T>.Builder.CreateFromEnumerable(items);
+		if (items.AsValueSetUnsafe() is { } valueSet)
+		{
+			return valueSet.ToBuilder();
+		}
+
+		return ValueSet<T>.Builder.CreateUnsafe(new(items));
 	}
 
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
 	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueSet{T}.Builder"/>
 	/// with a minimum capacity of <paramref name="minimumCapacity"/>.
@@ -167,18 +184,23 @@ public static class ValueCollectionExtensions
 	{
 		if (minimumCapacity < 0)
 		{
-			throw new ArgumentOutOfRangeException(nameof(minimumCapacity));
+			ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.minimumCapacity);
 		}
 
-		var initialCapacity = items switch
+		if (items is ICollection<T> collection)
 		{
-			ICollection<T> collection => Math.Max(minimumCapacity, collection.Count),
-			_ => minimumCapacity,
-		};
+			if (collection is ValueSet<T> valueSet)
+			{
+				return valueSet.ToBuilder(minimumCapacity);
+			}
 
-		return ValueSet.CreateBuilder<T>(initialCapacity).UnionWith(items);
+			minimumCapacity = Math.Max(minimumCapacity, collection.Count);
+		}
+
+		var newInner = new RawSet<T>(minimumCapacity);
+		newInner.UnionWith(items);
+		return ValueSet<T>.Builder.CreateUnsafe(newInner);
 	}
-#endif
 
 	/// <summary>
 	/// Add the <paramref name="items"/> to the set.

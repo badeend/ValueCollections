@@ -3,7 +3,6 @@ using System.ComponentModel;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
 using Badeend.ValueCollections.Internals;
 
 namespace Badeend.ValueCollections;
@@ -18,7 +17,7 @@ public static class ValueSet
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueSet<T> Create<T>(ReadOnlySpan<T> items) => ValueSet<T>.CreateImmutableFromSpan(items);
+	public static ValueSet<T> Create<T>(ReadOnlySpan<T> items) => ValueSet<T>.CreateImmutableUnsafe(new(items));
 
 	/// <summary>
 	/// Create a new empty <see cref="ValueSet{T}.Builder"/>. This builder can
@@ -26,9 +25,8 @@ public static class ValueSet
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueSet<T>.Builder CreateBuilder<T>() => ValueSet<T>.Builder.Create();
+	public static ValueSet<T>.Builder CreateBuilder<T>() => ValueSet<T>.Builder.CreateUnsafe(new());
 
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
 	/// <summary>
 	/// Create a new empty <see cref="ValueSet{T}.Builder"/> with the specified
 	/// initial <paramref name="minimumCapacity"/>. This builder can then be
@@ -39,8 +37,7 @@ public static class ValueSet
 	/// </exception>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueSet<T>.Builder CreateBuilder<T>(int minimumCapacity) => ValueSet<T>.Builder.CreateWithCapacity(minimumCapacity);
-#endif
+	public static ValueSet<T>.Builder CreateBuilder<T>(int minimumCapacity) => ValueSet<T>.Builder.CreateUnsafe(new(minimumCapacity));
 
 	/// <summary>
 	/// Create a new <see cref="ValueSet{T}.Builder"/> with the provided
@@ -48,7 +45,7 @@ public static class ValueSet
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueSet<T>.Builder CreateBuilder<T>(ReadOnlySpan<T> items) => ValueSet<T>.Builder.CreateFromSpan(items);
+	public static ValueSet<T>.Builder CreateBuilder<T>(ReadOnlySpan<T> items) => ValueSet<T>.Builder.CreateUnsafe(new(items));
 }
 
 /// <summary>
@@ -83,24 +80,18 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	/// This does not allocate any memory.
 	/// </summary>
 	[Pure]
-	public static ValueSet<T> Empty { get; } = new(new HashSet<T>(), BuilderState.InitialImmutable);
+	public static ValueSet<T> Empty { get; } = new(new(), BuilderState.InitialImmutable);
 
-	private HashSet<T> items;
+#pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
+#pragma warning disable SA1401 // Fields should be private
+
+	internal RawSet<T> inner;
 
 	// See the BuilderState utility class for more info.
 	private int state;
 
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
-	internal int Capacity
-	{
-		[Pure]
-#if NET9_0_OR_GREATER
-		get => this.items.Capacity;
-#else
-		get => this.items.EnsureCapacity(0);
-#endif
-	}
-#endif
+#pragma warning restore SA1401 // Fields should be private
+#pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
 
 	/// <summary>
 	/// Number of items in the set.
@@ -109,7 +100,7 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	public int Count
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		get => this.items.Count;
+		get => this.inner.Count;
 	}
 
 	/// <summary>
@@ -119,97 +110,30 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	public bool IsEmpty
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		get => this.items.Count == 0;
+		get => this.inner.Count == 0;
 	}
 
 	/// <inheritdoc/>
 	bool ICollection<T>.IsReadOnly => true;
 
-	private ValueSet(HashSet<T> items, int state)
+	private ValueSet(RawSet<T> inner, int state)
 	{
-		this.items = items;
+		this.inner = inner;
 		this.state = state;
 	}
 
-	internal static ValueSet<T> CreateImmutableFromEnumerable(IEnumerable<T> items)
+	internal static ValueSet<T> CreateImmutableUnsafe(RawSet<T> inner)
 	{
-		if (items is ICollection collection)
-		{
-			if (collection.Count == 0)
-			{
-				return Empty;
-			}
-
-			if (collection is ValueSet<T> set)
-			{
-				return set;
-			}
-		}
-
-		return new(new HashSet<T>(items), BuilderState.InitialImmutable);
-	}
-
-	internal static ValueSet<T> CreateImmutableFromSpan(ReadOnlySpan<T> items)
-	{
-		if (items.Length == 0)
+		if (inner.Count == 0)
 		{
 			return Empty;
 		}
 
-		return new(SpanToHashSet(items), BuilderState.InitialImmutable);
+		return new(inner, BuilderState.InitialImmutable);
 	}
 
-	private static ValueSet<T> CreateMutable()
-	{
-		return new(new HashSet<T>(), BuilderState.InitialMutable);
-	}
-
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
-	private static ValueSet<T> CreateMutableWithCapacity(int minimumCapacity)
-	{
-		return new(new HashSet<T>(minimumCapacity), BuilderState.InitialMutable);
-	}
-#endif
-
-	private static ValueSet<T> CreateMutableFromEnumerable(IEnumerable<T> items)
-	{
-		return new(new HashSet<T>(items), BuilderState.InitialMutable);
-	}
-
-	private static ValueSet<T> CreateMutableFromSpan(ReadOnlySpan<T> items)
-	{
-		return new(SpanToHashSet(items), BuilderState.InitialMutable);
-	}
-
-	private static HashSet<T> SpanToHashSet(ReadOnlySpan<T> items)
-	{
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
-		var set = new HashSet<T>(items.Length);
-
-		foreach (var item in items)
-		{
-			set.Add(item);
-		}
-
-		const int TrimThresholdAbsolute = 16;
-		const int TrimThresholdRatio = 2;
-		if (items.Length > TrimThresholdAbsolute && items.Length / set.Count >= TrimThresholdRatio)
-		{
-			set.TrimExcess();
-		}
-
-		return set;
-#else
-		var set = new HashSet<T>();
-
-		foreach (var item in items)
-		{
-			set.Add(item);
-		}
-
-		return set;
-#endif
-	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static ValueSet<T> CreateMutableUnsafe(RawSet<T> inner) => new(inner, BuilderState.InitialMutable);
 
 	/// <summary>
 	/// Create a new <see cref="Builder"/> with this set as its
@@ -221,9 +145,9 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	/// set. How much larger exactly is undefined.
 	/// </remarks>
 	[Pure]
-	public Builder ToBuilder() => Builder.CreateFromEnumerable(this.items);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public Builder ToBuilder() => Builder.CreateUnsafe(new(ref this.inner));
 
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
 	/// <summary>
 	/// Create a new <see cref="Builder"/> with a capacity of at
 	/// least <paramref name="minimumCapacity"/> and with this set as its
@@ -247,14 +171,20 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	{
 		if (minimumCapacity < 0)
 		{
-			throw new ArgumentOutOfRangeException(nameof(minimumCapacity));
+			ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.minimumCapacity);
 		}
 
-		var capacity = Math.Max(minimumCapacity, this.Count);
-
-		return ValueSet.CreateBuilder<T>(capacity).UnionWith(this.items);
+		if (minimumCapacity <= this.Count)
+		{
+			return Builder.CreateUnsafe(new(ref this.inner));
+		}
+		else
+		{
+			var newInner = new RawSet<T>(minimumCapacity);
+			newInner.UnionWith(ref this.inner);
+			return Builder.CreateUnsafe(newInner);
+		}
 	}
-#endif
 
 	/// <summary>
 	/// Copy the contents of the set into an existing <see cref="Span{T}"/>.
@@ -265,20 +195,8 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	/// <remarks>
 	/// The order in which the elements are copied is undefined.
 	/// </remarks>
-	public void CopyTo(Span<T> destination)
-	{
-		if (destination.Length < this.Count)
-		{
-			throw new ArgumentException("Destination too short", nameof(destination));
-		}
-
-		var index = 0;
-		foreach (var item in this)
-		{
-			destination[index] = item;
-			index++;
-		}
-	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public void CopyTo(Span<T> destination) => this.inner.CopyTo(destination);
 
 	/// <inheritdoc/>
 	void ICollection<T>.CopyTo(T[] array, int arrayIndex)
@@ -296,72 +214,85 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	/// <paramref name="item"/>.
 	/// </summary>
 	[Pure]
-	public bool Contains(T item) => this.items.Contains(item);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public bool Contains(T item) => this.inner.Contains(item);
 
 	/// <inheritdoc/>
 	public bool IsSubsetOf(IEnumerable<T> other)
 	{
-		if (other is ValueSet<T> otherSet)
+		if (other.AsValueSetUnsafe() is { } otherSet)
 		{
-			return this.items.IsSubsetOf(otherSet.items);
+			return this.inner.IsSubsetOf(ref otherSet.inner);
 		}
-
-		return this.items.IsSubsetOf(other);
+		else
+		{
+			return this.inner.IsSubsetOf(other);
+		}
 	}
 
 	/// <inheritdoc/>
 	public bool IsSupersetOf(IEnumerable<T> other)
 	{
-		if (other is ValueSet<T> otherSet)
+		if (other.AsValueSetUnsafe() is { } otherSet)
 		{
-			return this.items.IsSupersetOf(otherSet.items);
+			return this.inner.IsSupersetOf(ref otherSet.inner);
 		}
-
-		return this.items.IsSupersetOf(other);
+		else
+		{
+			return this.inner.IsSupersetOf(other);
+		}
 	}
 
 	/// <inheritdoc/>
 	public bool IsProperSupersetOf(IEnumerable<T> other)
 	{
-		if (other is ValueSet<T> otherSet)
+		if (other.AsValueSetUnsafe() is { } otherSet)
 		{
-			return this.items.IsProperSupersetOf(otherSet.items);
+			return this.inner.IsProperSupersetOf(ref otherSet.inner);
 		}
-
-		return this.items.IsProperSupersetOf(other);
+		else
+		{
+			return this.inner.IsProperSupersetOf(other);
+		}
 	}
 
 	/// <inheritdoc/>
 	public bool IsProperSubsetOf(IEnumerable<T> other)
 	{
-		if (other is ValueSet<T> otherSet)
+		if (other.AsValueSetUnsafe() is { } otherSet)
 		{
-			return this.items.IsProperSubsetOf(otherSet.items);
+			return this.inner.IsProperSubsetOf(ref otherSet.inner);
 		}
-
-		return this.items.IsProperSubsetOf(other);
+		else
+		{
+			return this.inner.IsProperSubsetOf(other);
+		}
 	}
 
 	/// <inheritdoc/>
 	public bool Overlaps(IEnumerable<T> other)
 	{
-		if (other is ValueSet<T> otherSet)
+		if (other.AsValueSetUnsafe() is { } otherSet)
 		{
-			return this.items.Overlaps(otherSet.items);
+			return this.inner.Overlaps(ref otherSet.inner);
 		}
-
-		return this.items.Overlaps(other);
+		else
+		{
+			return this.inner.Overlaps(other);
+		}
 	}
 
 	/// <inheritdoc/>
 	public bool SetEquals(IEnumerable<T> other)
 	{
-		if (other is ValueSet<T> otherSet)
+		if (other.AsValueSetUnsafe() is { } otherSet)
 		{
-			return this.items.SetEquals(otherSet.items);
+			return this.inner.SetEquals(ref otherSet.inner);
 		}
-
-		return this.items.SetEquals(other);
+		else
+		{
+			return this.inner.SetEquals(other);
+		}
 	}
 
 	/// <inheritdoc/>
@@ -373,24 +304,7 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 			return hashCode;
 		}
 
-		return BuilderState.AdjustAndStoreHashCode(ref this.state, this.ComputeHashCode());
-	}
-
-	private int ComputeHashCode()
-	{
-		var contentHasher = new UnorderedHashCode();
-
-		foreach (var item in this.items)
-		{
-			contentHasher.Add(item);
-		}
-
-		var hasher = new HashCode();
-		hasher.Add(typeof(ValueSet<T>));
-		hasher.Add(this.Count);
-		hasher.AddUnordered(ref contentHasher);
-
-		return hasher.ToHashCode();
+		return BuilderState.AdjustAndStoreHashCode(ref this.state, RawSet.GetSequenceHashCode(ref this.inner));
 	}
 
 	/// <summary>
@@ -398,6 +312,7 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	/// and content.
 	/// </summary>
 	[Pure]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool Equals(ValueSet<T>? other) => EqualsUtil(this, other);
 
 #pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
@@ -412,40 +327,29 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	/// Check for equality.
 	/// </summary>
 	[Pure]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool operator ==(ValueSet<T>? left, ValueSet<T>? right) => EqualsUtil(left, right);
 
 	/// <summary>
 	/// Check for inequality.
 	/// </summary>
 	[Pure]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool operator !=(ValueSet<T>? left, ValueSet<T>? right) => !EqualsUtil(left, right);
 
 	private static bool EqualsUtil(ValueSet<T>? left, ValueSet<T>? right)
 	{
-		if (object.ReferenceEquals(left, right))
+		if (left is null)
 		{
-			return true;
+			return right is null;
 		}
 
-		if (left is null || right is null)
-		{
-			return false;
-		}
-
-		if (left.Count != right.Count)
+		if (right is null)
 		{
 			return false;
 		}
 
-		foreach (var item in left.items)
-		{
-			if (!right.items.Contains(item))
-			{
-				return false;
-			}
-		}
-
-		return true;
+		return left.inner.SetEquals(ref right.inner);
 	}
 
 	/// <summary>
@@ -480,22 +384,25 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 #pragma warning disable CA1034 // Nested types should not be visible
 #pragma warning disable CA1815 // Override equals and operator equals on value types
 	[StructLayout(LayoutKind.Auto)]
-	public struct Enumerator : IEnumeratorLike<T>
+	public struct Enumerator : IRefEnumeratorLike<T>
 	{
-		private ShufflingHashSetEnumerator<T> inner;
+		private RawSet<T>.Enumerator inner;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal Enumerator(ValueSet<T> set)
 		{
-			this.inner = new(set.items, initialSeed: 0);
+			this.inner = set.inner.GetEnumerator();
 		}
 
 		/// <inheritdoc/>
-		public T Current
+		public readonly ref readonly T Current
 		{
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			get => this.inner.Current;
+			get => ref this.inner.Current;
 		}
+
+		/// <inheritdoc/>
+		readonly T IEnumeratorLike<T>.Current => this.Current;
 
 		/// <inheritdoc/>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -509,33 +416,7 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	/// The format is not stable and may change without prior notice.
 	/// </summary>
 	[Pure]
-	public override string ToString()
-	{
-		if (this.Count == 0)
-		{
-			return "[]";
-		}
-
-		var builder = new StringBuilder();
-		builder.Append('[');
-
-		var index = 0;
-		foreach (var item in this)
-		{
-			if (index > 0)
-			{
-				builder.Append(", ");
-			}
-
-			var itemString = item?.ToString() ?? "null";
-			builder.Append(itemString);
-
-			index++;
-		}
-
-		builder.Append(']');
-		return builder.ToString();
-	}
+	public override string ToString() => this.inner.ToString();
 
 	/// <inheritdoc/>
 	void ICollection<T>.Add(T item) => throw CreateImmutableException();

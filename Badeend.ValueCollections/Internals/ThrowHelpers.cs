@@ -8,6 +8,7 @@ internal static class ThrowHelpers
 	internal enum Argument
 	{
 		minimumCapacity,
+		targetCapacity,
 		value,
 		index,
 		offset,
@@ -19,6 +20,8 @@ internal static class ThrowHelpers
 		items,
 		array,
 		source,
+		other,
+		destination,
 	}
 
 	[DoesNotReturn]
@@ -26,6 +29,9 @@ internal static class ThrowHelpers
 
 	[DoesNotReturn]
 	internal static void ThrowArgumentNullException(Argument argument) => throw new ArgumentNullException(Polyfills.GetEnumName(argument));
+
+	[DoesNotReturn]
+	internal static void ThrowArgumentException_DestinationTooShort(Argument argument) => throw new ArgumentException("Destination too short", Polyfills.GetEnumName(argument));
 
 	[DoesNotReturn]
 	internal static void ThrowArgumentException_InvalidOffsetOrLength() => throw new ArgumentException("Invalid offset + length.");
@@ -40,5 +46,11 @@ internal static class ThrowHelpers
 	internal static void ThrowInvalidOperationException_CollectionModifiedDuringEnumeration() => throw new InvalidOperationException("Collection was modified during enumeration.");
 
 	[DoesNotReturn]
+	internal static void ThrowInvalidOperationException_ConcurrentOperationsNotSupported() => throw new InvalidOperationException("Concurrent access detected. The collection's state is corrupted.");
+
+	[DoesNotReturn]
 	internal static void ThrowNotSupportedException_CollectionImmutable() => throw new NotSupportedException("Collection is immutable");
+
+	[DoesNotReturn]
+	internal static void ThrowNotSupportedException_CapacityOverflow() => throw new NotSupportedException("Capacity overflowed.");
 }

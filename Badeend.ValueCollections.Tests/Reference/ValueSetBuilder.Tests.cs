@@ -96,7 +96,6 @@ namespace Badeend.ValueCollections.Tests.Reference
             Assert.Throws<ArgumentNullException>(() => ((IEnumerable<T>)null!).ToValueSetBuilder());
         }
 
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
         [Theory]
         [InlineData(1)]
         [InlineData(100)]
@@ -119,7 +118,6 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             Assert.True(afterCapacity > initialCapacity);
         }
-#endif
 
         
 
@@ -164,8 +162,6 @@ namespace Badeend.ValueCollections.Tests.Reference
             Assert.Throws<ArgumentNullException>(() => set.RemoveWhere(null));
         }
 
-        
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
         [Theory]
         [InlineData(1, -1)]
         [InlineData(2, 1)]
@@ -210,7 +206,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             Assert.True(set.Capacity >= initialCapacity);
             Assert.Equal(initialCount, set.Count);
         }
-#endif
+
         [Theory]
         [MemberData(nameof(ValidCollectionSizes))]
         public void ValueSetBuilder_Generic_TrimExcess_OnValidSetThatHasntBeenRemovedFrom(int setLength)
@@ -294,7 +290,6 @@ namespace Badeend.ValueCollections.Tests.Reference
             Assert.NotNull(iset);
         }
 
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
         [Theory]
         [MemberData(nameof(ValidCollectionSizes))]
         public void ValueSetBuilder_Generic_Constructor_int(int capacity)
@@ -331,15 +326,15 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void ValueSetBuilder_Generic_Constructor_int_Negative_ThrowsArgumentOutOfRangeException()
         {
-            AssertExtensions.Throws<ArgumentOutOfRangeException>("capacity", () => ValueSet.CreateBuilder<T>(-1));
-            AssertExtensions.Throws<ArgumentOutOfRangeException>("capacity", () => ValueSet.CreateBuilder<T>(int.MinValue));
+            AssertExtensions.Throws<ArgumentOutOfRangeException>("minimumCapacity", () => ValueSet.CreateBuilder<T>(-1));
+            AssertExtensions.Throws<ArgumentOutOfRangeException>("minimumCapacity", () => ValueSet.CreateBuilder<T>(int.MinValue));
         }
 
         [Fact]
         public void EnsureCapacity_Generic_NegativeCapacityRequested_Throws()
         {
             var set = ValueSet.CreateBuilder<T>();
-            AssertExtensions.Throws<ArgumentOutOfRangeException>("capacity", () => set.EnsureCapacity(-1));
+            AssertExtensions.Throws<ArgumentOutOfRangeException>("minimumCapacity", () => set.EnsureCapacity(-1));
         }
 
         [Fact]
@@ -479,19 +474,16 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             return set;
         }
-#endif
 
     }
 
     file static class ValueSetBuilderExtensions
     {
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
         internal static int EnsureAndGetCapacity<T>(this ValueSet<T>.Builder builder, int capacity)
         {
             builder.EnsureCapacity(capacity);
             return builder.Capacity;
         }
-#endif
 
         internal static int RemoveAndCountWhere<T>(this ValueSet<T>.Builder builder, Predicate<T> match)
         {
