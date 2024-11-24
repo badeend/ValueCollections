@@ -17,7 +17,7 @@ public static class ValueList
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueList<T> Create<T>(ReadOnlySpan<T> items) => ValueList<T>.CreateImmutable(new(items));
+	public static ValueList<T> Create<T>(ReadOnlySpan<T> items) => ValueList<T>.CreateImmutableUnsafe(new(items));
 
 	/// <summary>
 	/// Create a new empty <see cref="ValueList{T}.Builder"/>. This builder can
@@ -44,7 +44,6 @@ public static class ValueList
 	/// <paramref name="items"/> as its initial content.
 	/// </summary>
 	[Pure]
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueList<T>.Builder CreateBuilder<T>(ReadOnlySpan<T> items)
 	{
 		var builder = CreateBuilder<T>(items.Length);
@@ -130,13 +129,15 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 		set => ThrowHelpers.ThrowNotSupportedException_CollectionImmutable();
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private ValueList(RawList<T> inner, int state)
 	{
 		this.inner = inner;
 		this.state = state;
 	}
 
-	internal static ValueList<T> CreateImmutable(RawList<T> inner)
+	// This takes ownership of the RawList.
+	internal static ValueList<T> CreateImmutableUnsafe(RawList<T> inner)
 	{
 		if (inner.Count == 0)
 		{
@@ -146,8 +147,9 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 		return new(inner, BuilderState.InitialImmutable);
 	}
 
+	// This takes ownership of the RawList.
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal static ValueList<T> CreateMutable(RawList<T> inner) => new(inner, BuilderState.InitialMutable);
+	internal static ValueList<T> CreateMutableUnsafe(RawList<T> inner) => new(inner, BuilderState.InitialMutable);
 
 	/// <summary>
 	/// Access the list's contents using a <see cref="ValueSlice{T}"/>.

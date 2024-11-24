@@ -53,6 +53,7 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 		}
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal RawList(T[] items, int size)
 	{
 		Debug.Assert(items is not null);
@@ -63,6 +64,7 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 		this.size = size;
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public RawList()
 	{
 		this.items = Array.Empty<T>();

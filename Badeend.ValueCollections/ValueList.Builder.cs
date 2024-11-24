@@ -96,7 +96,7 @@ public sealed partial class ValueList<T>
 			}
 			else
 			{
-				return ValueList<T>.CreateImmutable(new(ref list.inner));
+				return ValueList<T>.CreateImmutableUnsafe(new(ref list.inner));
 			}
 		}
 
@@ -205,12 +205,12 @@ public sealed partial class ValueList<T>
 
 		internal static Builder Create()
 		{
-			return new(ValueList<T>.CreateMutable(new()));
+			return new(ValueList<T>.CreateMutableUnsafe(new()));
 		}
 
 		internal static Builder CreateWithCapacity(int minimumCapacity)
 		{
-			return new(ValueList<T>.CreateMutable(new(minimumCapacity)));
+			return new(ValueList<T>.CreateMutableUnsafe(new(minimumCapacity)));
 		}
 
 		internal static Builder CreateFromEnumerable(IEnumerable<T> items)
@@ -220,7 +220,7 @@ public sealed partial class ValueList<T>
 				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.items);
 			}
 
-			return new(ValueList<T>.CreateMutable(new(items)));
+			return new(ValueList<T>.CreateMutableUnsafe(new(items)));
 		}
 
 		private bool IsSelf(IEnumerable<T> items)

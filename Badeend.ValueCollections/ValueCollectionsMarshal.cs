@@ -28,7 +28,7 @@ public static class ValueCollectionsMarshal
 	/// > Ownership of the array is moved into the ValueList. It is the caller's
 	/// responsibility to never mutate the array ever again.
 	/// </summary>
-	public static ValueList<T> AsValueList<T>(T[] items) => ValueList<T>.CreateImmutable(RawList.CreateFromArrayUnsafe(items, items.Length));
+	public static ValueList<T> AsValueList<T>(T[] items) => ValueList<T>.CreateImmutableUnsafe(RawList.CreateFromArrayUnsafe(items, items.Length));
 
 	/// <summary>
 	/// Update the count of the <paramref name="builder"/>.
