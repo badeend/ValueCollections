@@ -278,7 +278,7 @@ public sealed partial class ValueList<T>
 				// infinite memory growth.
 				// We "protect" our consumers from this by invalidating the enumerator
 				// on each iteration such that an exception will be thrown.
-				this.Add(item);
+				this.Mutate().inner.Add(item);
 			}
 		}
 
@@ -336,7 +336,7 @@ public sealed partial class ValueList<T>
 				// infinite memory growth.
 				// We "protect" our consumers from this by invalidating the enumerator
 				// on each iteration such that an exception will be thrown.
-				this.Insert(index++, item);
+				this.Mutate().inner.Insert(index++, item);
 			}
 		}
 
