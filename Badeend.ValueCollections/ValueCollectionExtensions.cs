@@ -10,12 +10,20 @@ namespace Badeend.ValueCollections;
 /// </summary>
 public static class ValueCollectionExtensions
 {
+	// The returned list should never be mutated!
+	internal static ValueList<T>? AsValueListUnsafe<T>(this IEnumerable<T> items) => items switch
+	{
+		ValueList<T> valueList => valueList,
+		ValueList<T>.Builder.Collection collection => collection.Builder.list,
+		_ => null,
+	};
+
 	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueList{T}"/>.
 	/// </summary>
 	public static ValueList<T> ToValueList<T>(this IEnumerable<T> items)
 	{
-		if (items is ValueList<T> valueList)
+		if (items.AsValueListUnsafe() is { } valueList)
 		{
 			return ValueList<T>.CreateImmutableUnsafe(new(ref valueList.inner));
 		}
@@ -41,7 +49,7 @@ public static class ValueCollectionExtensions
 	/// </remarks>
 	public static ValueList<T>.Builder ToValueListBuilder<T>(this IEnumerable<T> items)
 	{
-		if (items is ValueList<T> valueList)
+		if (items.AsValueListUnsafe() is { } valueList)
 		{
 			return valueList.ToBuilder();
 		}

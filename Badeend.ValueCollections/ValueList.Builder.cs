@@ -5,7 +5,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
 using Badeend.ValueCollections.Internals;
 
 namespace Badeend.ValueCollections;
@@ -43,10 +42,16 @@ public sealed partial class ValueList<T>
 	[CollectionBuilder(typeof(ValueList), nameof(ValueList.CreateBuilder))]
 	public readonly struct Builder : IEquatable<Builder>
 	{
+#pragma warning disable SA1304 // Non-private readonly fields should begin with upper-case letter
+#pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
+
 		/// <summary>
 		/// Only access this field through .Read() or .Mutate().
 		/// </summary>
-		private readonly ValueList<T>? list;
+		internal readonly ValueList<T>? list;
+
+#pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
+#pragma warning restore SA1304 // Non-private readonly fields should begin with upper-case letter
 
 		/// <summary>
 		/// Returns <see langword="true"/> when this instance has been built and is
@@ -209,11 +214,6 @@ public sealed partial class ValueList<T>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static Builder CreateUnsafe(RawList<T> inner) => new(ValueList<T>.CreateMutableUnsafe(inner));
 
-		private bool IsSelf(IEnumerable<T> items)
-		{
-			return items is Builder.Collection collection && collection.Builder.list == this.list;
-		}
-
 		/// <summary>
 		/// Replaces an element at a given position in the list with the specified
 		/// element.
@@ -251,9 +251,9 @@ public sealed partial class ValueList<T>
 		{
 			var list = this.Mutate();
 
-			if (this.IsSelf(items))
+			if (items.AsValueListUnsafe() is { } otherList)
 			{
-				list.inner.AddSelf();
+				list.inner.AddRange(ref otherList.inner);
 			}
 			else
 			{
@@ -309,9 +309,9 @@ public sealed partial class ValueList<T>
 		{
 			var list = this.Mutate();
 
-			if (this.IsSelf(items))
+			if (items.AsValueListUnsafe() is { } otherList)
 			{
-				list.inner.InsertSelf(index);
+				list.inner.InsertRange(index, ref otherList.inner);
 			}
 			else
 			{

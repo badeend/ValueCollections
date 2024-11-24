@@ -188,8 +188,6 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 		this.items[size] = item;
 	}
 
-	internal void AddSelf() => this.AddRange(this.AsSpan());
-
 	internal void AddRange(ref readonly RawList<T> items) => this.AddRange(items.AsSpan());
 
 	internal void AddRange(ReadOnlySpan<T> items)
@@ -273,7 +271,19 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 		this.size++;
 	}
 
-	internal void InsertSelf(int index)
+	internal void InsertRange(int index, ref readonly RawList<T> other)
+	{
+		if (this.items == other.items)
+		{
+			this.InsertSelf(index);
+		}
+		else
+		{
+			this.InsertRange(index, other.AsSpan());
+		}
+	}
+
+	private void InsertSelf(int index)
 	{
 		if (this.Count == 0)
 		{
@@ -301,8 +311,6 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 
 		this.size += this.size;
 	}
-
-	internal void InsertRange(int index, ref readonly RawList<T> items) => this.InsertRange(index, items.AsSpan());
 
 	internal void InsertRange(int index, ReadOnlySpan<T> items)
 	{
