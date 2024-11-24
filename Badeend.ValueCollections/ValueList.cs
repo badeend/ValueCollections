@@ -25,7 +25,7 @@ public static class ValueList
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueList<T>.Builder CreateBuilder<T>() => ValueList<T>.Builder.Create();
+	public static ValueList<T>.Builder CreateBuilder<T>() => ValueList<T>.Builder.CreateUnsafe(new());
 
 	/// <summary>
 	/// Create a new empty <see cref="ValueList{T}.Builder"/> with the specified
@@ -37,7 +37,7 @@ public static class ValueList
 	/// </exception>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueList<T>.Builder CreateBuilder<T>(int minimumCapacity) => ValueList<T>.Builder.CreateWithCapacity(minimumCapacity);
+	public static ValueList<T>.Builder CreateBuilder<T>(int minimumCapacity) => ValueList<T>.Builder.CreateUnsafe(new(minimumCapacity));
 
 	/// <summary>
 	/// Create a new <see cref="ValueList{T}.Builder"/> with the provided

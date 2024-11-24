@@ -196,6 +196,8 @@ public sealed partial class ValueList<T>
 		{
 		}
 
+		// This takes ownership of the ValueList
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private Builder(ValueList<T> list)
 		{
 			Debug.Assert(BuilderState.IsMutable(list.state));
@@ -203,25 +205,9 @@ public sealed partial class ValueList<T>
 			this.list = list;
 		}
 
-		internal static Builder Create()
-		{
-			return new(ValueList<T>.CreateMutableUnsafe(new()));
-		}
-
-		internal static Builder CreateWithCapacity(int minimumCapacity)
-		{
-			return new(ValueList<T>.CreateMutableUnsafe(new(minimumCapacity)));
-		}
-
-		internal static Builder CreateFromEnumerable(IEnumerable<T> items)
-		{
-			if (items is null)
-			{
-				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.items);
-			}
-
-			return new(ValueList<T>.CreateMutableUnsafe(new(items)));
-		}
+		// This takes ownership of the RawList
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static Builder CreateUnsafe(RawList<T> inner) => new(ValueList<T>.CreateMutableUnsafe(inner));
 
 		private bool IsSelf(IEnumerable<T> items)
 		{

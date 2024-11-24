@@ -35,7 +35,7 @@ public static class ValueCollectionExtensions
 	/// </remarks>
 	public static ValueList<T>.Builder ToValueListBuilder<T>(this IEnumerable<T> items)
 	{
-		return ValueList<T>.Builder.CreateFromEnumerable(items);
+		return ValueList<T>.Builder.CreateUnsafe(new(items));
 	}
 
 	/// <summary>
