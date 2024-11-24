@@ -37,13 +37,6 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 		get => this.size;
 	}
 
-	[Pure]
-	public bool IsEmpty
-	{
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		get => this.size == 0;
-	}
-
 	public readonly ref T this[int index]
 	{
 		[Pure]
@@ -268,7 +261,7 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 
 	internal void InsertSelf(int index)
 	{
-		if (this.IsEmpty)
+		if (this.Count == 0)
 		{
 			return;
 		}

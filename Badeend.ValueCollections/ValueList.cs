@@ -104,7 +104,7 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	public bool IsEmpty
 	{
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		get => this.inner.IsEmpty;
+		get => this.inner.Count == 0;
 	}
 
 	/// <inheritdoc/>
@@ -138,7 +138,7 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 
 	internal static ValueList<T> CreateImmutable(RawList<T> inner)
 	{
-		if (inner.IsEmpty)
+		if (inner.Count == 0)
 		{
 			return Empty;
 		}
