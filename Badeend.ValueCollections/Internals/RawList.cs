@@ -210,7 +210,7 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 
 	// Appending the list onto itself through this method is unsupported.
 	// This may happen when the IEnumerable is implemented in terms of this RawList.
-	internal bool TryAddRange([NotNull] IEnumerable<T> items)
+	internal bool TryAddNonEnumeratedRange(IEnumerable<T> items)
 	{
 		if (items is null)
 		{
@@ -238,6 +238,18 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 		this.size += count; // Update size _after_ copying, to handle the case in which we're inserting the list into itself.
 
 		return true;
+	}
+
+	// Does not check/guard against concurrent mutation during enumeration!
+	internal void AddRange(IEnumerable<T> items)
+	{
+		if (!this.TryAddNonEnumeratedRange(items))
+		{
+			foreach (var item in items)
+			{
+				this.Add(item);
+			}
+		}
 	}
 
 	internal void Insert(int index, T item)
@@ -324,7 +336,7 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 
 	// Inserting the list into itself through this method is unsupported.
 	// This may happen when the IEnumerable is implemented in terms of this RawList.
-	internal bool TryInsertRange(int index, [NotNull] IEnumerable<T> items)
+	internal bool TryInsertNonEnumeratedRange(int index, IEnumerable<T> items)
 	{
 		if (items is null)
 		{
@@ -362,6 +374,18 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 		this.size += count;
 
 		return true;
+	}
+
+	// Does not check/guard against concurrent mutation during enumeration!
+	internal void InsertRange(int index, IEnumerable<T> items)
+	{
+		if (!this.TryInsertNonEnumeratedRange(index, items))
+		{
+			foreach (var item in items)
+			{
+				this.Insert(index++, item);
+			}
+		}
 	}
 
 	internal void Clear()

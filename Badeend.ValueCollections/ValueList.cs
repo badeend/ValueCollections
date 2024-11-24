@@ -44,12 +44,8 @@ public static class ValueList
 	/// <paramref name="items"/> as its initial content.
 	/// </summary>
 	[Pure]
-	public static ValueList<T>.Builder CreateBuilder<T>(ReadOnlySpan<T> items)
-	{
-		var builder = CreateBuilder<T>(items.Length);
-		builder.AddRange(items);
-		return builder;
-	}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ValueList<T>.Builder CreateBuilder<T>(ReadOnlySpan<T> items) => ValueList<T>.Builder.CreateUnsafe(new(items));
 }
 
 /// <summary>
@@ -81,10 +77,16 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	[Pure]
 	public static ValueList<T> Empty { get; } = new(new(), BuilderState.InitialImmutable);
 
-	private RawList<T> inner;
+#pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
+#pragma warning disable SA1401 // Fields should be private
+
+	internal RawList<T> inner;
 
 	// See the BuilderState utility class for more info.
 	private int state;
+
+#pragma warning restore SA1401 // Fields should be private
+#pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
 
 	/// <summary>
 	/// Length of the list.
@@ -239,7 +241,7 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	/// list. How much larger exactly is undefined.
 	/// </remarks>
 	[Pure]
-	public Builder ToBuilder() => ValueList.CreateBuilder(this.AsSpan());
+	public Builder ToBuilder() => Builder.CreateUnsafe(new(ref this.inner));
 
 	/// <summary>
 	/// Create a new <see cref="ValueList{T}.Builder"/> with a capacity of at
@@ -265,9 +267,16 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 			ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.minimumCapacity);
 		}
 
-		var capacity = Math.Max(minimumCapacity, this.Count);
-
-		return ValueList.CreateBuilder<T>(capacity).AddRange(this.AsSpan());
+		if (minimumCapacity <= this.Count)
+		{
+			return Builder.CreateUnsafe(new(ref this.inner));
+		}
+		else
+		{
+			var newInner = new RawList<T>(minimumCapacity);
+			newInner.AddRange(ref this.inner);
+			return Builder.CreateUnsafe(newInner);
+		}
 	}
 
 	/// <summary>

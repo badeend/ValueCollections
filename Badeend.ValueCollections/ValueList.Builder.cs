@@ -108,7 +108,7 @@ public sealed partial class ValueList<T>
 		{
 			var list = this.Read();
 
-			return ValueList.CreateBuilder<T>(list.Count).AddRange(list.AsSpan());
+			return ValueList<T>.Builder.CreateUnsafe(new(ref list.inner));
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -257,7 +257,7 @@ public sealed partial class ValueList<T>
 			}
 			else
 			{
-				if (!list.inner.TryAddRange(items))
+				if (!list.inner.TryAddNonEnumeratedRange(items))
 				{
 					this.AddRangeSlow(items);
 				}
@@ -315,7 +315,7 @@ public sealed partial class ValueList<T>
 			}
 			else
 			{
-				if (!list.inner.TryInsertRange(index, items))
+				if (!list.inner.TryInsertNonEnumeratedRange(index, items))
 				{
 					this.InsertRangeSlow(index, items);
 				}

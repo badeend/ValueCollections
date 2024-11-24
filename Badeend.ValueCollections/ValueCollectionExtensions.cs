@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using Badeend.ValueCollections.Internals;
 
 namespace Badeend.ValueCollections;
 
@@ -14,6 +15,11 @@ public static class ValueCollectionExtensions
 	/// </summary>
 	public static ValueList<T> ToValueList<T>(this IEnumerable<T> items)
 	{
+		if (items is ValueList<T> valueList)
+		{
+			return ValueList<T>.CreateImmutableUnsafe(new(ref valueList.inner));
+		}
+
 		return ValueList<T>.CreateImmutableUnsafe(new(items));
 	}
 
@@ -35,6 +41,11 @@ public static class ValueCollectionExtensions
 	/// </remarks>
 	public static ValueList<T>.Builder ToValueListBuilder<T>(this IEnumerable<T> items)
 	{
+		if (items is ValueList<T> valueList)
+		{
+			return valueList.ToBuilder();
+		}
+
 		return ValueList<T>.Builder.CreateUnsafe(new(items));
 	}
 
@@ -56,16 +67,22 @@ public static class ValueCollectionExtensions
 	{
 		if (minimumCapacity < 0)
 		{
-			throw new ArgumentOutOfRangeException(nameof(minimumCapacity));
+			ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.minimumCapacity);
 		}
 
-		var initialCapacity = items switch
+		if (items is ICollection<T> collection)
 		{
-			ICollection<T> collection => Math.Max(minimumCapacity, collection.Count),
-			_ => minimumCapacity,
-		};
+			if (collection is ValueList<T> valueList)
+			{
+				return valueList.ToBuilder(minimumCapacity);
+			}
 
-		return ValueList.CreateBuilder<T>(initialCapacity).AddRange(items);
+			minimumCapacity = Math.Max(minimumCapacity, collection.Count);
+		}
+
+		var newInner = new RawList<T>(minimumCapacity);
+		newInner.AddRange(items);
+		return ValueList<T>.Builder.CreateUnsafe(newInner);
 	}
 
 	/// <summary>
