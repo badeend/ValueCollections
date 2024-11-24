@@ -163,8 +163,6 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	/// set.ToBuilder().EnsureCapacity(minimumCapacity)
 	/// </code>
 	/// but without unnecessary intermediate copies.
-	///
-	/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
 	/// </remarks>
 	[Pure]
 	public Builder ToBuilder(int minimumCapacity)

@@ -177,8 +177,6 @@ public static class ValueCollectionExtensions
 	/// items.ToValueSetBuilder().EnsureCapacity(minimumCapacity)
 	/// </code>
 	/// but without unnecessary intermediate copies.
-	///
-	/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
 	/// </remarks>
 	public static ValueSet<T>.Builder ToValueSetBuilder<T>(this IEnumerable<T> items, int minimumCapacity)
 	{

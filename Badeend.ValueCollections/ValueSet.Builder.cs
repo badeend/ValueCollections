@@ -177,9 +177,6 @@ public sealed partial class ValueSet<T>
 		/// <summary>
 		/// The total number of elements the internal data structure can hold without resizing.
 		/// </summary>
-		/// <remarks>
-		/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
-		/// </remarks>
 		[Pure]
 		public int Capacity => this.Read().inner.Capacity;
 
@@ -188,9 +185,6 @@ public sealed partial class ValueSet<T>
 		/// If the current capacity is less than capacity, it is increased to at
 		/// least the specified capacity.
 		/// </summary>
-		/// <remarks>
-		/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
-		/// </remarks>
 		/// <exception cref="ArgumentOutOfRangeException">
 		/// <paramref name="minimumCapacity"/> is less than 0.
 		/// </exception>
@@ -210,9 +204,6 @@ public sealed partial class ValueSet<T>
 		/// <exception cref="ArgumentOutOfRangeException">
 		/// <paramref name="targetCapacity"/> is less than <see cref="Count"/>.
 		/// </exception>
-		/// <remarks>
-		/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
-		/// </remarks>
 		public Builder TrimExcess(int targetCapacity)
 		{
 			this.Mutate().inner.TrimExcess(targetCapacity);
