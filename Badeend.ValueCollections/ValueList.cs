@@ -307,12 +307,6 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	public int BinarySearch(T item) => this.inner.BinarySearch(item);
 
 	/// <inheritdoc/>
-	bool ICollection<T>.Contains(T item) => this.inner.Contains(item);
-
-	/// <inheritdoc/>
-	int IList<T>.IndexOf(T item) => this.inner.IndexOf(item);
-
-	/// <inheritdoc/>
 	void ICollection<T>.CopyTo(T[] array, int arrayIndex)
 	{
 		if (array is null)
