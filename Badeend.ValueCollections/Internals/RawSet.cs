@@ -10,9 +10,13 @@ namespace Badeend.ValueCollections.Internals;
 
 // Various parts of this type have been adapted from:
 // https://github.com/dotnet/runtime/blob/4389f9c54d070ca5e0cf7c4931aff56fe36d667f/src/libraries/System.Private.CoreLib/src/System/Collections/Generic/RawSet.cs
+//
+// This implements an Hash Table with Separate Chaining (https://en.wikipedia.org/wiki/Hash_table#Separate_chaining)
 [StructLayout(LayoutKind.Auto)]
 internal struct RawSet<T> : IEquatable<RawSet<T>>
 {
+	private const int StartOfFreeList = -3;
+
 	/// <summary>
 	/// When constructing a hashset from an existing collection, it may contain duplicates,
 	/// so this is used as the max acceptable excess ratio of capacity to count. Note that
@@ -21,14 +25,48 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 	/// This is set to 3 because capacity is acceptable as 2x rounded up to nearest prime.
 	/// </summary>
 	private const int ShrinkThreshold = 3;
-	private const int StartOfFreeList = -3;
 
+	/// <summary>
+	/// The _indexes_ into this `buckets` array are the modulo of the hash codes.
+	/// The _values_ of this `buckets` array are indexes into the `entries` array.
+	///
+	/// The values are offset by 1. A value of 0 means the bucket is empty.
+	///
+	/// This is `null` for empty sets. `buckets` and `entries` are always of
+	/// the same size, and are always null or not-null together.
+	/// </summary>
 	private int[]? buckets;
+
+	/// <summary>
+	/// The storage array of the hash set.
+	///
+	/// This is `null` for empty sets. `buckets` and `entries` are always of
+	/// the same size, and are always null or not-null together.
+	/// </summary>
 	private Entry[]? entries;
-	private int count;
-	private int freeList;
+
+	/// <summary>
+	/// How many `entries` are initialized. Initialized entries may be either
+	/// actively in use or serve as a free slot for future insertions.
+	/// `entries` in the range [end..] are unused capacity.
+	/// </summary>
+	private int end;
+
+	/// <summary>
+	/// Index to the head of the "free" list, or -1 if there are no free
+	/// entries (yet). This is always less than `end`.
+	/// </summary>
+	private int firstFreeIndex;
+
+	/// <summary>
+	/// How many `entries` in the range [..end] are NOT actively in use.
+	/// </summary>
+	/// <remarks>
+	/// Whenever an item is removed from the set, its `Entry` continues to exists
+	/// as a "free" slot for future insertions. This `freeCount` field
+	/// is updated whenever such a slot becomes available or is reclaimed.
+	/// </remarks>
 	private int freeCount;
-	private int version;
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public RawSet()
@@ -52,16 +90,16 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		{
 			this.buckets = (int[])source.buckets.Clone();
 			this.entries = (Entry[])source.entries!.Clone();
-			this.freeList = source.freeList;
+			this.firstFreeIndex = source.firstFreeIndex;
 			this.freeCount = source.freeCount;
-			this.count = source.count;
+			this.end = source.end;
 		}
 		else
 		{
 			this.Initialize(source.Count);
 
 			var entries = source.entries;
-			for (int i = 0; i < source.count; i++)
+			for (int i = 0; i < source.end; i++)
 			{
 				ref Entry entry = ref entries![i];
 				if (entry.Next >= -1)
@@ -93,7 +131,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			this.AddIfNotPresent(item, out _);
 		}
 
-		if (this.count > 0 && this.entries!.Length / this.count > ShrinkThreshold)
+		if (this.end > 0 && this.entries!.Length / this.end > ShrinkThreshold)
 		{
 			this.TrimExcess();
 		}
@@ -122,7 +160,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			this.AddIfNotPresent(item, out _);
 		}
 
-		if (this.count > 0 && this.entries!.Length / this.count > ShrinkThreshold)
+		if (this.end > 0 && this.entries!.Length / this.end > ShrinkThreshold)
 		{
 			this.TrimExcess();
 		}
@@ -143,8 +181,8 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 
 	internal void Clear()
 	{
-		var count = this.count;
-		if (count == 0)
+		var end = this.end;
+		if (end == 0)
 		{
 			return;
 		}
@@ -157,10 +195,10 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 #else
 		Array.Clear(this.buckets, 0, this.buckets!.Length);
 #endif
-		this.count = 0;
-		this.freeList = -1;
+		this.end = 0;
+		this.firstFreeIndex = -1;
 		this.freeCount = 0;
-		Array.Clear(this.entries, 0, count);
+		Array.Clear(this.entries, 0, end);
 	}
 
 	internal readonly bool Contains(T item) => this.FindItemIndex(item) >= 0;
@@ -244,15 +282,15 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 					entries![last].Next = entry.Next;
 				}
 
-				Debug.Assert((StartOfFreeList - this.freeList) < 0, "shouldn't underflow because max hashtable length is MaxPrimeArrayLength = 0x7FEFFFFD(2146435069) _freelist underflow threshold 2147483646");
-				entry.Next = StartOfFreeList - this.freeList;
+				Debug.Assert((StartOfFreeList - this.firstFreeIndex) < 0, "shouldn't underflow because max hashtable length is MaxPrimeArrayLength = 0x7FEFFFFD(2146435069) _freelist underflow threshold 2147483646");
+				entry.Next = StartOfFreeList - this.firstFreeIndex;
 
 				if (Polyfills.IsReferenceOrContainsReferences<T>())
 				{
 					entry.Value = default!;
 				}
 
-				this.freeList = i;
+				this.firstFreeIndex = i;
 				this.freeCount++;
 				return true;
 			}
@@ -273,7 +311,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 	}
 
 	/// <summary>Gets the number of elements that are contained in the set.</summary>
-	internal readonly int Count => this.count - this.freeCount;
+	internal readonly int Count => this.end - this.freeCount;
 
 	/// <summary>
 	/// Gets the total numbers of elements the internal data structure can hold without resizing.
@@ -382,7 +420,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		}
 
 		Entry[]? entries = this.entries;
-		for (int i = 0; i < this.count; i++)
+		for (int i = 0; i < this.end; i++)
 		{
 			ref Entry entry = ref entries![i];
 			if (entry.Next >= -1)
@@ -439,7 +477,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 	private void IntersectWithHashSetWithSameComparer(HashSet<T> other)
 	{
 		var entries = this.entries;
-		for (int i = 0; i < this.count; i++)
+		for (int i = 0; i < this.end; i++)
 		{
 			ref Entry entry = ref entries![i];
 			if (entry.Next >= -1)
@@ -1080,7 +1118,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		// Beware that `match` could mutate this collection as we iterate over it.
 		Entry[]? entries = this.entries;
 		int numRemoved = 0;
-		for (int i = 0; i < this.count; i++)
+		for (int i = 0; i < this.end; i++)
 		{
 			ref Entry entry = ref entries![i];
 			if (entry.Next >= -1)
@@ -1126,7 +1164,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		return newSize;
 	}
 
-	private void Resize() => this.Resize(HashHelpers.ExpandPrime(this.count));
+	private void Resize() => this.Resize(HashHelpers.ExpandPrime(this.end));
 
 	private void Resize(int newSize)
 	{
@@ -1135,12 +1173,12 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 
 		var entries = new Entry[newSize];
 
-		int count = this.count;
-		Array.Copy(this.entries!, entries, count);
+		int end = this.end;
+		Array.Copy(this.entries!, entries, end);
 
 		// Assign member variables after both arrays allocated to guard against corruption from OOM if second fails
 		this.buckets = new int[newSize];
-		for (int i = 0; i < count; i++)
+		for (int i = 0; i < end; i++)
 		{
 			ref Entry entry = ref entries[i];
 			if (entry.Next >= -1)
@@ -1171,8 +1209,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			return;
 		}
 
-		var oldCount = this.count;
-		this.version++;
+		var oldCount = this.end;
 		this.Initialize(newSize);
 		var entries = this.entries;
 		var count = 0;
@@ -1190,7 +1227,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			}
 		}
 
-		this.count = count;
+		this.end = count;
 		this.freeCount = 0;
 	}
 
@@ -1205,7 +1242,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		var entries = new Entry[size];
 
 		// Assign member variables after both arrays are allocated to guard against corruption from OOM if second fails.
-		this.freeList = -1;
+		this.firstFreeIndex = -1;
 		this.buckets = buckets;
 		this.entries = entries;
 
@@ -1257,22 +1294,22 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		int index;
 		if (this.freeCount > 0)
 		{
-			index = this.freeList;
+			index = this.firstFreeIndex;
 			this.freeCount--;
-			Debug.Assert((StartOfFreeList - entries![this.freeList].Next) >= -1, "shouldn't overflow because `next` cannot underflow");
-			this.freeList = StartOfFreeList - entries![this.freeList].Next;
+			Debug.Assert((StartOfFreeList - entries![this.firstFreeIndex].Next) >= -1, "shouldn't overflow because `next` cannot underflow");
+			this.firstFreeIndex = StartOfFreeList - entries![this.firstFreeIndex].Next;
 		}
 		else
 		{
-			int count = this.count;
-			if (count == entries!.Length)
+			int end = this.end;
+			if (end == entries!.Length)
 			{
 				this.Resize();
 				bucket = ref this.GetBucketRef(hashCode);
 			}
 
-			index = count;
-			this.count = count + 1;
+			index = end;
+			this.end = end + 1;
 			entries = this.entries;
 		}
 
@@ -1282,7 +1319,6 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			entry.Next = bucket - 1; // Value in _buckets is 1-based
 			entry.Value = value;
 			bucket = index + 1;
-			this.version++;
 			location = index;
 		}
 
@@ -1293,11 +1329,13 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 	{
 		internal int HashCode;
 
-		/// <summary>
-		/// 0-based index of next entry in chain: -1 means end of chain
-		/// also encodes whether this entry _itself_ is part of the free list by changing sign and subtracting 3,
-		/// so -2 means end of free list, -3 means index 0 but on free list, -4 means index 1 but on free list, etc.
-		/// </summary>
+		// Index of the next entry in the chain. This also doubles as an
+		// indicator for whether or not this entry is "free" or actively in use.
+		//
+		// >=  0 : The entry is active, and the index points to the next item in the chain.
+		// == -1 : The entry is active, and this is the last entry in the chain.
+		// == -2 : The entry is free, and this is the last entry in the free chain.
+		// <= -3 : The entry is free, and (after changing the sign and subtracting 3) this points to the next entry in the free list.
 		internal int Next;
 		internal T Value;
 	}
@@ -1306,13 +1344,13 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 	public struct Enumerator : IRefEnumeratorLike<T>
 	{
 		private readonly Entry[]? entries;
-		private readonly int count;
+		private readonly int end;
 		private int index;
 
 		internal Enumerator(RawSet<T> set)
 		{
 			this.entries = set.entries;
-			this.count = set.count;
+			this.end = set.end;
 			this.index = -1;
 		}
 
@@ -1328,7 +1366,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 
 		public bool MoveNext()
 		{
-			while ((uint)++this.index < (uint)this.count)
+			while ((uint)++this.index < (uint)this.end)
 			{
 				if (this.entries![this.index].Next >= -1)
 				{
@@ -1336,7 +1374,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 				}
 			}
 
-			this.index = this.count;
+			this.index = this.end;
 			return false;
 		}
 	}
