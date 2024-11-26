@@ -136,7 +136,7 @@ public sealed partial class ValueList<T>
 			{
 				if (list is null)
 				{
-					ThrowHelpers.ThrowInvalidOperationException_UninitializedBuiler();
+					ThrowHelpers.ThrowInvalidOperationException_UninitializedBuilder();
 				}
 				else if (list.state == BuilderState.LastMutableVersion)
 				{

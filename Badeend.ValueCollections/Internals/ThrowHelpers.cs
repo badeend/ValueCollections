@@ -40,7 +40,7 @@ internal static class ThrowHelpers
 	internal static void ThrowInvalidOperationException_AlreadyBuilt() => throw new InvalidOperationException("Builder has already been built");
 
 	[DoesNotReturn]
-	internal static void ThrowInvalidOperationException_UninitializedBuiler() => throw new InvalidOperationException("Uninitialized builder");
+	internal static void ThrowInvalidOperationException_UninitializedBuilder() => throw new InvalidOperationException("Uninitialized builder");
 
 	[DoesNotReturn]
 	internal static void ThrowInvalidOperationException_CollectionModifiedDuringEnumeration() => throw new InvalidOperationException("Collection was modified during enumeration.");

@@ -141,7 +141,7 @@ public sealed partial class ValueSet<T>
 			{
 				if (set is null)
 				{
-					ThrowHelpers.ThrowInvalidOperationException_UninitializedBuiler();
+					ThrowHelpers.ThrowInvalidOperationException_UninitializedBuilder();
 				}
 				else if (set.state == BuilderState.LastMutableVersion)
 				{
