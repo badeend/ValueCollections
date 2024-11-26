@@ -1325,6 +1325,17 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		return true;
 	}
 
+	private readonly int GetArbitraryIndex()
+	{
+		// Use the hashcode of the backing `entries` array as a semi-random seed.
+		// All we care about is educating developers that the order can't be
+		// trusted. It doesn't have to cryptographically secure or anything.
+		// The hashcode doesn't change over the lifetime of the array
+		// so, while the order is _undefined_, it is _consistent_ across multiple
+		// enumerations over the exact same instance.
+		return this.end > 1 ? RuntimeHelpers.GetHashCode(this.entries) % this.end : 0;
+	}
+
 	private struct Entry
 	{
 		internal int HashCode;
@@ -1345,13 +1356,15 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 	{
 		private readonly Entry[]? entries;
 		private readonly int end;
+		private int counter;
 		private int index;
 
 		internal Enumerator(RawSet<T> set)
 		{
 			this.entries = set.entries;
 			this.end = set.end;
-			this.index = -1;
+			this.counter = 0;
+			this.index = set.GetArbitraryIndex();
 		}
 
 		/// <inheritdoc/>
@@ -1366,8 +1379,13 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 
 		public bool MoveNext()
 		{
-			while ((uint)++this.index < (uint)this.end)
+			while ((uint)++this.counter <= (uint)this.end)
 			{
+				if ((uint)++this.index >= (uint)this.end)
+				{
+					this.index -= this.end;
+				}
+
 				if (this.entries![this.index].Next >= -1)
 				{
 					return true;
@@ -1375,6 +1393,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			}
 
 			this.index = this.end;
+			this.counter = this.end;
 			return false;
 		}
 	}
