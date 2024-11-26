@@ -100,7 +100,7 @@ public static class ValueCollectionExtensions
 	/// This overload is an extension method to avoid call site ambiguity.
 	/// </remarks>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueList<T>.Builder AddRange<T>(this ValueList<T>.Builder builder, ReadOnlySpan<T> items)
+	public static ValueList<T>.Builder AddRange<T>(this ValueList<T>.Builder builder, scoped ReadOnlySpan<T> items)
 	{
 		return builder.AddRangeSpan(items);
 	}
@@ -112,7 +112,7 @@ public static class ValueCollectionExtensions
 	/// This overload is an extension method to avoid call site ambiguity.
 	/// </remarks>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueList<T>.Builder InsertRange<T>(this ValueList<T>.Builder builder, int index, ReadOnlySpan<T> items)
+	public static ValueList<T>.Builder InsertRange<T>(this ValueList<T>.Builder builder, int index, scoped ReadOnlySpan<T> items)
 	{
 		return builder.InsertRangeSpan(index, items);
 	}
@@ -207,7 +207,7 @@ public static class ValueCollectionExtensions
 	/// This overload is an extension method to avoid call site ambiguity.
 	/// </remarks>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueSet<T>.Builder UnionWith<T>(this ValueSet<T>.Builder builder, ReadOnlySpan<T> items)
+	public static ValueSet<T>.Builder UnionWith<T>(this ValueSet<T>.Builder builder, scoped ReadOnlySpan<T> items)
 	{
 		return builder.UnionWithSpan(items);
 	}
@@ -219,7 +219,7 @@ public static class ValueCollectionExtensions
 	/// This overload is an extension method to avoid call site ambiguity.
 	/// </remarks>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueSet<T>.Builder ExceptWith<T>(this ValueSet<T>.Builder builder, ReadOnlySpan<T> items)
+	public static ValueSet<T>.Builder ExceptWith<T>(this ValueSet<T>.Builder builder, scoped ReadOnlySpan<T> items)
 	{
 		return builder.ExceptWithSpan(items);
 	}
@@ -367,7 +367,7 @@ public static class ValueCollectionExtensions
 	/// <paramref name="items"/> contains a duplicate key or a key that already
 	/// exists in the dictionary.
 	/// </exception>
-	public static ValueDictionaryBuilder<TKey, TValue> AddRange<TKey, TValue>(this ValueDictionaryBuilder<TKey, TValue> builder, ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
+	public static ValueDictionaryBuilder<TKey, TValue> AddRange<TKey, TValue>(this ValueDictionaryBuilder<TKey, TValue> builder, scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
 		where TKey : notnull
 	{
 		if (builder is null)
@@ -388,7 +388,7 @@ public static class ValueCollectionExtensions
 	///
 	/// This overload is an extension method to avoid call site ambiguity.
 	/// </remarks>
-	public static ValueDictionaryBuilder<TKey, TValue> SetItems<TKey, TValue>(this ValueDictionaryBuilder<TKey, TValue> builder, ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
+	public static ValueDictionaryBuilder<TKey, TValue> SetItems<TKey, TValue>(this ValueDictionaryBuilder<TKey, TValue> builder, scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
 		where TKey : notnull
 	{
 		if (builder is null)

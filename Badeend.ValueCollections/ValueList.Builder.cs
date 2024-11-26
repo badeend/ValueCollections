@@ -234,7 +234,7 @@ public sealed partial class ValueList<T>
 		}
 
 		// Accessible through an extension method.
-		internal Builder AddRangeSpan(ReadOnlySpan<T> items)
+		internal Builder AddRangeSpan(scoped ReadOnlySpan<T> items)
 		{
 			this.Mutate().inner.AddRange(items);
 			return this;
@@ -292,7 +292,7 @@ public sealed partial class ValueList<T>
 		}
 
 		// Accessible through an extension method.
-		internal Builder InsertRangeSpan(int index, ReadOnlySpan<T> items)
+		internal Builder InsertRangeSpan(int index, scoped ReadOnlySpan<T> items)
 		{
 			this.Mutate().inner.InsertRange(index, items);
 			return this;

@@ -349,7 +349,7 @@ public sealed partial class ValueDictionaryBuilder<TKey, TValue> : IDictionary<T
 
 	internal static ValueDictionaryBuilder<TKey, TValue> FromDictionaryUnsafe(Dictionary<TKey, TValue> items) => new(items);
 
-	internal static ValueDictionaryBuilder<TKey, TValue> FromReadOnlySpan(ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
+	internal static ValueDictionaryBuilder<TKey, TValue> FromReadOnlySpan(scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
 	{
 		if (items.Length == 0)
 		{
@@ -510,7 +510,7 @@ public sealed partial class ValueDictionaryBuilder<TKey, TValue> : IDictionary<T
 	}
 
 	// Accessible through an extension method.
-	internal ValueDictionaryBuilder<TKey, TValue> AddRangeSpan(ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
+	internal ValueDictionaryBuilder<TKey, TValue> AddRangeSpan(scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
 	{
 		var dictionary = this.Mutate();
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
@@ -569,7 +569,7 @@ public sealed partial class ValueDictionaryBuilder<TKey, TValue> : IDictionary<T
 	}
 
 	// Accessible through an extension method.
-	internal ValueDictionaryBuilder<TKey, TValue> SetItemsSpan(ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
+	internal ValueDictionaryBuilder<TKey, TValue> SetItemsSpan(scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
 	{
 		var dictionary = this.Mutate();
 
@@ -657,7 +657,7 @@ public sealed partial class ValueDictionaryBuilder<TKey, TValue> : IDictionary<T
 	}
 
 	// Accessible through an extension method.
-	internal ValueDictionaryBuilder<TKey, TValue> RemoveRangeSpan(ReadOnlySpan<TKey> keys)
+	internal ValueDictionaryBuilder<TKey, TValue> RemoveRangeSpan(scoped ReadOnlySpan<TKey> keys)
 	{
 		var dictionary = this.Mutate();
 

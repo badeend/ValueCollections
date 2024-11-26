@@ -17,7 +17,7 @@ public static class ValueList
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueList<T> Create<T>(ReadOnlySpan<T> items) => ValueList<T>.CreateImmutableUnsafe(new(items));
+	public static ValueList<T> Create<T>(scoped ReadOnlySpan<T> items) => ValueList<T>.CreateImmutableUnsafe(new(items));
 
 	/// <summary>
 	/// Create a new empty <see cref="ValueList{T}.Builder"/>. This builder can
@@ -45,7 +45,7 @@ public static class ValueList
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueList<T>.Builder CreateBuilder<T>(ReadOnlySpan<T> items) => ValueList<T>.Builder.CreateUnsafe(new(items));
+	public static ValueList<T>.Builder CreateBuilder<T>(scoped ReadOnlySpan<T> items) => ValueList<T>.Builder.CreateUnsafe(new(items));
 }
 
 /// <summary>

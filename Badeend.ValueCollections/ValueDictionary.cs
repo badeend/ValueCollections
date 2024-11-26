@@ -23,7 +23,7 @@ public static class ValueDictionary
 	/// </exception>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueDictionary<TKey, TValue> Create<TKey, TValue>(ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
+	public static ValueDictionary<TKey, TValue> Create<TKey, TValue>(scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
 		where TKey : notnull => ValueDictionary<TKey, TValue>.FromReadOnlySpan(items);
 
 	/// <summary>
@@ -44,7 +44,7 @@ public static class ValueDictionary
 	/// </exception>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueDictionaryBuilder<TKey, TValue> Builder<TKey, TValue>(ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
+	public static ValueDictionaryBuilder<TKey, TValue> Builder<TKey, TValue>(scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
 		where TKey : notnull => ValueDictionaryBuilder<TKey, TValue>.FromReadOnlySpan(items);
 }
 
@@ -156,7 +156,7 @@ public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TV
 		return new(items);
 	}
 
-	internal static ValueDictionary<TKey, TValue> FromReadOnlySpan(ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
+	internal static ValueDictionary<TKey, TValue> FromReadOnlySpan(scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
 	{
 		if (items.Length == 0)
 		{
@@ -166,7 +166,7 @@ public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TV
 		return new(SpanToDictionary(items));
 	}
 
-	internal static Dictionary<TKey, TValue> SpanToDictionary(ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
+	internal static Dictionary<TKey, TValue> SpanToDictionary(scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
 	{
 		var dictionary = new Dictionary<TKey, TValue>(items.Length);
 

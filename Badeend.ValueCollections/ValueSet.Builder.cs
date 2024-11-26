@@ -412,7 +412,7 @@ public sealed partial class ValueSet<T>
 		}
 
 		// Accessible through an extension method.
-		internal Builder ExceptWithSpan(ReadOnlySpan<T> items)
+		internal Builder ExceptWithSpan(scoped ReadOnlySpan<T> items)
 		{
 			this.Mutate().inner.ExceptWith(items);
 			return this;
@@ -519,7 +519,7 @@ public sealed partial class ValueSet<T>
 		}
 
 		// Accessible through an extension method.
-		internal Builder UnionWithSpan(ReadOnlySpan<T> items)
+		internal Builder UnionWithSpan(scoped ReadOnlySpan<T> items)
 		{
 			this.Mutate().inner.UnionWith(items);
 			return this;

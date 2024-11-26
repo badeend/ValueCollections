@@ -18,7 +18,7 @@ public static class ValueSlice
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueSlice<T> Create<T>(ReadOnlySpan<T> items) => new(items.ToArray());
+	public static ValueSlice<T> Create<T>(scoped ReadOnlySpan<T> items) => new(items.ToArray());
 }
 
 /// <summary>

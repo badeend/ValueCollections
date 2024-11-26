@@ -99,7 +99,7 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 		}
 	}
 
-	internal RawList(ReadOnlySpan<T> source)
+	internal RawList(scoped ReadOnlySpan<T> source)
 	{
 		var length = source.Length;
 		if (length == 0)
@@ -190,7 +190,7 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 
 	internal void AddRange(ref readonly RawList<T> items) => this.AddRange(items.AsSpan());
 
-	internal void AddRange(ReadOnlySpan<T> items)
+	internal void AddRange(scoped ReadOnlySpan<T> items)
 	{
 		if (items.IsEmpty)
 		{
@@ -312,7 +312,7 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 		this.size += this.size;
 	}
 
-	internal void InsertRange(int index, ReadOnlySpan<T> items)
+	internal void InsertRange(int index, scoped ReadOnlySpan<T> items)
 	{
 		if ((uint)index > (uint)this.size)
 		{

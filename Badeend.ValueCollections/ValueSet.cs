@@ -17,7 +17,7 @@ public static class ValueSet
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueSet<T> Create<T>(ReadOnlySpan<T> items) => ValueSet<T>.CreateImmutableUnsafe(new(items));
+	public static ValueSet<T> Create<T>(scoped ReadOnlySpan<T> items) => ValueSet<T>.CreateImmutableUnsafe(new(items));
 
 	/// <summary>
 	/// Create a new empty <see cref="ValueSet{T}.Builder"/>. This builder can
@@ -45,7 +45,7 @@ public static class ValueSet
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueSet<T>.Builder CreateBuilder<T>(ReadOnlySpan<T> items) => ValueSet<T>.Builder.CreateUnsafe(new(items));
+	public static ValueSet<T>.Builder CreateBuilder<T>(scoped ReadOnlySpan<T> items) => ValueSet<T>.Builder.CreateUnsafe(new(items));
 }
 
 /// <summary>

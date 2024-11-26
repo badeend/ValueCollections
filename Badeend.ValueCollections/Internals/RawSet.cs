@@ -112,7 +112,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		Debug.Assert(this.Count == source.Count);
 	}
 
-	internal RawSet(ReadOnlySpan<T> source)
+	internal RawSet(scoped ReadOnlySpan<T> source)
 	{
 		if (source.Length == 0)
 		{
@@ -352,7 +352,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		}
 	}
 
-	internal void UnionWith(ReadOnlySpan<T> other)
+	internal void UnionWith(scoped ReadOnlySpan<T> other)
 	{
 		foreach (T item in other)
 		{
@@ -513,7 +513,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		}
 	}
 
-	internal void ExceptWith(ReadOnlySpan<T> other)
+	internal void ExceptWith(scoped ReadOnlySpan<T> other)
 	{
 		// This is already the empty set; return.
 		if (this.Count == 0)
@@ -603,7 +603,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		}
 	}
 
-	internal void SymmetricExceptWith(ReadOnlySpan<T> other)
+	internal void SymmetricExceptWith(scoped ReadOnlySpan<T> other)
 	{
 		// If set is empty, then symmetric difference is other.
 		if (this.Count == 0)
@@ -986,7 +986,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		return false;
 	}
 
-	internal readonly bool Overlaps(ReadOnlySpan<T> other)
+	internal readonly bool Overlaps(scoped ReadOnlySpan<T> other)
 	{
 		if (this.Count == 0)
 		{
