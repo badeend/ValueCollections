@@ -104,7 +104,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 				ref Entry entry = ref entries![i];
 				if (entry.Next >= -1)
 				{
-					this.AddIfNotPresent(entry.Value, out _);
+					this.AddIfNotPresent(entry.Value);
 				}
 			}
 		}
@@ -128,7 +128,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 
 		foreach (T item in source)
 		{
-			this.AddIfNotPresent(item, out _);
+			this.AddIfNotPresent(item);
 		}
 
 		if (this.end > 0 && this.entries!.Length / this.end > ShrinkThreshold)
@@ -157,7 +157,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 
 		foreach (T item in source)
 		{
-			this.AddIfNotPresent(item, out _);
+			this.AddIfNotPresent(item);
 		}
 
 		if (this.end > 0 && this.entries!.Length / this.end > ShrinkThreshold)
@@ -320,7 +320,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 
 	public readonly Enumerator GetEnumerator() => new Enumerator(this);
 
-	internal bool Add(T item) => this.AddIfNotPresent(item, out _);
+	internal bool Add(T item) => this.AddIfNotPresent(item);
 
 	internal readonly bool TryGetValue(T equalValue, [MaybeNullWhen(false)] out T actualValue)
 	{
@@ -348,7 +348,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 
 		foreach (T item in other)
 		{
-			this.AddIfNotPresent(item, out _);
+			this.AddIfNotPresent(item);
 		}
 	}
 
@@ -356,7 +356,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 	{
 		foreach (T item in other)
 		{
-			this.AddIfNotPresent(item, out _);
+			this.AddIfNotPresent(item);
 		}
 	}
 
@@ -382,7 +382,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			{
 				foreach (var element in otherHashSet)
 				{
-					this.AddIfNotPresent(element, out _);
+					this.AddIfNotPresent(element);
 				}
 
 				return true;
@@ -399,7 +399,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		{
 			foreach (T item in other)
 			{
-				this.AddIfNotPresent(item, out _);
+				this.AddIfNotPresent(item);
 			}
 		}
 	}
@@ -598,7 +598,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		{
 			if (!this.Remove(item))
 			{
-				this.AddIfNotPresent(item, out _);
+				this.AddIfNotPresent(item);
 			}
 		}
 	}
@@ -616,7 +616,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		{
 			if (!this.Remove(item))
 			{
-				this.AddIfNotPresent(item, out _);
+				this.AddIfNotPresent(item);
 			}
 		}
 	}
@@ -651,7 +651,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 				{
 					if (!this.Remove(item))
 					{
-						this.AddIfNotPresent(item, out _);
+						this.AddIfNotPresent(item);
 					}
 				}
 
@@ -1251,9 +1251,8 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 
 	/// <summary>Adds the specified element to the set if it's not already contained.</summary>
 	/// <param name="value">The element to add to the set.</param>
-	/// <param name="location">The index into <see cref="entries"/> of the element.</param>
 	/// <returns>true if the element is added to the <see cref="RawSet{T}"/> object; false if the element is already present.</returns>
-	private bool AddIfNotPresent(T value, out int location)
+	private bool AddIfNotPresent(T value)
 	{
 		if (this.buckets is null)
 		{
@@ -1277,7 +1276,6 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			ref Entry entry = ref entries![i];
 			if (entry.HashCode == hashCode && comparer.Equals(entry.Value, value))
 			{
-				location = i;
 				return false;
 			}
 
@@ -1319,7 +1317,6 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			entry.Next = bucket - 1; // Value in _buckets is 1-based
 			entry.Value = value;
 			bucket = index + 1;
-			location = index;
 		}
 
 		return true;
