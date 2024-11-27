@@ -14,7 +14,7 @@ public static class ValueCollectionExtensions
 	internal static ValueList<T>? AsValueListUnsafe<T>(this IEnumerable<T> items) => items switch
 	{
 		ValueList<T> valueList => valueList,
-		ValueList<T>.Builder.Collection collection => collection.Builder.list,
+		ValueList<T>.Builder.Collection collection => collection.Builder.Read(),
 		_ => null,
 	};
 
@@ -121,7 +121,7 @@ public static class ValueCollectionExtensions
 	internal static ValueSet<T>? AsValueSetUnsafe<T>(this IEnumerable<T> items) => items switch
 	{
 		ValueSet<T> valueSet => valueSet,
-		ValueSet<T>.Builder.Collection collection => collection.Builder.set,
+		ValueSet<T>.Builder.Collection collection => collection.Builder.Read(),
 		_ => null,
 	};
 

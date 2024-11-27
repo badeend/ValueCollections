@@ -42,16 +42,10 @@ public sealed partial class ValueList<T>
 	[CollectionBuilder(typeof(ValueList), nameof(ValueList.CreateBuilder))]
 	public readonly struct Builder : IEquatable<Builder>
 	{
-#pragma warning disable SA1304 // Non-private readonly fields should begin with upper-case letter
-#pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
-
 		/// <summary>
 		/// Only access this field through .Read() or .Mutate().
 		/// </summary>
-		internal readonly ValueList<T>? list;
-
-#pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
-#pragma warning restore SA1304 // Non-private readonly fields should begin with upper-case letter
+		private readonly ValueList<T>? list;
 
 		/// <summary>
 		/// Returns <see langword="true"/> when this instance has been built and is
@@ -151,7 +145,7 @@ public sealed partial class ValueList<T>
 			}
 		}
 
-		private ValueList<T> Read() => this.list ?? Empty;
+		internal ValueList<T> Read() => this.list ?? Empty;
 
 		/// <summary>
 		/// The total number of elements the internal data structure can hold without resizing.

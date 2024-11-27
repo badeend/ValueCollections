@@ -48,16 +48,10 @@ public sealed partial class ValueSet<T>
 	[CollectionBuilder(typeof(ValueSet), nameof(ValueSet.CreateBuilder))]
 	public readonly struct Builder : IEquatable<Builder>
 	{
-#pragma warning disable SA1304 // Non-private readonly fields should begin with upper-case letter
-#pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
-
 		/// <summary>
 		/// Only access this field through .Read() or .Mutate().
 		/// </summary>
-		internal readonly ValueSet<T>? set;
-
-#pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
-#pragma warning restore SA1304 // Non-private readonly fields should begin with upper-case letter
+		private readonly ValueSet<T>? set;
 
 		/// <summary>
 		/// Returns <see langword="true"/> when this instance has been built and is
@@ -156,7 +150,7 @@ public sealed partial class ValueSet<T>
 			}
 		}
 
-		private ValueSet<T> Read() => this.set ?? Empty;
+		internal ValueSet<T> Read() => this.set ?? Empty;
 
 		/// <summary>
 		/// Current size of the set.
