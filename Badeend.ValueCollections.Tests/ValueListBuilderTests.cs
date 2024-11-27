@@ -79,11 +79,11 @@ public class ValueListBuilderTests
 
         Assert.True(a.ToValueList() == [3]);
         
-        a.AddRange([]);
+        a.AddRange((ReadOnlySpan<int>)[]);
 
         Assert.True(a.ToValueList() == [3]);
         
-        a.AddRange([5, 5]);
+        a.AddRange((ReadOnlySpan<int>)[5, 5]);
 
         Assert.True(a.ToValueList() == [3, 5, 5]);
 
@@ -91,11 +91,11 @@ public class ValueListBuilderTests
 
         Assert.True(a.ToValueList() == [1, 3, 5, 5]);
         
-        a.InsertRange(1, []);
+        a.InsertRange(1, (ReadOnlySpan<int>)[]);
 
         Assert.True(a.ToValueList() == [1, 3, 5, 5]);
         
-        a.InsertRange(1, [2, 3]);
+        a.InsertRange(1, (ReadOnlySpan<int>)[2, 3]);
 
         Assert.True(a.ToValueList() == [1, 2, 3, 3, 5, 5]);
         
@@ -197,6 +197,9 @@ public class ValueListBuilderTests
         List<int> c = [1, 2, 3];
         Span<int> d = [1, 2, 3];
         ReadOnlySpan<int> e = [1, 2, 3];
+        ValueSlice<int> f = [1, 2, 3];
+        ValueList<int> g = [1, 2, 3];
+        ValueList<int>.Builder h = [1, 2, 3];
 
         var builder = ValueList.CreateBuilder<int>();
 
@@ -205,14 +208,18 @@ public class ValueListBuilderTests
         builder.AddRange(c);
         builder.AddRange(d);
         builder.AddRange(e);
-        builder.AddRange([1, 2]);
+        builder.AddRange(f);
+        builder.AddRange(g);
+        builder.AddRange(h);
 
         builder.InsertRange(0, a);
         builder.InsertRange(0, b);
         builder.InsertRange(0, c);
         builder.InsertRange(0, d);
         builder.InsertRange(0, e);
-        builder.InsertRange(0, [1, 2]);
+        builder.InsertRange(0, f);
+        builder.InsertRange(0, g);
+        builder.InsertRange(0, h);
     }
 
     [Fact]

@@ -138,7 +138,7 @@ namespace Badeend.ValueCollections.Tests.Reference
                     Assert.Throws<ArgumentOutOfRangeException>(() => list.InsertRange(bad[i], constructIEnumerable(items))); //"ArgumentOutOfRangeException expected"
                 }
 
-                Assert.Throws<ArgumentNullException>(() => list.InsertRange(0, null)); //"ArgumentNullException expected."
+                Assert.Throws<ArgumentNullException>(() => list.InsertRange(0, (IEnumerable<T>)null!)); //"ArgumentNullException expected."
             }
 
             public IEnumerable<T> ConstructTestEnumerable(T[] items)

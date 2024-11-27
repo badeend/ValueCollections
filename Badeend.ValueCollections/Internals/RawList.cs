@@ -285,6 +285,11 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 
 	private void InsertSelf(int index)
 	{
+		if ((uint)index > (uint)this.size)
+		{
+			ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.index);
+		}
+
 		if (this.Count == 0)
 		{
 			return;

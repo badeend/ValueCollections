@@ -227,21 +227,49 @@ public sealed partial class ValueList<T>
 			return this;
 		}
 
-		// Accessible through an extension method.
-		internal Builder AddRangeSpan(scoped ReadOnlySpan<T> items)
+		/// <summary>
+		/// Add the <paramref name="items"/> to the end of the list.
+		/// </summary>
+		public Builder AddRange(ValueSlice<T> items) => this.AddRange(items.AsSpan());
+
+		/// <summary>
+		/// Add the <paramref name="items"/> to the end of the list.
+		/// </summary>
+		/// <remarks>
+		/// An overload that takes any <c>IEnumerable&lt;T&gt;</c> exists as an
+		/// <see cref="ValueCollectionExtensions.AddRange{T}(ValueList{T}.Builder, IEnumerable{T})">extension method</see>.
+		/// </remarks>
+		public Builder AddRange(ValueList<T> items)
 		{
-			this.Mutate().inner.AddRange(items);
+			if (items is null)
+			{
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.items);
+			}
+
+			this.Mutate().inner.AddRange(ref items.inner);
 			return this;
 		}
 
 		/// <summary>
 		/// Add the <paramref name="items"/> to the end of the list.
 		/// </summary>
-		/// <remarks>
-		/// <see cref="ValueCollectionExtensions.AddRange{T}(ValueList{T}.Builder, ReadOnlySpan{T})">More overloads</see> are
-		/// available as extension methods.
-		/// </remarks>
-		public Builder AddRange(IEnumerable<T> items)
+		public Builder AddRange(Builder items)
+		{
+			this.Mutate().inner.AddRange(ref items.Read().inner);
+			return this;
+		}
+
+		/// <summary>
+		/// Add the <paramref name="items"/> to the end of the list.
+		/// </summary>
+		public Builder AddRange(scoped ReadOnlySpan<T> items)
+		{
+			this.Mutate().inner.AddRange(items);
+			return this;
+		}
+
+		// Accessible through extension method.
+		internal Builder AddRangeEnumerable(IEnumerable<T> items)
 		{
 			var list = this.Mutate();
 
@@ -285,21 +313,49 @@ public sealed partial class ValueList<T>
 			return this;
 		}
 
-		// Accessible through an extension method.
-		internal Builder InsertRangeSpan(int index, scoped ReadOnlySpan<T> items)
+		/// <summary>
+		/// Insert the <paramref name="items"/> into the list at the specified <paramref name="index"/>.
+		/// </summary>
+		public Builder InsertRange(int index, ValueSlice<T> items) => this.InsertRange(index, items.AsSpan());
+
+		/// <summary>
+		/// Insert the <paramref name="items"/> into the list at the specified <paramref name="index"/>.
+		/// </summary>
+		/// <remarks>
+		/// An overload that takes any <c>IEnumerable&lt;T&gt;</c> exists as an
+		/// <see cref="ValueCollectionExtensions.InsertRange{T}(ValueList{T}.Builder, int, IEnumerable{T})">extension method</see>.
+		/// </remarks>
+		public Builder InsertRange(int index, ValueList<T> items)
 		{
-			this.Mutate().inner.InsertRange(index, items);
+			if (items is null)
+			{
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.items);
+			}
+
+			this.Mutate().inner.InsertRange(index, ref items.inner);
 			return this;
 		}
 
 		/// <summary>
 		/// Insert the <paramref name="items"/> into the list at the specified <paramref name="index"/>.
 		/// </summary>
-		/// <remarks>
-		/// <see cref="ValueCollectionExtensions.InsertRange">More overloads</see> are
-		/// available as extension methods.
-		/// </remarks>
-		public Builder InsertRange(int index, IEnumerable<T> items)
+		public Builder InsertRange(int index, Builder items)
+		{
+			this.Mutate().inner.InsertRange(index, ref items.Read().inner);
+			return this;
+		}
+
+		/// <summary>
+		/// Insert the <paramref name="items"/> into the list at the specified <paramref name="index"/>.
+		/// </summary>
+		public Builder InsertRange(int index, scoped ReadOnlySpan<T> items)
+		{
+			this.Mutate().inner.InsertRange(index, items);
+			return this;
+		}
+
+		// Accessible through extension method.
+		internal Builder InsertRangeEnumerable(int index, IEnumerable<T> items)
 		{
 			var list = this.Mutate();
 
@@ -325,7 +381,7 @@ public sealed partial class ValueList<T>
 				// Something not immediately obvious from just the code itself is that
 				// nothing prevents consumers from calling this method with an `items`
 				// argument that is (indirectly) derived from `this`. e.g.
-				// ```builder.InsertRange(0, builder.Where(_ => true))```
+				// ```builder.InsertRange(0, builder.AsCollection().Where(_ => true))```
 				// Without precaution that could result in an infinite loop with
 				// infinite memory growth.
 				// We "protect" our consumers from this by invalidating the enumerator

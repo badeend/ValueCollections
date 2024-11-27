@@ -100,9 +100,9 @@ public static class ValueCollectionExtensions
 	/// This overload is an extension method to avoid call site ambiguity.
 	/// </remarks>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueList<T>.Builder AddRange<T>(this ValueList<T>.Builder builder, scoped ReadOnlySpan<T> items)
+	public static ValueList<T>.Builder AddRange<T>(this ValueList<T>.Builder builder, IEnumerable<T> items)
 	{
-		return builder.AddRangeSpan(items);
+		return builder.AddRangeEnumerable(items);
 	}
 
 	/// <summary>
@@ -112,9 +112,9 @@ public static class ValueCollectionExtensions
 	/// This overload is an extension method to avoid call site ambiguity.
 	/// </remarks>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueList<T>.Builder InsertRange<T>(this ValueList<T>.Builder builder, int index, scoped ReadOnlySpan<T> items)
+	public static ValueList<T>.Builder InsertRange<T>(this ValueList<T>.Builder builder, int index, IEnumerable<T> items)
 	{
-		return builder.InsertRangeSpan(index, items);
+		return builder.InsertRangeEnumerable(index, items);
 	}
 
 	// The returned set should never be mutated!
