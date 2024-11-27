@@ -46,7 +46,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(5)]
         public void EnsureCapacity_RequestedCapacitySmallerThanOrEqualToCurrent_CapacityUnchanged(int currentCapacity)
         {
-            var list = ValueList.CreateBuilder<T>(currentCapacity);
+            var list = ValueList.CreateBuilderWithCapacity<T>(currentCapacity);
 
             for (int requestCapacity = 0; requestCapacity <= currentCapacity; requestCapacity++)
             {

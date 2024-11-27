@@ -101,7 +101,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(100)]
         public void ValueSetBuilder_CreateWithCapacity_CapacityAtLeastPassedValue(int capacity)
         {
-            var hashSet = ValueSet.CreateBuilder<T>(capacity);
+            var hashSet = ValueSet.CreateBuilderWithCapacity<T>(capacity);
             Assert.True(capacity <= hashSet.Capacity);
         }
 
@@ -294,7 +294,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void ValueSetBuilder_Generic_Constructor_int(int capacity)
         {
-            ValueSet<T>.Builder set = ValueSet.CreateBuilder<T>(capacity);
+            ValueSet<T>.Builder set = ValueSet.CreateBuilderWithCapacity<T>(capacity);
             Assert.Equal(0, set.Count);
         }
 
@@ -302,7 +302,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void ValueSetBuilder_Generic_Constructor_int_AddUpToAndBeyondCapacity(int capacity)
         {
-            ValueSet<T>.Builder set = ValueSet.CreateBuilder<T>(capacity);
+            ValueSet<T>.Builder set = ValueSet.CreateBuilderWithCapacity<T>(capacity);
 
             AddToCollection(set.AsCollection(), capacity);
             Assert.Equal(capacity, set.Count);
@@ -316,7 +316,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         {
             // Highest pre-computed number + 1.
             const int Capacity = 7199370;
-            var set = ValueSet.CreateBuilder<T>(Capacity);
+            var set = ValueSet.CreateBuilderWithCapacity<T>(Capacity);
 
             // Assert that the HashTable's capacity is set to the descendant prime number of the given one.
             const int NextPrime = 7199371;
@@ -326,8 +326,8 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void ValueSetBuilder_Generic_Constructor_int_Negative_ThrowsArgumentOutOfRangeException()
         {
-            AssertExtensions.Throws<ArgumentOutOfRangeException>("minimumCapacity", () => ValueSet.CreateBuilder<T>(-1));
-            AssertExtensions.Throws<ArgumentOutOfRangeException>("minimumCapacity", () => ValueSet.CreateBuilder<T>(int.MinValue));
+            AssertExtensions.Throws<ArgumentOutOfRangeException>("minimumCapacity", () => ValueSet.CreateBuilderWithCapacity<T>(-1));
+            AssertExtensions.Throws<ArgumentOutOfRangeException>("minimumCapacity", () => ValueSet.CreateBuilderWithCapacity<T>(int.MinValue));
         }
 
         [Fact]
@@ -365,7 +365,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             // assert capacity remains the same when ensuring a capacity smaller or equal than existing
             for (int i = 0; i <= currentCapacity; i++)
             {
-                set = ValueSet.CreateBuilder<T>(currentCapacity);
+                set = ValueSet.CreateBuilderWithCapacity<T>(currentCapacity);
                 Assert.Equal(currentCapacity, set.EnsureAndGetCapacity(i));
             }
         }
@@ -375,7 +375,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(89)]
         public void EnsureCapacity_Generic_ExistingCapacityRequested_SameValueReturned(int capacity)
         {
-            var set = ValueSet.CreateBuilder<T>(capacity);
+            var set = ValueSet.CreateBuilderWithCapacity<T>(capacity);
             Assert.Equal(capacity, set.EnsureAndGetCapacity(capacity));
 
             set = BuilderFactory(capacity);
@@ -464,7 +464,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         /// </summary>
         protected ValueSet<T>.Builder CreateValueSetBuilderSetWithCapacity(int count, int capacity)
         {
-            var set = ValueSet.CreateBuilder<T>(capacity);
+            var set = ValueSet.CreateBuilderWithCapacity<T>(capacity);
             int seed = 528;
 
             for (int i = 0; i < count; i++)

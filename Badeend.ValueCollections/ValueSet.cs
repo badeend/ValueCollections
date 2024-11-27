@@ -37,7 +37,7 @@ public static class ValueSet
 	/// </exception>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueSet<T>.Builder CreateBuilder<T>(int minimumCapacity) => ValueSet<T>.Builder.CreateUnsafe(new(minimumCapacity));
+	public static ValueSet<T>.Builder CreateBuilderWithCapacity<T>(int minimumCapacity) => ValueSet<T>.Builder.CreateUnsafe(new(minimumCapacity));
 
 	/// <summary>
 	/// Create a new <see cref="ValueSet{T}.Builder"/> with the provided
