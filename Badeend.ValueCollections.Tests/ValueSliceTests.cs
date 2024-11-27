@@ -235,4 +235,17 @@ public class ValueSliceTests
         Assert.Equal(2, explicitMemory.Span[1]);
         Assert.Equal(3, explicitMemory.Span[2]);
     }
+
+    [Fact]
+    public void SliceSyntax()
+    {
+        ValueSlice<int> a = [1, 2, 3, 4, 5, 6];
+
+        var s = a[2..4];
+
+        Assert.True(s.GetType() == typeof(ValueSlice<int>));
+        Assert.Equal(2, s.Length);
+        Assert.Equal(3, s[0]);
+        Assert.Equal(4, s[1]);
+    }
 }
