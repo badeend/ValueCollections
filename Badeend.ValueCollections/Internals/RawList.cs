@@ -449,6 +449,7 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 		return false;
 	}
 
+	// `match` may not access/mutate the list.
 	internal bool Remove(Predicate<T> match)
 	{
 		if (match is null)
@@ -460,13 +461,6 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 		{
 			if (match(this.items[i]))
 			{
-				// The `match` function may have modified the list.
-				// Check if the index we're about to remove still exists:
-				if (i >= this.size)
-				{
-					ThrowHelpers.ThrowInvalidOperationException_CollectionModifiedDuringEnumeration();
-				}
-
 				this.RemoveAtUnsafe(i);
 				return true;
 			}
@@ -480,6 +474,7 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 		this.RemoveAll(x => new DefaultEqualityComparer<T>().Equals(x, item));
 	}
 
+	// `match` may not access/mutate the list.
 	internal void RemoveAll(Predicate<T> match)
 	{
 		if (match == null)

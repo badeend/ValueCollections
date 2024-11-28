@@ -209,6 +209,29 @@ public class ValueListBuilderTests
         a.RemoveAll(4);
 
         Assert.True(a.ToValueList() == [2, 2]);
+
+        {
+            var e = Assert.Throws<InvalidOperationException>(() => a.TryRemove(x => a.Contains(x)));
+            Assert.Equal("Can't access builder in middle of mutation.", e.Message);
+
+            Assert.True(a.ToValueList() == [2, 2]);
+        }
+        {
+            var e = Assert.Throws<InvalidOperationException>(() => a.Remove(x => a.Contains(x)));
+            Assert.Equal("Can't access builder in middle of mutation.", e.Message);
+
+            Assert.True(a.ToValueList() == [2, 2]);
+        }
+        {
+            var e = Assert.Throws<InvalidOperationException>(() => a.RemoveAll(x => a.Contains(x)));
+            Assert.Equal("Can't access builder in middle of mutation.", e.Message);
+
+            Assert.True(a.ToValueList() == [2, 2]);
+        }
+
+        a.RemoveAll(_ => true);
+
+        Assert.True(a.ToValueList() == []);
     }
 
     [Fact]

@@ -580,7 +580,10 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public bool TryRemove(Predicate<T> match)
 		{
-			return this.MutateOnce().Remove(match);
+			using (var guard = this.Mutate())
+			{
+				return guard.Inner.Remove(match);
+			}
 		}
 
 		/// <summary>
@@ -615,7 +618,11 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public Builder RemoveAll(Predicate<T> match)
 		{
-			this.MutateOnce().RemoveAll(match);
+			using (var guard = this.Mutate())
+			{
+				guard.Inner.RemoveAll(match);
+			}
+
 			return this;
 		}
 
