@@ -104,7 +104,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         {
             ValueList<T>.Builder list = GenericListFactory(count);
             ValueList<T>.Builder withoutDuplicates = list.ToValueListBuilder();
-            list.AddRange(list.AsCollection());
+            list.AddRange(list.ToValueList());
             IndexOfDelegate IndexOf = IndexOfDelegateFromType(indexOfMethod);
 
             Assert.All(Enumerable.Range(0, count), i =>

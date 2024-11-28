@@ -70,28 +70,34 @@ namespace Badeend.ValueCollections.Tests.Reference
         }
 
         [Fact]
+        public void AddRange_AddSelfAsEnumerable_ThrowsExceptionWhenEmpty()
+        {
+            ValueList<T>.Builder list = GenericListFactory(0);
+            var listAsCollection = list.AsCollection();
+
+            // Fails when list is empty.
+            Assert.Throws<InvalidOperationException>(() => list.AddRange(list));
+            Assert.Equal(0, list.Count);
+            Assert.Throws<InvalidOperationException>(() => list.AddRange(listAsCollection));
+            Assert.Equal(0, list.Count);
+            Assert.Throws<InvalidOperationException>(() => list.AddRange(listAsCollection.Where(_ => true)));
+        }
+
+        [Fact]
         public void AddRange_AddSelfAsEnumerable_ThrowsExceptionWhenNotEmpty()
         {
             ValueList<T>.Builder list = GenericListFactory(0);
             var listAsCollection = list.AsCollection();
 
-            // Succeeds when list is empty.
-            list.AddRange(listAsCollection);
-            list.AddRange(listAsCollection.Where(_ => true));
-
-            // Succeeds when list has elements and is added as collection.
+            // Succeeds
             list.Add(default);
-            Assert.Equal(1, list.Count);
-            list.AddRange(listAsCollection);
-            Assert.Equal(2, list.Count);
-            list.AddRange(listAsCollection);
-            Assert.Equal(4, list.Count);
 
             // Fails version check when list has elements and is added as non-collection.
+            Assert.Throws<InvalidOperationException>(() => list.AddRange(list));
+            Assert.Equal(1, list.Count);
+            Assert.Throws<InvalidOperationException>(() => list.AddRange(listAsCollection));
+            Assert.Equal(1, list.Count);
             Assert.Throws<InvalidOperationException>(() => list.AddRange(listAsCollection.Where(_ => true)));
-            Assert.Equal(5, list.Count);
-            Assert.Throws<InvalidOperationException>(() => list.AddRange(listAsCollection.Where(_ => true)));
-            Assert.Equal(6, list.Count);
         }
 
         [Fact]

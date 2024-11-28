@@ -10,22 +10,19 @@ namespace Badeend.ValueCollections;
 /// </summary>
 public static class ValueCollectionExtensions
 {
-	// The returned list should never be mutated!
-	internal static ValueList<T>? AsValueListUnsafe<T>(this IEnumerable<T> items) => items switch
-	{
-		ValueList<T> valueList => valueList,
-		ValueList<T>.Builder.Collection collection => collection.Builder.Read(),
-		_ => null,
-	};
-
 	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueList{T}"/>.
 	/// </summary>
 	public static ValueList<T> ToValueList<T>(this IEnumerable<T> items)
 	{
-		if (items.AsValueListUnsafe() is { } valueList)
+		if (items is null)
 		{
-			return ValueList<T>.CreateImmutableUnsafe(new(ref valueList.inner));
+			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.items);
+		}
+
+		if (items is ValueList<T> valueList)
+		{
+			return valueList;
 		}
 
 		return ValueList<T>.CreateImmutableUnsafe(new(items));
@@ -49,11 +46,6 @@ public static class ValueCollectionExtensions
 	/// </remarks>
 	public static ValueList<T>.Builder ToValueListBuilder<T>(this IEnumerable<T> items)
 	{
-		if (items.AsValueListUnsafe() is { } valueList)
-		{
-			return valueList.ToBuilder();
-		}
-
 		return ValueList<T>.Builder.CreateUnsafe(new(items));
 	}
 
@@ -99,6 +91,9 @@ public static class ValueCollectionExtensions
 	/// <remarks>
 	/// This overload is an extension method to avoid call site ambiguity.
 	/// </remarks>
+	/// <exception cref="InvalidOperationException">
+	/// Can't add builder into itself.
+	/// </exception>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueList<T>.Builder AddRange<T>(this ValueList<T>.Builder builder, IEnumerable<T> items)
 	{
@@ -111,6 +106,12 @@ public static class ValueCollectionExtensions
 	/// <remarks>
 	/// This overload is an extension method to avoid call site ambiguity.
 	/// </remarks>
+	/// <exception cref="InvalidOperationException">
+	/// Can't insert builder into itself.
+	/// </exception>
+	/// <exception cref="ArgumentOutOfRangeException">
+	/// Invalid <paramref name="index"/>.
+	/// </exception>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueList<T>.Builder InsertRange<T>(this ValueList<T>.Builder builder, int index, IEnumerable<T> items)
 	{

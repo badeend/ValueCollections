@@ -32,7 +32,12 @@ internal static class BuilderState
 	/// <summary>
 	/// The last valid version number before incrementing it will overflow into the negative (immutable) state range.
 	/// </summary>
-	internal const uint LastMutableVersion = 0x7FFFFFFF;
+	internal const uint LastMutableVersion = 0x7FFFFFFE;
+
+	/// <summary>
+	/// The state for a mutable collection that is temporarily protected from external access.
+	/// </summary>
+	internal const int ExclusiveMode = 0x7FFFFFFF;
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static bool IsMutable(int state) => state >= 0;

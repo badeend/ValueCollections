@@ -40,13 +40,19 @@ internal static class ThrowHelpers
 	internal static void ThrowInvalidOperationException_AlreadyBuilt() => throw new InvalidOperationException("Builder has already been built");
 
 	[DoesNotReturn]
+	internal static void ThrowInvalidOperationException_CantAddOrInsertIntoSelf() => throw new InvalidOperationException("Can't add/insert collection into itself.");
+
+	[DoesNotReturn]
 	internal static void ThrowInvalidOperationException_UninitializedBuilder() => throw new InvalidOperationException("Uninitialized builder");
+
+	[DoesNotReturn]
+	internal static void ThrowInvalidOperationException_Locked() => throw new InvalidOperationException("Can't access builder in middle of mutation.");
 
 	[DoesNotReturn]
 	internal static void ThrowInvalidOperationException_CollectionModifiedDuringEnumeration() => throw new InvalidOperationException("Collection was modified during enumeration.");
 
 	[DoesNotReturn]
-	internal static void ThrowInvalidOperationException_ConcurrentOperationsNotSupported() => throw new InvalidOperationException("Concurrent access detected. The collection's state is corrupted.");
+	internal static void ThrowInvalidOperationException_ConcurrentOperationsNotSupported() => throw new InvalidOperationException("Concurrent access detected. The collection's state may be corrupted.");
 
 	[DoesNotReturn]
 	internal static void ThrowNotSupportedException_CollectionImmutable() => throw new NotSupportedException("Collection is immutable");

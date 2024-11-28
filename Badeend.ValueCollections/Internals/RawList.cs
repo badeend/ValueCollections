@@ -192,6 +192,8 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 
 	internal void AddRange(scoped ReadOnlySpan<T> items)
 	{
+		Debug.Assert(this.items.AsSpan().Overlaps(items) == false);
+
 		if (items.IsEmpty)
 		{
 			return;
@@ -203,7 +205,7 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 		}
 
 		items.CopyTo(this.items.AsSpan(this.size));
-		this.size += items.Length;
+		this.size += items.Length; // Update size _after_ copying, to handle the case in which we're inserting the list into itself.
 	}
 
 	// Appending the list onto itself through this method is unsupported.
@@ -271,54 +273,12 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 		this.size++;
 	}
 
-	internal void InsertRange(int index, ref readonly RawList<T> other)
-	{
-		if (this.items == other.items)
-		{
-			this.InsertSelf(index);
-		}
-		else
-		{
-			this.InsertRange(index, other.AsSpan());
-		}
-	}
-
-	private void InsertSelf(int index)
-	{
-		if ((uint)index > (uint)this.size)
-		{
-			ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.index);
-		}
-
-		if (this.Count == 0)
-		{
-			return;
-		}
-
-		if (this.items.Length < this.size * 2)
-		{
-			this.Grow(checked(this.size * 2));
-		}
-
-		// If the index at which to insert is less than the number of items in the list,
-		// shift all items past that location in the list down to the end, making room
-		// to copy in the new data.
-		if (index < this.size)
-		{
-			Array.Copy(this.items, index, this.items, index + this.size, this.size - index);
-		}
-
-		// Copy first part of _items to insert location
-		Array.Copy(this.items, 0, this.items, index, index);
-
-		// Copy last part of _items back to inserted location
-		Array.Copy(this.items, index + this.size, this.items, index * 2, this.size - index);
-
-		this.size += this.size;
-	}
+	internal void InsertRange(int index, ref readonly RawList<T> other) => this.InsertRange(index, other.AsSpan());
 
 	internal void InsertRange(int index, scoped ReadOnlySpan<T> items)
 	{
+		Debug.Assert(this.items.AsSpan().Overlaps(items) == false);
+
 		if ((uint)index > (uint)this.size)
 		{
 			ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.index);
@@ -343,7 +303,7 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 			// Note that this does not handle the unsafe case of trying to insert a CollectionsMarshal.AsSpan(list)
 			// or some slice thereof back into the list itself; such an operation has undefined behavior.
 			items.CopyTo(this.items.AsSpan(index));
-			this.size += items.Length;
+			this.size += items.Length; // Update size _after_ copying, to handle the case in which we're inserting the list into itself.
 		}
 	}
 
@@ -383,8 +343,7 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 
 		// Note that this might end up calling our own `CopyTo`.
 		collection.CopyTo(this.items, index);
-
-		this.size += count;
+		this.size += count; // Update size _after_ copying, to handle the case in which we're inserting the list into itself.
 
 		return true;
 	}

@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+
 namespace Badeend.ValueCollections.Tests;
 
 public class ValueListBuilderTests
@@ -118,18 +120,38 @@ public class ValueListBuilderTests
         {
             ValueList<int>.Builder a = [1, 2, 3];
 
-            a.AddRange(a.AsCollection());
+            var e = Assert.Throws<InvalidOperationException>(() => a.AddRange(a));
+            Assert.Equal("Can't add/insert collection into itself.", e.Message);
 
-            Assert.Equal(6, a.Count);
-            Assert.Equal([1, 2, 3, 1, 2, 3], a.ToValueList());
+            Assert.Equal(3, a.Count);
+            Assert.Equal([1, 2, 3], a.ToValueList());
         }
         {
             ValueList<int>.Builder a = [1, 2, 3];
 
-            Assert.Throws<InvalidOperationException>(() => a.AddRange(a.AsCollection().Where(_ => true)));
+            var e = Assert.Throws<InvalidOperationException>(() => a.AddRange(a.AsCollection()));
+            Assert.Equal("Can't add/insert collection into itself.", e.Message);
 
-            Assert.Equal(4, a.Count);
-            Assert.Equal([1, 2, 3, 1], a.ToValueList());
+            Assert.Equal(3, a.Count);
+            Assert.Equal([1, 2, 3], a.ToValueList());
+        }
+        {
+            ValueList<int>.Builder a = [1, 2, 3];
+
+            var e = Assert.Throws<InvalidOperationException>(() => a.AddRange(new ReadOnlyCollection<int>(a.AsCollection())));
+            Assert.Equal("Can't access builder in middle of mutation.", e.Message);
+
+            Assert.Equal(3, a.Count);
+            Assert.Equal([1, 2, 3], a.ToValueList());
+        }
+        {
+            ValueList<int>.Builder a = [1, 2, 3];
+
+            var e = Assert.Throws<InvalidOperationException>(() => a.AddRange(a.AsCollection().Where(_ => true)));
+            Assert.Equal("Can't access builder in middle of mutation.", e.Message);
+
+            Assert.Equal(3, a.Count);
+            Assert.Equal([1, 2, 3], a.ToValueList());
         }
     }
 
@@ -139,18 +161,38 @@ public class ValueListBuilderTests
         {
             ValueList<int>.Builder a = [1, 2, 3];
 
-            a.InsertRange(1, a.AsCollection());
+            var e = Assert.Throws<InvalidOperationException>(() => a.InsertRange(1, a));
+            Assert.Equal("Can't add/insert collection into itself.", e.Message);
 
-            Assert.Equal(6, a.Count);
-            Assert.Equal([1, 1, 2, 3, 2, 3], a.ToValueList());
+            Assert.Equal(3, a.Count);
+            Assert.Equal([1, 2, 3], a.ToValueList());
         }
         {
             ValueList<int>.Builder a = [1, 2, 3];
 
-            Assert.Throws<InvalidOperationException>(() => a.InsertRange(1, a.AsCollection().Where(_ => true)));
+            var e = Assert.Throws<InvalidOperationException>(() => a.InsertRange(1, a.AsCollection()));
+            Assert.Equal("Can't add/insert collection into itself.", e.Message);
 
-            Assert.Equal(4, a.Count);
-            Assert.Equal([1, 1, 2, 3], a.ToValueList());
+            Assert.Equal(3, a.Count);
+            Assert.Equal([1, 2, 3], a.ToValueList());
+        }
+        {
+            ValueList<int>.Builder a = [1, 2, 3];
+
+            var e = Assert.Throws<InvalidOperationException>(() => a.InsertRange(1, new ReadOnlyCollection<int>(a.AsCollection())));
+            Assert.Equal("Can't access builder in middle of mutation.", e.Message);
+
+            Assert.Equal(3, a.Count);
+            Assert.Equal([1, 2, 3], a.ToValueList());
+        }
+        {
+            ValueList<int>.Builder a = [1, 2, 3];
+
+            var e = Assert.Throws<InvalidOperationException>(() => a.InsertRange(1, a.AsCollection().Where(_ => true)));
+            Assert.Equal("Can't access builder in middle of mutation.", e.Message);
+
+            Assert.Equal(3, a.Count);
+            Assert.Equal([1, 2, 3], a.ToValueList());
         }
     }
 

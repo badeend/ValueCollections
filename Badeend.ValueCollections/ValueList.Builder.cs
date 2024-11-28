@@ -52,7 +52,7 @@ public sealed partial class ValueList<T>
 		/// now read-only.
 		/// </summary>
 		[Pure]
-		public bool IsReadOnly => BuilderState.IsImmutable(this.Read().state);
+		public bool IsReadOnly => this.list is null || BuilderState.IsImmutable(this.list.state);
 
 		/// <summary>
 		/// Finalize the builder and export its contents as a <see cref="ValueList{T}"/>.
@@ -70,11 +70,13 @@ public sealed partial class ValueList<T>
 		/// </exception>
 		public ValueList<T> Build()
 		{
-			var list = this.Mutate();
+			this.MutateOnce();
 
-			list.state = BuilderState.InitialImmutable;
+			Debug.Assert(this.list is not null);
 
-			return list;
+			this.list!.state = BuilderState.InitialImmutable;
+
+			return this.list;
 		}
 
 		/// <summary>
@@ -87,7 +89,11 @@ public sealed partial class ValueList<T>
 		[Pure]
 		public ValueList<T> ToValueList()
 		{
-			var list = this.Read();
+			var list = this.list;
+			if (list is null)
+			{
+				return Empty;
+			}
 
 			if (BuilderState.IsImmutable(list.state))
 			{
@@ -105,53 +111,174 @@ public sealed partial class ValueList<T>
 		[Pure]
 		public Builder ToValueListBuilder()
 		{
-			var list = this.Read();
-
-			return ValueList<T>.Builder.CreateUnsafe(new(ref list.inner));
+			return ValueList<T>.Builder.CreateUnsafe(new(in this.ReadOnce()));
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private ValueList<T> Mutate()
+		[StructLayout(LayoutKind.Auto)]
+		private readonly struct ReadGuard
+		{
+			private readonly ValueList<T> list;
+			private readonly int expectedState;
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			internal ReadGuard(ValueList<T> list, int expectedState)
+			{
+				this.list = list;
+				this.expectedState = expectedState;
+			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			internal ref readonly RawList<T> AssertAlive()
+			{
+				if (this.expectedState != this.list.state)
+				{
+					this.AssertAliveUncommon();
+				}
+
+				return ref this.list.inner;
+			}
+
+			private void AssertAliveUncommon()
+			{
+				// The only valid reason for ending up here is when the snapshot
+				// was obtained in an already-built state and the hash code was
+				// materialized afterwards.
+				if (BuilderState.IsImmutable(this.expectedState))
+				{
+					Debug.Assert(BuilderState.IsImmutable(this.list.state));
+
+					return;
+				}
+
+				if (this.list.state == BuilderState.ExclusiveMode)
+				{
+					ThrowHelpers.ThrowInvalidOperationException_Locked();
+				}
+				else
+				{
+					ThrowHelpers.ThrowInvalidOperationException_CollectionModifiedDuringEnumeration();
+				}
+			}
+		}
+
+		[StructLayout(LayoutKind.Auto)]
+		private readonly ref struct MutationGuard
+		{
+			private readonly ValueList<T> list;
+			private readonly int restoreState;
+
+			internal readonly ref RawList<T> Inner
+			{
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
+				get
+				{
+					Debug.Assert(this.list.state == BuilderState.ExclusiveMode);
+
+					return ref this.list.inner;
+				}
+			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			internal MutationGuard(ValueList<T> list, int restoreState)
+			{
+				this.list = list;
+				this.restoreState = restoreState;
+			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			public void Dispose()
+			{
+				Debug.Assert(this.list.state == BuilderState.ExclusiveMode);
+
+				this.list.state = this.restoreState;
+			}
+		}
+
+		private ReadGuard Read()
+		{
+			var list = this.list ?? Empty;
+
+			if (list.state == BuilderState.ExclusiveMode)
+			{
+				ThrowHelpers.ThrowInvalidOperationException_Locked();
+			}
+
+			return new ReadGuard(list, list.state);
+		}
+
+		private ref readonly RawList<T> ReadOnce()
+		{
+			var list = this.list ?? Empty;
+
+			if (list.state == BuilderState.ExclusiveMode)
+			{
+				ThrowHelpers.ThrowInvalidOperationException_Locked();
+			}
+
+			return ref list.inner;
+		}
+
+		private MutationGuard Mutate()
 		{
 			var list = this.list;
 			if (list is null || (uint)list.state >= BuilderState.LastMutableVersion)
 			{
-				SlowPath(list);
+				MutateUncommon(list);
+			}
+
+			var stateToRestore = list.state + 1;
+			list.state = BuilderState.ExclusiveMode;
+
+			Debug.Assert(BuilderState.IsMutable(stateToRestore));
+
+			return new MutationGuard(list, stateToRestore);
+		}
+
+		// Only to be used if the mutation can be done at once (i.e. "atomically"),
+		// and the outside world can not observe the builder in a temporary intermediate state.
+		private ref RawList<T> MutateOnce()
+		{
+			var list = this.list;
+			if (list is null || (uint)list.state >= BuilderState.LastMutableVersion)
+			{
+				MutateUncommon(list);
 			}
 
 			list.state++;
 
 			Debug.Assert(BuilderState.IsMutable(list.state));
 
-			return list;
-
-			[MethodImpl(MethodImplOptions.NoInlining)]
-			static void SlowPath([NotNull] ValueList<T>? list)
-			{
-				if (list is null)
-				{
-					ThrowHelpers.ThrowInvalidOperationException_UninitializedBuilder();
-				}
-				else if (list.state == BuilderState.LastMutableVersion)
-				{
-					list.state = BuilderState.InitialMutable;
-				}
-				else
-				{
-					Debug.Assert(BuilderState.IsImmutable(list.state));
-
-					ThrowHelpers.ThrowInvalidOperationException_AlreadyBuilt();
-				}
-			}
+			return ref list.inner;
 		}
 
-		internal ValueList<T> Read() => this.list ?? Empty;
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		private static void MutateUncommon([NotNull] ValueList<T>? list)
+		{
+			if (list is null)
+			{
+				ThrowHelpers.ThrowInvalidOperationException_UninitializedBuilder();
+			}
+			else if (list.state == BuilderState.LastMutableVersion)
+			{
+				list.state = BuilderState.InitialMutable;
+			}
+			else if (list.state == BuilderState.ExclusiveMode)
+			{
+				ThrowHelpers.ThrowInvalidOperationException_Locked();
+			}
+			else
+			{
+				Debug.Assert(BuilderState.IsImmutable(list.state));
+
+				ThrowHelpers.ThrowInvalidOperationException_AlreadyBuilt();
+			}
+		}
 
 		/// <summary>
 		/// The total number of elements the internal data structure can hold without resizing.
 		/// </summary>
 		[Pure]
-		public int Capacity => this.Read().inner.Capacity;
+		public int Capacity => this.ReadOnce().Capacity;
 
 		/// <summary>
 		/// Gets or sets the element at the specified <paramref name="index"/>.
@@ -159,15 +286,15 @@ public sealed partial class ValueList<T>
 		public T this[int index]
 		{
 			[Pure]
-			get => this.Read().inner[index];
-			set => this.Mutate().inner[index] = value;
+			get => this.ReadOnce()[index];
+			set => this.MutateOnce()[index] = value;
 		}
 
 		/// <summary>
 		/// Current length of the list.
 		/// </summary>
 		[Pure]
-		public int Count => this.Read().inner.Count;
+		public int Count => this.ReadOnce().Count;
 
 		/// <summary>
 		/// Shortcut for <c>.Count == 0</c>.
@@ -214,7 +341,7 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public Builder SetItem(int index, T value)
 		{
-			this.Mutate().inner[index] = value;
+			this.MutateOnce()[index] = value;
 			return this;
 		}
 
@@ -223,7 +350,7 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public Builder Add(T item)
 		{
-			this.Mutate().inner.Add(item);
+			this.MutateOnce().Add(item);
 			return this;
 		}
 
@@ -246,16 +373,29 @@ public sealed partial class ValueList<T>
 				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.items);
 			}
 
-			this.Mutate().inner.AddRange(ref items.inner);
+			this.MutateOnce().AddRange(ref items.inner);
 			return this;
 		}
 
 		/// <summary>
 		/// Add the <paramref name="items"/> to the end of the list.
 		/// </summary>
+		/// <exception cref="InvalidOperationException">
+		/// Can't add builder into itself.
+		/// </exception>
 		public Builder AddRange(Builder items)
 		{
-			this.Mutate().inner.AddRange(ref items.Read().inner);
+			ref var thisInner = ref this.MutateOnce();
+			ref readonly var otherInner = ref items.ReadOnce();
+
+			// This check is also what makes the MutateOnce safe.
+			if (thisInner.Equals(in otherInner))
+			{
+				ThrowHelpers.ThrowInvalidOperationException_CantAddOrInsertIntoSelf();
+			}
+
+			thisInner.AddRange(in otherInner);
+
 			return this;
 		}
 
@@ -264,58 +404,54 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public Builder AddRange(scoped ReadOnlySpan<T> items)
 		{
-			this.Mutate().inner.AddRange(items);
+			this.MutateOnce().AddRange(items);
 			return this;
 		}
 
 		// Accessible through extension method.
 		internal Builder AddRangeEnumerable(IEnumerable<T> items)
 		{
-			var list = this.Mutate();
-
-			if (items.AsValueListUnsafe() is { } otherList)
+			if (items is null)
 			{
-				list.inner.AddRange(ref otherList.inner);
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.items);
 			}
-			else
+
+			if (items is ValueList<T> valueList)
 			{
-				if (!list.inner.TryAddNonEnumeratedRange(items))
-				{
-					this.AddRangeSlow(items);
-				}
+				return this.AddRange(valueList);
+			}
+
+			if (items is Collection collection)
+			{
+				return this.AddRange(collection.Builder);
+			}
+
+			using (var guard = this.Mutate())
+			{
+				guard.Inner.AddRange(items);
 			}
 
 			return this;
 		}
 
-		private void AddRangeSlow(IEnumerable<T> items)
-		{
-			foreach (var item in items)
-			{
-				// Something not immediately obvious from just the code itself is that
-				// nothing prevents consumers from calling this method with an `items`
-				// argument that is (indirectly) derived from `this`. e.g.
-				// ```builder.AddRange(builder.Where(_ => true))```
-				// Without precaution that could result in an infinite loop with
-				// infinite memory growth.
-				// We "protect" our consumers from this by invalidating the enumerator
-				// on each iteration such that an exception will be thrown.
-				this.Mutate().inner.Add(item);
-			}
-		}
-
 		/// <summary>
 		/// Insert an <paramref name="item"/> into the list at the specified <paramref name="index"/>.
 		/// </summary>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// Invalid <paramref name="index"/>.
+		/// </exception>
 		public Builder Insert(int index, T item)
 		{
-			this.Mutate().inner.Insert(index, item);
+			this.MutateOnce().Insert(index, item);
 			return this;
 		}
 
 		/// <summary>
 		/// Insert the <paramref name="items"/> into the list at the specified <paramref name="index"/>.
 		/// </summary>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// Invalid <paramref name="index"/>.
+		/// </exception>
 		public Builder InsertRange(int index, ValueSlice<T> items) => this.InsertRange(index, items.AsSpan());
 
 		/// <summary>
@@ -325,6 +461,9 @@ public sealed partial class ValueList<T>
 		/// An overload that takes any <c>IEnumerable&lt;T&gt;</c> exists as an
 		/// <see cref="ValueCollectionExtensions.InsertRange{T}(ValueList{T}.Builder, int, IEnumerable{T})">extension method</see>.
 		/// </remarks>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// Invalid <paramref name="index"/>.
+		/// </exception>
 		public Builder InsertRange(int index, ValueList<T> items)
 		{
 			if (items is null)
@@ -332,62 +471,71 @@ public sealed partial class ValueList<T>
 				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.items);
 			}
 
-			this.Mutate().inner.InsertRange(index, ref items.inner);
+			this.MutateOnce().InsertRange(index, ref items.inner);
 			return this;
 		}
 
 		/// <summary>
 		/// Insert the <paramref name="items"/> into the list at the specified <paramref name="index"/>.
 		/// </summary>
+		/// <exception cref="InvalidOperationException">
+		/// Can't insert builder into itself.
+		/// </exception>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// Invalid <paramref name="index"/>.
+		/// </exception>
 		public Builder InsertRange(int index, Builder items)
 		{
-			this.Mutate().inner.InsertRange(index, ref items.Read().inner);
+			ref var thisInner = ref this.MutateOnce();
+			ref readonly var otherInner = ref items.ReadOnce();
+
+			// This check is also what makes the MutateOnce safe.
+			if (thisInner.Equals(in otherInner))
+			{
+				ThrowHelpers.ThrowInvalidOperationException_CantAddOrInsertIntoSelf();
+			}
+
+			thisInner.InsertRange(index, in otherInner);
+
 			return this;
 		}
 
 		/// <summary>
 		/// Insert the <paramref name="items"/> into the list at the specified <paramref name="index"/>.
 		/// </summary>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// Invalid <paramref name="index"/>.
+		/// </exception>
 		public Builder InsertRange(int index, scoped ReadOnlySpan<T> items)
 		{
-			this.Mutate().inner.InsertRange(index, items);
+			this.MutateOnce().InsertRange(index, items);
 			return this;
 		}
 
 		// Accessible through extension method.
 		internal Builder InsertRangeEnumerable(int index, IEnumerable<T> items)
 		{
-			var list = this.Mutate();
-
-			if (items.AsValueListUnsafe() is { } otherList)
+			if (items is null)
 			{
-				list.inner.InsertRange(index, ref otherList.inner);
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.items);
 			}
-			else
+
+			if (items is ValueList<T> valueList)
 			{
-				if (!list.inner.TryInsertNonEnumeratedRange(index, items))
-				{
-					this.InsertRangeSlow(index, items);
-				}
+				return this.InsertRange(index, valueList);
+			}
+
+			if (items is Collection collection)
+			{
+				return this.InsertRange(index, collection.Builder);
+			}
+
+			using (var guard = this.Mutate())
+			{
+				guard.Inner.InsertRange(index, items);
 			}
 
 			return this;
-		}
-
-		private void InsertRangeSlow(int index, IEnumerable<T> items)
-		{
-			foreach (var item in items)
-			{
-				// Something not immediately obvious from just the code itself is that
-				// nothing prevents consumers from calling this method with an `items`
-				// argument that is (indirectly) derived from `this`. e.g.
-				// ```builder.InsertRange(0, builder.AsCollection().Where(_ => true))```
-				// Without precaution that could result in an infinite loop with
-				// infinite memory growth.
-				// We "protect" our consumers from this by invalidating the enumerator
-				// on each iteration such that an exception will be thrown.
-				this.Mutate().inner.Insert(index++, item);
-			}
 		}
 
 		/// <summary>
@@ -395,7 +543,7 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public Builder Clear()
 		{
-			this.Mutate().inner.Clear();
+			this.MutateOnce().Clear();
 			return this;
 		}
 
@@ -404,7 +552,7 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public Builder RemoveAt(int index)
 		{
-			this.Mutate().inner.RemoveAt(index);
+			this.MutateOnce().RemoveAt(index);
 			return this;
 		}
 
@@ -413,7 +561,7 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public Builder RemoveRange(int index, int count)
 		{
-			this.Mutate().inner.RemoveRange(index, count);
+			this.MutateOnce().RemoveRange(index, count);
 			return this;
 		}
 
@@ -423,7 +571,7 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public bool TryRemove(T item)
 		{
-			return this.Mutate().inner.Remove(item);
+			return this.MutateOnce().Remove(item);
 		}
 
 		/// <summary>
@@ -432,7 +580,7 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public bool TryRemove(Predicate<T> match)
 		{
-			return this.Mutate().inner.Remove(match);
+			return this.MutateOnce().Remove(match);
 		}
 
 		/// <summary>
@@ -458,7 +606,7 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public Builder RemoveAll(T item)
 		{
-			this.Mutate().inner.RemoveAll(item);
+			this.MutateOnce().RemoveAll(item);
 			return this;
 		}
 
@@ -467,7 +615,7 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public Builder RemoveAll(Predicate<T> match)
 		{
-			this.Mutate().inner.RemoveAll(match);
+			this.MutateOnce().RemoveAll(match);
 			return this;
 		}
 
@@ -476,7 +624,7 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public Builder Reverse()
 		{
-			this.Mutate().inner.Reverse();
+			this.MutateOnce().Reverse();
 			return this;
 		}
 
@@ -485,7 +633,7 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public Builder Sort()
 		{
-			this.Mutate().inner.Sort();
+			this.MutateOnce().Sort();
 			return this;
 		}
 
@@ -495,20 +643,20 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public Builder Shuffle()
 		{
-			this.Mutate().inner.Shuffle();
+			this.MutateOnce().Shuffle();
 			return this;
 		}
 
 		/// <inheritdoc cref="ValueCollectionsMarshal.AsSpan"/>
 		internal Span<T> AsSpanUnsafe()
 		{
-			return this.Mutate().inner.AsSpan();
+			return this.MutateOnce().AsSpan();
 		}
 
 		/// <inheritdoc cref="ValueCollectionsMarshal.SetCount"/>
 		internal void SetCountUnsafe(int count)
 		{
-			this.Mutate().inner.SetCount(count);
+			this.MutateOnce().SetCount(count);
 		}
 
 		/// <summary>
@@ -517,7 +665,7 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public Builder TrimExcess()
 		{
-			this.Mutate().inner.TrimExcess();
+			this.MutateOnce().TrimExcess();
 			return this;
 		}
 
@@ -531,7 +679,7 @@ public sealed partial class ValueList<T>
 		/// </exception>
 		public Builder EnsureCapacity(int minimumCapacity)
 		{
-			this.Mutate().inner.EnsureCapacity(minimumCapacity);
+			this.MutateOnce().EnsureCapacity(minimumCapacity);
 			return this;
 		}
 
@@ -540,21 +688,21 @@ public sealed partial class ValueList<T>
 		/// <paramref name="item"/>.
 		/// </summary>
 		[Pure]
-		public bool Contains(T item) => this.Read().inner.Contains(item);
+		public bool Contains(T item) => this.ReadOnce().Contains(item);
 
 		/// <summary>
 		/// Return the index of the first occurrence of <paramref name="item"/> in
 		/// the list, or <c>-1</c> if not found.
 		/// </summary>
 		[Pure]
-		public int IndexOf(T item) => this.Read().inner.IndexOf(item);
+		public int IndexOf(T item) => this.ReadOnce().IndexOf(item);
 
 		/// <summary>
 		/// Return the index of the last occurrence of <paramref name="item"/> in
 		/// the list, or <c>-1</c> if not found.
 		/// </summary>
 		[Pure]
-		public int LastIndexOf(T item) => this.Read().inner.LastIndexOf(item);
+		public int LastIndexOf(T item) => this.ReadOnce().LastIndexOf(item);
 
 		/// <summary>
 		/// Perform a binary search for <paramref name="item"/> within the list.
@@ -565,20 +713,20 @@ public sealed partial class ValueList<T>
 		/// the bitwise complement of the index where the item should be inserted.
 		/// </summary>
 		[Pure]
-		public int BinarySearch(T item) => this.Read().inner.BinarySearch(item);
+		public int BinarySearch(T item) => this.ReadOnce().BinarySearch(item);
 
 		/// <summary>
 		/// Copy the contents of the list into a new array.
 		/// </summary>
 		[Pure]
-		public T[] ToArray() => this.Read().inner.ToArray();
+		public T[] ToArray() => this.ReadOnce().ToArray();
 
 		/// <summary>
 		/// Attempt to copy the contents of the list into an existing
 		/// <see cref="Span{T}"/>. If the <paramref name="destination"/> is too short,
 		/// no items are copied and the method returns <see langword="false"/>.
 		/// </summary>
-		public bool TryCopyTo(Span<T> destination) => this.Read().inner.TryCopyTo(destination);
+		public bool TryCopyTo(Span<T> destination) => this.ReadOnce().TryCopyTo(destination);
 
 		/// <summary>
 		/// Copy the contents of the list into an existing <see cref="Span{T}"/>.
@@ -586,7 +734,7 @@ public sealed partial class ValueList<T>
 		/// <exception cref="ArgumentException">
 		///   <paramref name="destination"/> is shorter than the source list.
 		/// </exception>
-		public void CopyTo(Span<T> destination) => this.Read().inner.CopyTo(destination);
+		public void CopyTo(Span<T> destination) => this.ReadOnce().CopyTo(destination);
 
 		/// <summary>
 		/// Create a new heap-allocated live view of the builder.
@@ -690,7 +838,7 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		[Pure]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public Enumerator GetEnumerator() => new Enumerator(this.Read());
+		public Enumerator GetEnumerator() => new Enumerator(this);
 
 		/// <summary>
 		/// Enumerator for <see cref="Builder"/>.
@@ -700,16 +848,15 @@ public sealed partial class ValueList<T>
 		[StructLayout(LayoutKind.Auto)]
 		public struct Enumerator : IEnumeratorLike<T>
 		{
-			private readonly ValueList<T> list;
-			private readonly int expectedState;
+			private readonly ReadGuard guard;
 			private RawList<T>.Enumerator inner;
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			internal Enumerator(ValueList<T> list)
+			internal Enumerator(Builder builder)
 			{
-				this.list = list;
-				this.expectedState = list.state;
-				this.inner = list.inner.GetEnumerator();
+				var snapshot = builder.Read();
+				this.guard = snapshot;
+				this.inner = snapshot.AssertAlive().GetEnumerator();
 			}
 
 			/// <inheritdoc/>
@@ -723,27 +870,9 @@ public sealed partial class ValueList<T>
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public bool MoveNext()
 			{
-				if (this.expectedState != this.list.state)
-				{
-					this.MoveNextSlow();
-				}
+				this.guard.AssertAlive();
 
 				return this.inner.MoveNext();
-			}
-
-			private void MoveNextSlow()
-			{
-				// The only valid reason for ending up here is when the enumerator
-				// was obtained in an already-built state and the hash code was
-				// materialized during enumeration.
-				if (BuilderState.IsImmutable(this.expectedState))
-				{
-					Debug.Assert(BuilderState.IsImmutable(this.list.state));
-
-					return;
-				}
-
-				ThrowHelpers.ThrowInvalidOperationException_CollectionModifiedDuringEnumeration();
 			}
 		}
 #pragma warning restore CA1815 // Override equals and operator equals on value types
@@ -754,7 +883,7 @@ public sealed partial class ValueList<T>
 		/// The format is not stable and may change without prior notice.
 		/// </summary>
 		[Pure]
-		public override string ToString() => this.Read().inner.ToString();
+		public override string ToString() => this.ReadOnce().ToString();
 
 		/// <inheritdoc/>
 		[Pure]
