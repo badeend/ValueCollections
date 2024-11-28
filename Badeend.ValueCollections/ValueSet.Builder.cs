@@ -534,11 +534,7 @@ public sealed partial class ValueSet<T>
 		/// A heap-allocated live view of a builder. Changes made to the
 		/// collection are visible in the builder and vice versa.
 		/// </summary>
-#if NET5_0_OR_GREATER
 		public sealed class Collection : ISet<T>, IReadOnlyCollection<T>, IReadOnlySet<T>
-#else
-		public sealed class Collection : ISet<T>, IReadOnlyCollection<T>
-#endif
 		{
 			private readonly Builder builder;
 
@@ -634,7 +630,6 @@ public sealed partial class ValueSet<T>
 			/// <inheritdoc/>
 			void ISet<T>.UnionWith(IEnumerable<T> other) => this.builder.UnionWith(other);
 
-#if NET5_0_OR_GREATER
 			/// <inheritdoc/>
 			bool IReadOnlySet<T>.Contains(T item) => this.builder.Contains(item);
 
@@ -655,7 +650,6 @@ public sealed partial class ValueSet<T>
 
 			/// <inheritdoc/>
 			bool IReadOnlySet<T>.SetEquals(IEnumerable<T> other) => this.builder.SetEquals(other);
-#endif
 		}
 #pragma warning restore CA1034 // Nested types should not be visible
 

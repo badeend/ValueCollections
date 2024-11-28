@@ -68,11 +68,7 @@ public static class ValueSet
 /// </remarks>
 /// <typeparam name="T">The type of items in the set.</typeparam>
 [CollectionBuilder(typeof(ValueSet), nameof(ValueSet.Create))]
-#if NET5_0_OR_GREATER
 public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<ValueSet<T>>, IReadOnlySet<T>
-#else
-public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<ValueSet<T>>
-#endif
 {
 	/// <summary>
 	/// Get an empty set.

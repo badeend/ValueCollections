@@ -101,11 +101,7 @@ public sealed partial class ValueDictionaryBuilder<TKey, TValue>
 	/// the next mutation performed on the builder. As long as the KeysCollection
 	/// is usable, it effectively represents an immutable set of keys.
 	/// </remarks>
-#if NET5_0_OR_GREATER
 	public sealed class KeysCollection : ISet<TKey>, IReadOnlyCollection<TKey>, IReadOnlySet<TKey>
-#else
-	public sealed class KeysCollection : ISet<TKey>, IReadOnlyCollection<TKey>
-#endif
 	{
 		private readonly Snapshot snapshot;
 
@@ -169,7 +165,6 @@ public sealed partial class ValueDictionaryBuilder<TKey, TValue>
 		/// <inheritdoc/>
 		bool ISet<TKey>.SetEquals(IEnumerable<TKey> other) => this.snapshot.Read().Keys_SetEquals(other);
 
-#if NET5_0_OR_GREATER
 		/// <inheritdoc/>
 		bool IReadOnlySet<TKey>.Contains(TKey item) => this.snapshot.Read().ContainsKey(item);
 
@@ -190,7 +185,6 @@ public sealed partial class ValueDictionaryBuilder<TKey, TValue>
 
 		/// <inheritdoc/>
 		bool IReadOnlySet<TKey>.SetEquals(IEnumerable<TKey> other) => this.snapshot.Read().Keys_SetEquals(other);
-#endif
 
 		/// <inheritdoc/>
 		void ICollection<TKey>.Add(TKey item) => throw ImmutableException();

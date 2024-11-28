@@ -87,11 +87,7 @@ public sealed partial class ValueDictionary<TKey, TValue>
 	/// <summary>
 	/// A heap-allocated read-only view over all the keys in the dictionary.
 	/// </summary>
-#if NET5_0_OR_GREATER
 	public sealed class KeysCollection : ISet<TKey>, IReadOnlyCollection<TKey>, IReadOnlySet<TKey>
-#else
-	public sealed class KeysCollection : ISet<TKey>, IReadOnlyCollection<TKey>
-#endif
 	{
 		internal static readonly KeysCollection Empty = new KeysCollection(ValueDictionary<TKey, TValue>.Empty);
 
@@ -156,7 +152,6 @@ public sealed partial class ValueDictionary<TKey, TValue>
 		/// <inheritdoc/>
 		bool ISet<TKey>.SetEquals(IEnumerable<TKey> other) => this.dictionary.Keys_SetEquals(other);
 
-#if NET5_0_OR_GREATER
 		/// <inheritdoc/>
 		bool IReadOnlySet<TKey>.Contains(TKey item) => this.dictionary.ContainsKey(item);
 
@@ -177,7 +172,6 @@ public sealed partial class ValueDictionary<TKey, TValue>
 
 		/// <inheritdoc/>
 		bool IReadOnlySet<TKey>.SetEquals(IEnumerable<TKey> other) => this.dictionary.Keys_SetEquals(other);
-#endif
 
 		/// <inheritdoc/>
 		void ICollection<TKey>.Add(TKey item) => throw ImmutableException();
