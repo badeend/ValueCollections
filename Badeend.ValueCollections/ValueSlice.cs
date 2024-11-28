@@ -252,6 +252,82 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	public bool TryCopyTo(Span<T> destination) => this.AsSpan().TryCopyTo(destination);
 
 	/// <summary>
+	/// Reinterpret the type of the slice to be of another element type.
+	/// </summary>
+	/// <typeparam name="TDerived">Element type of the existing slice. Must be derived from <typeparamref name="T"/>.</typeparam>
+	/// <remarks>
+	/// This does not perform a copy. The returned slice points to the same memory.
+	///
+	/// This is guaranteed to be safe and infallible because of the generic type
+	/// constraints. If these constraints are not statically provable,
+	/// <see cref="TryAs"/> may be used to perform the same conversion but
+	/// using dynamic type checks.
+	/// </remarks>
+	/// <example>
+	/// <code>
+	/// ValueSlice&lt;Cat&gt; cats = [/*...*/];
+	/// ValueSlice&lt;Animal&gt; animals = ValueSlice&lt;Animal&gt;.CastUp(cats);
+	/// </code>
+	/// </example>
+	[Pure]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ValueSlice<T> CastUp<TDerived>(ValueSlice<TDerived> source)
+		where TDerived : class, T
+	{
+		return new(source.items, source.offset, source.length);
+	}
+
+	/// <summary>
+	/// Attempt to reinterpret the type of the slice to be of another element type.
+	/// </summary>
+	/// <typeparam name="TOther">Element type of the new slice.</typeparam>
+	/// <remarks>
+	/// If the slice is empty this method always succeeds and
+	/// <paramref name="result"/> contains the empty slice for the requested type.
+	///
+	/// The common use case is to upcast the slice's element type into a base
+	/// type. However, this method can also be used to downcast the element type
+	/// iif that reverses a prior upcast operation.
+	///
+	/// This does not perform a copy. On success, the returned slice points to
+	/// the same memory.
+	///
+	/// If <typeparamref name="TOther"/> is statically provable to be the
+	/// supertype of <typeparamref name="T"/>, <see cref="CastUp"/> may be used
+	/// to perform the same conversion without dynamic type checks.
+	/// </remarks>
+	/// <example>
+	/// <code>
+	/// ValueSlice&lt;Cat&gt; cats = [/*...*/];
+	/// Assert.True(cats.TryAs&lt;Animal&gt;(out var animals)); // Upcast
+	/// Assert.True(animals.TryAs&lt;Cat&gt;(out var catsAgain)); // Downcast
+	/// </code>
+	/// </example>
+	public bool TryAs<TOther>(out ValueSlice<TOther> result)
+	{
+		if (this.items is null)
+		{
+			// We have nothing to dynamically type check against. Now, we can
+			// either succeed or fail. Both of those options are equally
+			// "correct" and "wrong" depending on how you look at it, and both
+			// of them have surprising (counter)examples.
+			result = default;
+			return true;
+		}
+
+#pragma warning disable CA1508 // Avoid dead conditional code => Analyzer doesn't seem to understand what we're doing here... :)
+		if (this.items is TOther[] castItems)
+		{
+			result = new(castItems, this.offset, this.length);
+			return true;
+		}
+#pragma warning restore CA1508 // Avoid dead conditional code
+
+		result = default;
+		return false;
+	}
+
+	/// <summary>
 	/// Return the index of the first occurrence of <paramref name="item"/> in
 	/// <c>this</c>, or <c>-1</c> if not found.
 	/// </summary>

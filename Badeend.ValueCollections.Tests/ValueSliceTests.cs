@@ -248,4 +248,57 @@ public class ValueSliceTests
         Assert.Equal(3, s[0]);
         Assert.Equal(4, s[1]);
     }
+
+    [Fact]
+    public void CastUp()
+    {
+        ValueSlice<MyChildClass> a = [new()];
+        ValueSlice<MyBaseClass> b = ValueSlice<MyBaseClass>.CastUp(a);
+        ValueSlice<IMyInterface> c = ValueSlice<IMyInterface>.CastUp(a);
+    }
+
+    [Fact]
+    public void TryAs()
+    {
+        {
+            ValueSlice<int> a = [];
+
+            Assert.True(a.TryAs<string>(out _));
+        }
+        {
+            ValueSlice<int> a = [1, 2, 3];
+
+            Assert.False(a.TryAs<string>(out _));
+        }
+        {
+            ValueSlice<MyBaseClass> a = [new()];
+
+            Assert.False(a.TryAs<MyChildClass>(out _));
+        }
+        {
+            ValueSlice<MyBaseClass> a = [new MyChildClass()];
+
+            Assert.False(a.TryAs<IMyInterface>(out _));
+        }
+        {
+            ValueSlice<MyChildClass> a = [new()];
+
+            Assert.True(a.TryAs<IMyInterface>(out _));
+        }
+        {
+            ValueSlice<MyChildClass> a = [new()];
+
+            Assert.True(a.TryAs<MyBaseClass>(out var b));
+
+            Assert.True(b.TryAs<IMyInterface>(out var c));
+
+            Assert.True(b.TryAs<MyChildClass>(out var d));
+
+            Assert.Equal(a, d);
+        }
+    }
+
+    private interface IMyInterface { }
+    private class MyBaseClass { }
+    private class MyChildClass : MyBaseClass, IMyInterface { }
 }
