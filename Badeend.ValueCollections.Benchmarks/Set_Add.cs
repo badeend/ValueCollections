@@ -10,7 +10,7 @@ public class Set_Add
 	private const int Iterations = 1_000_000;
 
 	[Benchmark(Description = "HashSet<T>.Add()")]
-	public IReadOnlySet<int> HashSet()
+	public IReadOnlyCollection<int> HashSet()
 	{
 		var list = new HashSet<int>();
 
@@ -23,7 +23,7 @@ public class Set_Add
 	}
 
 	[Benchmark(Description = "ValueSet<T>.Builder.Add()")]
-	public IReadOnlySet<int> ValueSetBuilder()
+	public IReadOnlyCollection<int> ValueSetBuilder()
 	{
 		var builder = ValueSet.CreateBuilder<int>();
 
@@ -36,7 +36,7 @@ public class Set_Add
 	}
 
 	[Benchmark(Description = "ImmutableHashSet<T>.Builder.Add()")]
-	public IReadOnlySet<int> ImmutableHashSetBuilder()
+	public IReadOnlyCollection<int> ImmutableHashSetBuilder()
 	{
 		var builder = ImmutableHashSet.CreateBuilder<int>();
 
