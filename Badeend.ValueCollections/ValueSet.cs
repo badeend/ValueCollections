@@ -149,42 +149,6 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	public Builder ToBuilder() => Builder.CreateUnsafe(new(ref this.inner));
 
 	/// <summary>
-	/// Create a new <see cref="Builder"/> with a capacity of at
-	/// least <paramref name="minimumCapacity"/> and with this set as its
-	/// initial content. This builder can then be used to efficiently construct
-	/// a new immutable <see cref="ValueSet{T}"/>.
-	/// </summary>
-	/// <exception cref="ArgumentOutOfRangeException">
-	///   <paramref name="minimumCapacity"/> is less than 0.
-	/// </exception>
-	/// <remarks>
-	/// This is functionally equivalent to:
-	/// <code>
-	/// set.ToBuilder().EnsureCapacity(minimumCapacity)
-	/// </code>
-	/// but without unnecessary intermediate copies.
-	/// </remarks>
-	[Pure]
-	public Builder ToBuilder(int minimumCapacity)
-	{
-		if (minimumCapacity < 0)
-		{
-			ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.minimumCapacity);
-		}
-
-		if (minimumCapacity <= this.Count)
-		{
-			return Builder.CreateUnsafe(new(ref this.inner));
-		}
-		else
-		{
-			var newInner = new RawSet<T>(minimumCapacity);
-			newInner.UnionWith(ref this.inner);
-			return Builder.CreateUnsafe(newInner);
-		}
-	}
-
-	/// <summary>
 	/// Copy the contents of the set into an existing <see cref="Span{T}"/>.
 	/// </summary>
 	/// <exception cref="ArgumentException">

@@ -244,42 +244,6 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	public Builder ToBuilder() => Builder.CreateUnsafe(new(ref this.inner));
 
 	/// <summary>
-	/// Create a new <see cref="ValueList{T}.Builder"/> with a capacity of at
-	/// least <paramref name="minimumCapacity"/> and with this list as its
-	/// initial content. This builder can then be used to efficiently construct
-	/// a new immutable <see cref="ValueList{T}"/>.
-	/// </summary>
-	/// <exception cref="ArgumentOutOfRangeException">
-	///   <paramref name="minimumCapacity"/> is less than 0.
-	/// </exception>
-	/// <remarks>
-	/// This is functionally equivalent to:
-	/// <code>
-	/// list.ToBuilder().EnsureCapacity(minimumCapacity)
-	/// </code>
-	/// but without unnecessary intermediate copies.
-	/// </remarks>
-	[Pure]
-	public Builder ToBuilder(int minimumCapacity)
-	{
-		if (minimumCapacity < 0)
-		{
-			ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.minimumCapacity);
-		}
-
-		if (minimumCapacity <= this.Count)
-		{
-			return Builder.CreateUnsafe(new(ref this.inner));
-		}
-		else
-		{
-			var newInner = new RawList<T>(minimumCapacity);
-			newInner.AddRange(ref this.inner);
-			return Builder.CreateUnsafe(newInner);
-		}
-	}
-
-	/// <summary>
 	/// Return the index of the first occurrence of <paramref name="item"/> in
 	/// the list, or <c>-1</c> if not found.
 	/// </summary>

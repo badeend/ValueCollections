@@ -116,21 +116,6 @@ public class ValueSetBuilderTests
         Assert.Throws<InvalidOperationException>(() => builder.Build());
     }
 
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
-    [Fact]
-    public void ToBuilderWithCapacity()
-    {
-        ValueSet<int> set = [1, 2, 3];
-
-        Assert.True(set.ToBuilder().Capacity >= 3);
-        Assert.True(set.ToBuilder(0).Capacity >= 3);
-        Assert.True(set.ToBuilder(3).Capacity >= 3);
-        Assert.True(set.ToBuilder(100).Capacity >= 100);
-
-        Assert.Throws<ArgumentOutOfRangeException>(() => set.ToBuilder(-1));
-    }
-#endif
-
     [Fact]
     public void SerializeToString()
     {

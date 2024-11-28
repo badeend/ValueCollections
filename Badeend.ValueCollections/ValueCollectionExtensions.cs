@@ -50,42 +50,6 @@ public static class ValueCollectionExtensions
 	}
 
 	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueList{T}.Builder"/>
-	/// with a minimum capacity of <paramref name="minimumCapacity"/>.
-	/// </summary>
-	/// <exception cref="ArgumentOutOfRangeException">
-	///   <paramref name="minimumCapacity"/> is less than 0.
-	/// </exception>
-	/// <remarks>
-	/// This is functionally equivalent to:
-	/// <code>
-	/// items.ToValueListBuilder().EnsureCapacity(minimumCapacity)
-	/// </code>
-	/// but without unnecessary intermediate copies.
-	/// </remarks>
-	public static ValueList<T>.Builder ToValueListBuilder<T>(this IEnumerable<T> items, int minimumCapacity)
-	{
-		if (minimumCapacity < 0)
-		{
-			ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.minimumCapacity);
-		}
-
-		if (items is ICollection<T> collection)
-		{
-			if (collection is ValueList<T> valueList)
-			{
-				return valueList.ToBuilder(minimumCapacity);
-			}
-
-			minimumCapacity = Math.Max(minimumCapacity, collection.Count);
-		}
-
-		var newInner = new RawList<T>(minimumCapacity);
-		newInner.AddRange(items);
-		return ValueList<T>.Builder.CreateUnsafe(newInner);
-	}
-
-	/// <summary>
 	/// Add the <paramref name="items"/> to the end of the list.
 	/// </summary>
 	/// <remarks>
@@ -163,42 +127,6 @@ public static class ValueCollectionExtensions
 		}
 
 		return ValueSet<T>.Builder.CreateUnsafe(new(items));
-	}
-
-	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueSet{T}.Builder"/>
-	/// with a minimum capacity of <paramref name="minimumCapacity"/>.
-	/// </summary>
-	/// <exception cref="ArgumentOutOfRangeException">
-	///   <paramref name="minimumCapacity"/> is less than 0.
-	/// </exception>
-	/// <remarks>
-	/// This is functionally equivalent to:
-	/// <code>
-	/// items.ToValueSetBuilder().EnsureCapacity(minimumCapacity)
-	/// </code>
-	/// but without unnecessary intermediate copies.
-	/// </remarks>
-	public static ValueSet<T>.Builder ToValueSetBuilder<T>(this IEnumerable<T> items, int minimumCapacity)
-	{
-		if (minimumCapacity < 0)
-		{
-			ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.minimumCapacity);
-		}
-
-		if (items is ICollection<T> collection)
-		{
-			if (collection is ValueSet<T> valueSet)
-			{
-				return valueSet.ToBuilder(minimumCapacity);
-			}
-
-			minimumCapacity = Math.Max(minimumCapacity, collection.Count);
-		}
-
-		var newInner = new RawSet<T>(minimumCapacity);
-		newInner.UnionWith(items);
-		return ValueSet<T>.Builder.CreateUnsafe(newInner);
 	}
 
 	/// <summary>
@@ -319,44 +247,6 @@ public static class ValueCollectionExtensions
 
 		return ValueDictionaryBuilder<TKey, TValue>.FromDictionaryUnsafe(inner);
 	}
-
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
-	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueDictionaryBuilder{TKey,TValue}"/>
-	/// with a minimum capacity of <paramref name="minimumCapacity"/>.
-	/// </summary>
-	/// <remarks>
-	/// This is functionally equivalent to:
-	/// <code>
-	/// items.ToValueDictionaryBuilder().EnsureCapacity(minimumCapacity)
-	/// </code>
-	/// but without unnecessary intermediate copies.
-	///
-	/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
-	/// </remarks>
-	/// <exception cref="ArgumentOutOfRangeException">
-	///   <paramref name="minimumCapacity"/> is less than 0.
-	/// </exception>
-	/// <exception cref="ArgumentException">
-	/// <paramref name="items"/> contains duplicate keys.
-	/// </exception>
-	public static ValueDictionaryBuilder<TKey, TValue> ToValueDictionaryBuilder<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> items, int minimumCapacity)
-		where TKey : notnull
-	{
-		if (minimumCapacity < 0)
-		{
-			throw new ArgumentOutOfRangeException(nameof(minimumCapacity));
-		}
-
-		var initialCapacity = items switch
-		{
-			ICollection<KeyValuePair<TKey, TValue>> collection => Math.Max(minimumCapacity, collection.Count),
-			_ => minimumCapacity,
-		};
-
-		return new ValueDictionaryBuilder<TKey, TValue>(initialCapacity).AddRange(items);
-	}
-#endif
 
 	/// <summary>
 	/// Add multiple entries to the dictionary.
