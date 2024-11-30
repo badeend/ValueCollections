@@ -11,6 +11,12 @@ public class ValueListBuilderTests
     }
 
     [Fact]
+    public void FactoryMethod()
+    {
+        ValueList<int>.Builder _ = ValueList.CreateBuilder(1, 2, 3);
+    }
+
+    [Fact]
     public void FluentInterface()
     {
         _ = ValueList.CreateBuilder<int>()
@@ -276,6 +282,7 @@ public class ValueListBuilderTests
         builder.AddRange(f);
         builder.AddRange(g);
         builder.AddRange(h);
+        builder.AddRange(1, 2, 3);
 
         builder.InsertRange(0, a);
         builder.InsertRange(0, b);
@@ -285,6 +292,7 @@ public class ValueListBuilderTests
         builder.InsertRange(0, f);
         builder.InsertRange(0, g);
         builder.InsertRange(0, h);
+        builder.InsertRange(0, 1, 2, 3);
     }
 
     [Fact]

@@ -9,6 +9,12 @@ public class ValueListTests
     }
 
     [Fact]
+    public void FactoryMethod()
+    {
+        ValueList<int> _ = ValueList.Create(1, 2, 3);
+    }
+
+    [Fact]
     public void ImplicitSlice()
     {
         ValueList<int> a = [1, 2, 3];

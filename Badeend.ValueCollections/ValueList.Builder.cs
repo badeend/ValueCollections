@@ -402,7 +402,7 @@ public sealed partial class ValueList<T>
 		/// <summary>
 		/// Add the <paramref name="items"/> to the end of the list.
 		/// </summary>
-		public Builder AddRange(scoped ReadOnlySpan<T> items)
+		public Builder AddRange(params ReadOnlySpan<T> items)
 		{
 			this.MutateOnce().AddRange(items);
 			return this;
@@ -506,7 +506,7 @@ public sealed partial class ValueList<T>
 		/// <exception cref="ArgumentOutOfRangeException">
 		/// Invalid <paramref name="index"/>.
 		/// </exception>
-		public Builder InsertRange(int index, scoped ReadOnlySpan<T> items)
+		public Builder InsertRange(int index, params ReadOnlySpan<T> items)
 		{
 			this.MutateOnce().InsertRange(index, items);
 			return this;

@@ -9,6 +9,12 @@ public class ValueSliceTests
     }
 
     [Fact]
+    public void FactoryMethod()
+    {
+        ValueSlice<int> _ = ValueSlice.Create(1, 2, 3);
+    }
+
+    [Fact]
     public void ValueSemantics()
     {
         ValueSlice<int> a = [1, 2, 3];
