@@ -12,7 +12,7 @@ namespace System.Collections.Generic
 	internal interface IReadOnlySet<T> : IReadOnlyCollection<T>
 	{
 		/// <summary>
-		/// Determines if the set contains a specific item
+		/// Determines if the set contains a specific item.
 		/// </summary>
 		/// <param name="item">The item to check if the set contains.</param>
 		/// <returns><see langword="true" /> if found; otherwise <see langword="false" />.</returns>
@@ -45,7 +45,7 @@ namespace System.Collections.Generic
 		/// <summary>
 		/// Determine whether the current set is a super set of a specified collection.
 		/// </summary>
-		/// <param name="other">The collection to compare to the current set</param>
+		/// <param name="other">The collection to compare to the current set.</param>
 		/// <returns><see langword="true" /> if the current set is a subset of other; otherwise <see langword="false" />.</returns>
 		/// <exception cref="ArgumentNullException">other is <see langword="null" />.</exception>
 		bool IsSupersetOf(IEnumerable<T> other);
