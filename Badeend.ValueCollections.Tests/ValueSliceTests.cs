@@ -264,41 +264,41 @@ public class ValueSliceTests
     }
 
     [Fact]
-    public void TryAs()
+    public void TryCast()
     {
         {
             ValueSlice<int> a = [];
 
-            Assert.True(a.TryAs<string>(out _));
+            Assert.True(a.TryCast<string>(out _));
         }
         {
             ValueSlice<int> a = [1, 2, 3];
 
-            Assert.False(a.TryAs<string>(out _));
+            Assert.False(a.TryCast<string>(out _));
         }
         {
             ValueSlice<MyBaseClass> a = [new()];
 
-            Assert.False(a.TryAs<MyChildClass>(out _));
+            Assert.False(a.TryCast<MyChildClass>(out _));
         }
         {
             ValueSlice<MyBaseClass> a = [new MyChildClass()];
 
-            Assert.False(a.TryAs<IMyInterface>(out _));
+            Assert.False(a.TryCast<IMyInterface>(out _));
         }
         {
             ValueSlice<MyChildClass> a = [new()];
 
-            Assert.True(a.TryAs<IMyInterface>(out _));
+            Assert.True(a.TryCast<IMyInterface>(out _));
         }
         {
             ValueSlice<MyChildClass> a = [new()];
 
-            Assert.True(a.TryAs<MyBaseClass>(out var b));
+            Assert.True(a.TryCast<MyBaseClass>(out var b));
 
-            Assert.True(b.TryAs<IMyInterface>(out var c));
+            Assert.True(b.TryCast<IMyInterface>(out var c));
 
-            Assert.True(b.TryAs<MyChildClass>(out var d));
+            Assert.True(b.TryCast<MyChildClass>(out var d));
 
             Assert.Equal(a, d);
         }

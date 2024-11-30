@@ -260,7 +260,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	///
 	/// This is guaranteed to be safe and infallible because of the generic type
 	/// constraints. If these constraints are not statically provable,
-	/// <see cref="TryAs"/> may be used to perform the same conversion but
+	/// <see cref="TryCast"/> may be used to perform the same conversion but
 	/// using dynamic type checks.
 	/// </remarks>
 	/// <example>
@@ -299,11 +299,11 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// <example>
 	/// <code>
 	/// ValueSlice&lt;Cat&gt; cats = [/*...*/];
-	/// Assert.True(cats.TryAs&lt;Animal&gt;(out var animals)); // Upcast
-	/// Assert.True(animals.TryAs&lt;Cat&gt;(out var catsAgain)); // Downcast
+	/// Assert.True(cats.TryCast&lt;Animal&gt;(out var animals)); // Upcast
+	/// Assert.True(animals.TryCast&lt;Cat&gt;(out var catsAgain)); // Downcast
 	/// </code>
 	/// </example>
-	public bool TryAs<TOther>(out ValueSlice<TOther> result)
+	public bool TryCast<TOther>(out ValueSlice<TOther> result)
 	{
 		if (this.items is null)
 		{
