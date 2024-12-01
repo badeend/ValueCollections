@@ -296,7 +296,7 @@ public static class ValueCollectionExtensions
 	/// <remarks>
 	/// This overload is an extension method to avoid call site ambiguity.
 	/// </remarks>
-	public static ValueDictionaryBuilder<TKey, TValue> RemoveRange<TKey, TValue>(this ValueDictionaryBuilder<TKey, TValue> builder, ReadOnlySpan<TKey> keys)
+	public static ValueDictionaryBuilder<TKey, TValue> RemoveRange<TKey, TValue>(this ValueDictionaryBuilder<TKey, TValue> builder, scoped ReadOnlySpan<TKey> keys)
 		where TKey : notnull
 	{
 		if (builder is null)
