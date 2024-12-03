@@ -2,7 +2,8 @@
   "metadata": [
     {
       "properties": {
-        "TargetFramework": "net9.0"
+        "TargetFramework": "net9.0",
+        "LangVersion": "preview"
       },
       "src": [
         {
