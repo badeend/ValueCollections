@@ -21,15 +21,22 @@ In general, the performance and memory usage is equivalent to the regular `Syste
 ```sh
 dotnet add package Badeend.ValueCollections
 
-# Optional:
+# Optional JSON (de)serializers:
 dotnet add package Badeend.ValueCollections.SystemTextJson
 dotnet add package Badeend.ValueCollections.NewtonsoftJson
+
+# Optional EF _Core_ interoperability:
+dotnet add package Badeend.ValueCollections.EntityFrameworkCore
+# Optional "classic" EF6 interoperability:
+dotnet add package Badeend.ValueCollections.EntityFramework
 ```
 
 Nuget packages:
 - [![NuGet Badeend.ValueCollections](https://img.shields.io/nuget/v/Badeend.ValueCollections?label=Badeend.ValueCollections)](https://www.nuget.org/packages/Badeend.ValueCollections)
 - [![NuGet Badeend.ValueCollections.SystemTextJson](https://img.shields.io/nuget/v/Badeend.ValueCollections.SystemTextJson?label=Badeend.ValueCollections.SystemTextJson)](https://www.nuget.org/packages/Badeend.ValueCollections.SystemTextJson)
 - [![NuGet Badeend.ValueCollections.NewtonsoftJson](https://img.shields.io/nuget/v/Badeend.ValueCollections.NewtonsoftJson?label=Badeend.ValueCollections.NewtonsoftJson)](https://www.nuget.org/packages/Badeend.ValueCollections.NewtonsoftJson)
+- [![NuGet Badeend.ValueCollections.EntityFrameworkCore](https://img.shields.io/nuget/v/Badeend.ValueCollections.EntityFrameworkCore?label=Badeend.ValueCollections.EntityFrameworkCore)](https://www.nuget.org/packages/Badeend.ValueCollections.EntityFrameworkCore)
+- [![NuGet Badeend.ValueCollections.EntityFramework](https://img.shields.io/nuget/v/Badeend.ValueCollections.EntityFramework?label=Badeend.ValueCollections.EntityFramework)](https://www.nuget.org/packages/Badeend.ValueCollections.EntityFramework)
 
 ## Basic example
 

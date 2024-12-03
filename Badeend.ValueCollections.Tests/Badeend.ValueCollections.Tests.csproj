@@ -24,12 +24,21 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Effort.EF6" Version="2.2.17" Condition="'$(TargetFramework)' == 'net462' or '$(TargetFramework)' == 'net48'" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="3.1.0" Condition="'$(TargetFramework)' == 'netcoreapp3.1'" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="5.0.0" Condition="'$(TargetFramework)' == 'net5.0'" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.0" Condition="'$(TargetFramework)' == 'net6.0'" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="7.0.0" Condition="'$(TargetFramework)' == 'net7.0'" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0" Condition="'$(TargetFramework)' == 'net8.0'" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" Condition="'$(TargetFramework)' == 'net9.0'" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Badeend.ValueCollections\Badeend.ValueCollections.csproj" />
     <ProjectReference Include="..\Badeend.ValueCollections.SystemTextJson\Badeend.ValueCollections.SystemTextJson.csproj" />
     <ProjectReference Include="..\Badeend.ValueCollections.NewtonsoftJson\Badeend.ValueCollections.NewtonsoftJson.csproj" />
+    <ProjectReference Include="..\Badeend.ValueCollections.EntityFramework\Badeend.ValueCollections.EntityFramework.csproj" />
+    <ProjectReference Include="..\Badeend.ValueCollections.EntityFrameworkCore\Badeend.ValueCollections.EntityFrameworkCore.csproj" />
   </ItemGroup>
 
 </Project>

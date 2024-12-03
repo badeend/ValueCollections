@@ -13,6 +13,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Badeend.ValueCollections.Ne
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Badeend.ValueCollections.Benchmarks", "Badeend.ValueCollections.Benchmarks\Badeend.ValueCollections.Benchmarks.csproj", "{F94C9A16-F49B-4638-A601-7DDB512D9C9F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Badeend.ValueCollections.EntityFrameworkCore", "Badeend.ValueCollections.EntityFrameworkCore\Badeend.ValueCollections.EntityFrameworkCore.csproj", "{AA5A1287-CF0D-4E35-B0A7-BF41438C2230}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Badeend.ValueCollections.EntityFramework", "Badeend.ValueCollections.EntityFramework\Badeend.ValueCollections.EntityFramework.csproj", "{18201AFF-CA4E-42D4-8540-6A6B5610AFAE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +43,14 @@ Global
 		{F94C9A16-F49B-4638-A601-7DDB512D9C9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F94C9A16-F49B-4638-A601-7DDB512D9C9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F94C9A16-F49B-4638-A601-7DDB512D9C9F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AA5A1287-CF0D-4E35-B0A7-BF41438C2230}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AA5A1287-CF0D-4E35-B0A7-BF41438C2230}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AA5A1287-CF0D-4E35-B0A7-BF41438C2230}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AA5A1287-CF0D-4E35-B0A7-BF41438C2230}.Release|Any CPU.Build.0 = Release|Any CPU
+		{18201AFF-CA4E-42D4-8540-6A6B5610AFAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18201AFF-CA4E-42D4-8540-6A6B5610AFAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18201AFF-CA4E-42D4-8540-6A6B5610AFAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{18201AFF-CA4E-42D4-8540-6A6B5610AFAE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

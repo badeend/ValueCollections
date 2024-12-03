@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageId>Badeend.ValueCollections.EntityFrameworkCore</PackageId>
+    <Description>Extension methods to asynchronously fetch Entity Framework Core `IQueryable&lt;T&gt;` results directly into ValueCollections. E.g. ToValueListAsync, etc.</Description>
+    <TargetFrameworks>netstandard2.0;net6.0;net9.0</TargetFrameworks>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.0" Condition="'$(TargetFramework)' == 'netstandard2.0'" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.0" Condition="'$(TargetFramework)' != 'netstandard2.0'" />
+
+    <ProjectReference Include="..\Badeend.ValueCollections\Badeend.ValueCollections.csproj" />
+  </ItemGroup>
+</Project>
