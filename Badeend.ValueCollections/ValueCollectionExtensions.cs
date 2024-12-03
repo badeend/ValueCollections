@@ -29,6 +29,26 @@ public static class ValueCollectionExtensions
 	}
 
 	/// <summary>
+	/// Asynchronously copy the <paramref name="items"/> into a new <see cref="ValueList{T}"/>.
+	/// </summary>
+	public static async Task<ValueList<T>> ToValueListAsync<T>(this IAsyncEnumerable<T> items, CancellationToken cancellationToken = default)
+	{
+		if (items is null)
+		{
+			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.items);
+		}
+
+		var builder = ValueList.CreateBuilder<T>();
+
+		await foreach (var element in items.WithCancellation(cancellationToken).ConfigureAwait(false))
+		{
+			builder.Add(element);
+		}
+
+		return builder.Build();
+	}
+
+	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueList{T}.Builder"/>.
 	/// </summary>
 	[Pure]
@@ -101,6 +121,26 @@ public static class ValueCollectionExtensions
 		}
 
 		return ValueSet<T>.CreateImmutableUnsafe(new(items));
+	}
+
+	/// <summary>
+	/// Asynchronously copy the <paramref name="items"/> into a new <see cref="ValueSet{T}"/>.
+	/// </summary>
+	public static async Task<ValueSet<T>> ToValueSetAsync<T>(this IAsyncEnumerable<T> items, CancellationToken cancellationToken = default)
+	{
+		if (items is null)
+		{
+			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.items);
+		}
+
+		var builder = ValueSet.CreateBuilder<T>();
+
+		await foreach (var element in items.WithCancellation(cancellationToken).ConfigureAwait(false))
+		{
+			builder.Add(element);
+		}
+
+		return builder.Build();
 	}
 
 	/// <summary>
@@ -178,6 +218,18 @@ public static class ValueCollectionExtensions
 	}
 
 	/// <summary>
+	/// Asynchronously copy the <paramref name="items"/> into a new <see cref="ValueDictionary{TKey, TValue}"/>.
+	/// </summary>
+	/// <exception cref="ArgumentException">
+	/// <paramref name="items"/> contains duplicate keys.
+	/// </exception>
+	public static Task<ValueDictionary<TKey, TValue>> ToValueDictionary<TKey, TValue>(this IAsyncEnumerable<KeyValuePair<TKey, TValue>> items, CancellationToken cancellationToken = default)
+		where TKey : notnull
+	{
+		return items.ToValueDictionaryAsync(static e => e.Key, static e => e.Value, cancellationToken);
+	}
+
+	/// <summary>
 	/// Creates a <see cref="ValueDictionary{TKey, TValue}"/> from an
 	/// <see cref="IEnumerable{T}"/> according to specified key selector function.
 	/// </summary>
@@ -192,6 +244,22 @@ public static class ValueCollectionExtensions
 		var inner = items.ToDictionary(keySelector);
 
 		return ValueDictionary<TKey, TValue>.FromDictionaryUnsafe(inner);
+	}
+
+	/// <summary>
+	/// Asynchronously creates a <see cref="ValueDictionary{TKey, TValue}"/> from an
+	/// <see cref="IEnumerable{T}"/> according to specified key selector function.
+	/// </summary>
+	/// <param name="items">Elements that will becomes the values of the dictionary.</param>
+	/// <param name="keySelector">A function to extract a key from each element.</param>
+	/// <param name="cancellationToken">A CancellationToken to observe while waiting for the task to complete.</param>
+	/// <exception cref="ArgumentException">
+	/// The <paramref name="keySelector"/> produced a duplicate key.
+	/// </exception>
+	public static Task<ValueDictionary<TKey, TValue>> ToValueDictionaryAsync<TKey, TValue>(this IAsyncEnumerable<TValue> items, Func<TValue, TKey> keySelector, CancellationToken cancellationToken = default)
+		where TKey : notnull
+	{
+		return items.ToValueDictionaryAsync(keySelector, static e => e, cancellationToken);
 	}
 
 	/// <summary>
@@ -211,6 +279,46 @@ public static class ValueCollectionExtensions
 		var inner = source.ToDictionary(keySelector, valueSelector);
 
 		return ValueDictionary<TKey, TValue>.FromDictionaryUnsafe(inner);
+	}
+
+	/// <summary>
+	/// Asynchronously creates a <see cref="ValueDictionary{TKey, TValue}"/> from an
+	/// <see cref="IEnumerable{T}"/> according to specified key selector and
+	/// element selector functions.
+	/// </summary>
+	/// <param name="source">Elements to feed into the selector functions.</param>
+	/// <param name="keySelector">A function to extract a key from each element.</param>
+	/// <param name="valueSelector">A transform function to produce a result element value from each element.</param>
+	/// <param name="cancellationToken">A CancellationToken to observe while waiting for the task to complete.</param>
+	/// <exception cref="ArgumentException">
+	/// The <paramref name="keySelector"/> produced a duplicate key.
+	/// </exception>
+	public static async Task<ValueDictionary<TKey, TValue>> ToValueDictionaryAsync<TSource, TKey, TValue>(this IAsyncEnumerable<TSource> source, Func<TSource, TKey> keySelector, Func<TSource, TValue> valueSelector, CancellationToken cancellationToken = default)
+		where TKey : notnull
+	{
+		if (source is null)
+		{
+			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.source);
+		}
+
+		if (keySelector is null)
+		{
+			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.keySelector);
+		}
+
+		if (valueSelector is null)
+		{
+			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.valueSelector);
+		}
+
+		var builder = new ValueDictionaryBuilder<TKey, TValue>();
+
+		await foreach (var element in source.WithCancellation(cancellationToken).ConfigureAwait(false))
+		{
+			builder.Add(keySelector(element), valueSelector(element));
+		}
+
+		return builder.Build();
 	}
 
 	/// <summary>

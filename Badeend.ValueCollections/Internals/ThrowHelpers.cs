@@ -22,6 +22,8 @@ internal static class ThrowHelpers
 		source,
 		other,
 		destination,
+		keySelector,
+		valueSelector,
 	}
 
 	[DoesNotReturn]
