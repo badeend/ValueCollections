@@ -119,7 +119,7 @@ public sealed partial class ValueSet<T>
 		private ValueSet<T> Mutate()
 		{
 			var set = this.set;
-			if (set is null || (uint)set.state >= BuilderState.LastMutableVersion)
+			if (set is null || BuilderState.RequiresAttention(set.state))
 			{
 				SlowPath(set);
 			}

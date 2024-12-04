@@ -221,7 +221,7 @@ public sealed partial class ValueList<T>
 		private MutationGuard Mutate()
 		{
 			var list = this.list;
-			if (list is null || (uint)list.state >= BuilderState.LastMutableVersion)
+			if (list is null || BuilderState.RequiresAttention(list.state))
 			{
 				MutateUncommon(list);
 			}
@@ -239,7 +239,7 @@ public sealed partial class ValueList<T>
 		private ref RawList<T> MutateOnce()
 		{
 			var list = this.list;
-			if (list is null || (uint)list.state >= BuilderState.LastMutableVersion)
+			if (list is null || BuilderState.RequiresAttention(list.state))
 			{
 				MutateUncommon(list);
 			}

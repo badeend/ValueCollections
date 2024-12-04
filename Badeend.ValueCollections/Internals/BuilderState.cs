@@ -43,6 +43,9 @@ internal static class BuilderState
 	internal static bool IsMutable(int state) => state >= 0;
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static bool RequiresAttention(int state) => (uint)state >= LastMutableVersion; // Implicitly also checks for negative numbers due to the uint conversion.
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static bool IsImmutable(int state) => state < 0;
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
