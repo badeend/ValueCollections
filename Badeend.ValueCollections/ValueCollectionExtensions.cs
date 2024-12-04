@@ -66,6 +66,11 @@ public static class ValueCollectionExtensions
 	/// </remarks>
 	public static ValueList<T>.Builder ToValueListBuilder<T>(this IEnumerable<T> items)
 	{
+		if (items is ValueList<T> valueList)
+		{
+			return valueList.ToBuilder();
+		}
+
 		return ValueList<T>.Builder.CreateUnsafe(new(items));
 	}
 
@@ -161,7 +166,7 @@ public static class ValueCollectionExtensions
 	/// </remarks>
 	public static ValueSet<T>.Builder ToValueSetBuilder<T>(this IEnumerable<T> items)
 	{
-		if (items.AsValueSetUnsafe() is { } valueSet)
+		if (items is ValueSet<T> valueSet)
 		{
 			return valueSet.ToBuilder();
 		}

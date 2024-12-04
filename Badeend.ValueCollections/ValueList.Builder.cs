@@ -70,13 +70,13 @@ public sealed partial class ValueList<T>
 		/// </exception>
 		public ValueList<T> Build()
 		{
-			this.MutateOnce();
+			var list = this.list;
+			if (list is null || BuilderState.BuildRequiresAttention(list.state))
+			{
+				MutateUncommon(list);
+			}
 
-			var list = this.list!;
-
-			Debug.Assert(list is not null);
-
-			list!.state = BuilderState.InitialImmutable;
+			list.state = BuilderState.InitialImmutable;
 
 			return list.IsEmpty ? Empty : list;
 		}
@@ -100,6 +100,10 @@ public sealed partial class ValueList<T>
 			if (BuilderState.IsImmutable(list.state))
 			{
 				return list.IsEmpty ? Empty : list;
+			}
+			else if (list.state == BuilderState.Cow)
+			{
+				return ValueList<T>.CreateImmutableUnsafe(list.inner);
 			}
 			else
 			{
@@ -223,7 +227,7 @@ public sealed partial class ValueList<T>
 		private MutationGuard Mutate()
 		{
 			var list = this.list;
-			if (list is null || BuilderState.RequiresAttention(list.state))
+			if (list is null || BuilderState.MutateRequiresAttention(list.state))
 			{
 				MutateUncommon(list);
 			}
@@ -241,7 +245,7 @@ public sealed partial class ValueList<T>
 		private ref RawList<T> MutateOnce()
 		{
 			var list = this.list;
-			if (list is null || BuilderState.RequiresAttention(list.state))
+			if (list is null || BuilderState.MutateRequiresAttention(list.state))
 			{
 				MutateUncommon(list);
 			}
@@ -259,6 +263,15 @@ public sealed partial class ValueList<T>
 			if (list is null)
 			{
 				ThrowHelpers.ThrowInvalidOperationException_UninitializedBuilder();
+			}
+			else if (list.state == BuilderState.Cow)
+			{
+				// Make copy with at least the same amount of capacity.
+				var copy = new RawList<T>(list.inner.Capacity);
+				copy.AddRange(ref list.inner);
+
+				list.inner = copy;
+				list.state = BuilderState.InitialMutable;
 			}
 			else if (list.state == BuilderState.LastMutableVersion)
 			{
@@ -336,6 +349,10 @@ public sealed partial class ValueList<T>
 		// This takes ownership of the RawList
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static Builder CreateUnsafe(RawList<T> inner) => new(ValueList<T>.CreateMutableUnsafe(inner));
+
+		// The RawList is expected to be immutable.
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static Builder CreateCowUnsafe(RawList<T> inner) => new(ValueList<T>.CreateCowUnsafe(inner));
 
 		/// <summary>
 		/// Replaces an element at a given position in the list with the specified

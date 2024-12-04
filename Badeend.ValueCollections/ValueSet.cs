@@ -131,6 +131,10 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static ValueSet<T> CreateMutableUnsafe(RawSet<T> inner) => new(inner, BuilderState.InitialMutable);
 
+	// The RawSet is expected to be immutable.
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static ValueSet<T> CreateCowUnsafe(RawSet<T> inner) => new(inner, BuilderState.Cow);
+
 	/// <summary>
 	/// Create a new <see cref="Builder"/> with this set as its
 	/// initial content. This builder can then be used to efficiently construct
@@ -142,7 +146,17 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	/// </remarks>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public Builder ToBuilder() => Builder.CreateUnsafe(new(ref this.inner));
+	public Builder ToBuilder()
+	{
+		if (Utilities.IsReuseWorthwhile(this.inner.Capacity, this.inner.Count))
+		{
+			return Builder.CreateCowUnsafe(this.inner);
+		}
+		else
+		{
+			return Builder.CreateUnsafe(new(ref this.inner));
+		}
+	}
 
 	/// <summary>
 	/// Copy the contents of the set into an existing <see cref="Span{T}"/>.

@@ -32,7 +32,14 @@ internal static class BuilderState
 	/// <summary>
 	/// The last valid version number before incrementing it will overflow into the negative (immutable) state range.
 	/// </summary>
-	internal const uint LastMutableVersion = 0x7FFFFFFE;
+	internal const uint LastMutableVersion = 0x7FFFFFFD;
+
+	/// <summary>
+	/// The state for a mutable collection that is currently holding the contents
+	/// of an immutable collection in order to defer copying the actual contents
+	/// until actually needed.
+	/// </summary>
+	internal const int Cow = 0x7FFFFFFE; // Must be the value next to LastMutableVersion
 
 	/// <summary>
 	/// The state for a mutable collection that is temporarily protected from external access.
@@ -43,7 +50,10 @@ internal static class BuilderState
 	internal static bool IsMutable(int state) => state >= 0;
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal static bool RequiresAttention(int state) => (uint)state >= LastMutableVersion; // Implicitly also checks for negative numbers due to the uint conversion.
+	internal static bool MutateRequiresAttention(int state) => (uint)state >= LastMutableVersion; // Implicitly also checks for negative numbers due to the uint conversion.
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static bool BuildRequiresAttention(int state) => (uint)state > Cow; // Implicitly also checks for negative numbers due to the uint conversion.
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static bool IsImmutable(int state) => state < 0;

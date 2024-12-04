@@ -153,6 +153,10 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static ValueList<T> CreateMutableUnsafe(RawList<T> inner) => new(inner, BuilderState.InitialMutable);
 
+	// The RawList is expected to be immutable.
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static ValueList<T> CreateCowUnsafe(RawList<T> inner) => new(inner, BuilderState.Cow);
+
 	/// <summary>
 	/// Access the list's contents using a <see cref="ValueSlice{T}"/>.
 	/// </summary>
@@ -241,7 +245,17 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	/// list. How much larger exactly is undefined.
 	/// </remarks>
 	[Pure]
-	public Builder ToBuilder() => Builder.CreateUnsafe(new(ref this.inner));
+	public Builder ToBuilder()
+	{
+		if (Utilities.IsReuseWorthwhile(this.inner.Capacity, this.inner.Count))
+		{
+			return Builder.CreateCowUnsafe(this.inner);
+		}
+		else
+		{
+			return Builder.CreateUnsafe(new(ref this.inner));
+		}
+	}
 
 	/// <summary>
 	/// Return the index of the first occurrence of <paramref name="item"/> in

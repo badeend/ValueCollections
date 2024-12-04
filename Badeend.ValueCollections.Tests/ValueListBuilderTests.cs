@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 namespace Badeend.ValueCollections.Tests;
 
@@ -392,5 +393,73 @@ public class ValueListBuilderTests
         Assert.True(object.ReferenceEquals(ValueList<int>.Empty, b.ToValueList()));
         Assert.True(object.ReferenceEquals(ValueList<int>.Empty, b.Build()));
         Assert.True(object.ReferenceEquals(ValueList<int>.Empty, b.ToValueList()));
+    }
+
+    [Theory]
+    [InlineData(3, 1, true)]
+    [InlineData(3, 3, true)]
+    [InlineData(16, 1, false)]
+    [InlineData(16, 8, false)]
+    [InlineData(16, 12, true)]
+    [InlineData(1000, 250, false)]
+    [InlineData(1000, 500, false)]
+    [InlineData(1000, 750, true)]
+    [InlineData(1000, 1000, true)]
+    public void Cow(int capacity, int count, bool shouldReuse)
+    {
+        Debug.Assert(count <= capacity);
+        Debug.Assert(count >= 1);
+
+        var originalList = CreateValueList();
+        var originalSpan = originalList.AsSpan();
+
+        Assert.Equal(42, originalList[0]);
+        Assert.Equal(42, originalSpan[0]);
+
+        {
+            var builder = originalList.ToBuilder();
+
+            Assert.True(!shouldReuse || capacity == builder.Capacity);
+            Assert.Equal(42, builder[0]);
+            Assert.Equal(shouldReuse, originalSpan == builder.ToValueList().AsSpan());
+
+            var builtList = builder.Build();
+
+            Assert.Equal(shouldReuse, originalSpan == builtList.AsSpan());
+            Assert.Equal(shouldReuse, originalSpan == builder.ToValueList().AsSpan());
+        }
+        {
+            var builder = ((IEnumerable<int>)originalList).ToValueListBuilder();
+
+            Assert.True(!shouldReuse || capacity == builder.Capacity);
+            Assert.Equal(42, builder[0]);
+            Assert.Equal(shouldReuse, originalSpan == builder.ToValueList().AsSpan());
+
+            var builtList = builder.Build();
+
+            Assert.Equal(shouldReuse, originalSpan == builtList.AsSpan());
+            Assert.Equal(shouldReuse, originalSpan == builder.ToValueList().AsSpan());
+        }
+        {
+            var builder = originalList.ToBuilder();
+            Assert.True(!shouldReuse || capacity == builder.Capacity);
+
+            var listCopy = builder.ToValueList();
+            Assert.Equal(shouldReuse, originalSpan == listCopy.AsSpan());
+
+            builder[0] = 314;
+
+            Assert.True(!shouldReuse || capacity == builder.Capacity);
+            Assert.Equal(42, listCopy[0]);
+            Assert.Equal(shouldReuse, originalSpan == listCopy.AsSpan());
+        }
+
+        ValueList<int> CreateValueList()
+        {
+            var builder = ValueList.CreateBuilderWithCapacity<int>(capacity);
+            ValueCollectionsMarshal.SetCount(builder, count);
+            builder[0] = 42;
+            return builder.Build();
+        }
     }
 }

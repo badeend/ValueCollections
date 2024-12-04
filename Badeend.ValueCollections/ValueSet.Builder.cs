@@ -76,7 +76,11 @@ public sealed partial class ValueSet<T>
 		/// </exception>
 		public ValueSet<T> Build()
 		{
-			var set = this.Mutate();
+			var set = this.set;
+			if (set is null || BuilderState.BuildRequiresAttention(set.state))
+			{
+				MutateUncommon(set);
+			}
 
 			set.state = BuilderState.InitialImmutable;
 
@@ -99,6 +103,10 @@ public sealed partial class ValueSet<T>
 			{
 				return set.IsEmpty ? Empty : set;
 			}
+			else if (set.state == BuilderState.Cow)
+			{
+				return ValueSet<T>.CreateImmutableUnsafe(set.inner);
+			}
 			else
 			{
 				return ValueSet<T>.CreateImmutableUnsafe(new(ref set.inner));
@@ -119,9 +127,9 @@ public sealed partial class ValueSet<T>
 		private ValueSet<T> Mutate()
 		{
 			var set = this.set;
-			if (set is null || BuilderState.RequiresAttention(set.state))
+			if (set is null || BuilderState.MutateRequiresAttention(set.state))
 			{
-				SlowPath(set);
+				MutateUncommon(set);
 			}
 
 			set.state++;
@@ -129,24 +137,33 @@ public sealed partial class ValueSet<T>
 			Debug.Assert(BuilderState.IsMutable(set.state));
 
 			return set;
+		}
 
-			[MethodImpl(MethodImplOptions.NoInlining)]
-			static void SlowPath([NotNull] ValueSet<T>? set)
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		private static void MutateUncommon([NotNull] ValueSet<T>? set)
+		{
+			if (set is null)
 			{
-				if (set is null)
-				{
-					ThrowHelpers.ThrowInvalidOperationException_UninitializedBuilder();
-				}
-				else if (set.state == BuilderState.LastMutableVersion)
-				{
-					set.state = BuilderState.InitialMutable;
-				}
-				else
-				{
-					Debug.Assert(BuilderState.IsImmutable(set.state));
+				ThrowHelpers.ThrowInvalidOperationException_UninitializedBuilder();
+			}
+			else if (set.state == BuilderState.Cow)
+			{
+				// Make copy with at least the same amount of capacity.
+				var copy = new RawSet<T>(set.inner.Capacity);
+				copy.UnionWith(ref set.inner);
 
-					ThrowHelpers.ThrowInvalidOperationException_AlreadyBuilt();
-				}
+				set.inner = copy;
+				set.state = BuilderState.InitialMutable;
+			}
+			else if (set.state == BuilderState.LastMutableVersion)
+			{
+				set.state = BuilderState.InitialMutable;
+			}
+			else
+			{
+				Debug.Assert(BuilderState.IsImmutable(set.state));
+
+				ThrowHelpers.ThrowInvalidOperationException_AlreadyBuilt();
 			}
 		}
 
@@ -232,6 +249,10 @@ public sealed partial class ValueSet<T>
 		// This takes ownership of the RawSet
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal static Builder CreateUnsafe(RawSet<T> inner) => new(ValueSet<T>.CreateMutableUnsafe(inner));
+
+		// The RawSet is expected to be immutable.
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static Builder CreateCowUnsafe(RawSet<T> inner) => new(ValueSet<T>.CreateCowUnsafe(inner));
 
 		/// <summary>
 		/// Attempt to add the <paramref name="item"/> to the set.

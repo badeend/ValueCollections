@@ -1,4 +1,9 @@
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+
 namespace Badeend.ValueCollections.Tests;
+
+#pragma warning disable xUnit2017 // Do not use Contains() to check if a value exists in a collection
 
 public class ValueSetBuilderTests
 {
@@ -240,5 +245,100 @@ public class ValueSetBuilderTests
         Assert.True(object.ReferenceEquals(ValueSet<int>.Empty, b.ToValueSet()));
         Assert.True(object.ReferenceEquals(ValueSet<int>.Empty, b.Build()));
         Assert.True(object.ReferenceEquals(ValueSet<int>.Empty, b.ToValueSet()));
+    }
+
+    [Theory]
+    [InlineData(3, 1, true)]
+    [InlineData(3, 3, true)]
+    [InlineData(17, 1, false)]
+    [InlineData(17, 11, false)]
+    [InlineData(17, 13, true)]
+    [InlineData(919, 230, false)]
+    [InlineData(919, 460, false)]
+    [InlineData(919, 688, false)]
+    [InlineData(919, 690, true)]
+    [InlineData(919, 919, true)]
+    public void Cow(int capacity, int count, bool shouldReuse)
+    {
+        Debug.Assert(count <= capacity);
+        Debug.Assert(count >= 1);
+
+        var originalSet = CreateValueSet();
+        ref readonly var originalRef = ref GetRef(originalSet);
+
+        Assert.True(originalSet.Contains(42));
+
+        {
+            var builder = originalSet.ToBuilder();
+
+            Assert.True(!shouldReuse || capacity == builder.Capacity);
+            Assert.True(builder.Contains(42));
+            Assert.Equal(shouldReuse, AreSameRef(in originalRef, in GetRef(builder.ToValueSet())));
+
+            var builtSet = builder.Build();
+
+            Assert.Equal(shouldReuse, AreSameRef(in originalRef, in GetRef(builtSet)));
+            Assert.Equal(shouldReuse, AreSameRef(in originalRef, in GetRef(builder.ToValueSet())));
+        }
+        {
+            var builder = ((IEnumerable<int>)originalSet).ToValueSetBuilder();
+
+            Assert.True(!shouldReuse || capacity == builder.Capacity);
+            Assert.True(builder.Contains(42));
+            Assert.Equal(shouldReuse, AreSameRef(in originalRef, in GetRef(builder.ToValueSet())));
+
+            var builtSet = builder.Build();
+
+            Assert.Equal(shouldReuse, AreSameRef(in originalRef, in GetRef(builtSet)));
+            Assert.Equal(shouldReuse, AreSameRef(in originalRef, in GetRef(builder.ToValueSet())));
+        }
+        {
+            var builder = originalSet.ToBuilder();
+            Assert.True(!shouldReuse || capacity == builder.Capacity);
+
+            var setCopy = builder.ToValueSet();
+            Assert.Equal(shouldReuse, AreSameRef(in originalRef, in GetRef(setCopy)));
+
+            builder.Remove(42);
+
+            Assert.True(!shouldReuse || capacity == builder.Capacity);
+            Assert.False(builder.Contains(42));
+			Assert.True(setCopy.Contains(42));
+
+			Assert.Equal(shouldReuse, AreSameRef(in originalRef, in GetRef(setCopy)));
+        }
+
+        ValueSet<int> CreateValueSet()
+        {
+            var builder = ValueSet.CreateBuilderWithCapacity<int>(capacity);
+
+            for (int i = 1; i < count; i++)
+            {
+                builder.Add(-i);
+            }
+
+            builder.Add(42);
+
+            Debug.Assert(builder.Count == count);
+
+            return builder.Build();
+        }
+
+        static bool AreSameRef(ref readonly int left, ref readonly int right)
+        {
+            return Unsafe.AreSame(ref Unsafe.AsRef(in left), ref Unsafe.AsRef(in right));
+        }
+
+        static ref readonly int GetRef(ValueSet<int> set)
+        {
+            var enumerator = set.GetEnumerator();
+            
+            if (!enumerator.MoveNext())
+            {
+                throw new Exception();
+            }
+
+            return ref enumerator.Current;
+        }
     }
 }
