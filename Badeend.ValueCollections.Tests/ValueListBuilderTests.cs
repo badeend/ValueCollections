@@ -383,4 +383,14 @@ public class ValueListBuilderTests
             return true;
         }
     }
+
+    [Fact]
+    public void EmptyBuilderReturnsEmptySingleton()
+    {
+        var b = ValueList.CreateBuilderWithCapacity<int>(100);
+
+        Assert.True(object.ReferenceEquals(ValueList<int>.Empty, b.ToValueList()));
+        Assert.True(object.ReferenceEquals(ValueList<int>.Empty, b.Build()));
+        Assert.True(object.ReferenceEquals(ValueList<int>.Empty, b.ToValueList()));
+    }
 }

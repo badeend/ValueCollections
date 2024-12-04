@@ -80,7 +80,7 @@ public sealed partial class ValueSet<T>
 
 			set.state = BuilderState.InitialImmutable;
 
-			return set;
+			return set.IsEmpty ? Empty : set;
 		}
 
 		/// <summary>
@@ -97,7 +97,7 @@ public sealed partial class ValueSet<T>
 
 			if (BuilderState.IsImmutable(set.state))
 			{
-				return set;
+				return set.IsEmpty ? Empty : set;
 			}
 			else
 			{

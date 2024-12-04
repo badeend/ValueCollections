@@ -72,11 +72,13 @@ public sealed partial class ValueList<T>
 		{
 			this.MutateOnce();
 
-			Debug.Assert(this.list is not null);
+			var list = this.list!;
 
-			this.list!.state = BuilderState.InitialImmutable;
+			Debug.Assert(list is not null);
 
-			return this.list;
+			list!.state = BuilderState.InitialImmutable;
+
+			return list.IsEmpty ? Empty : list;
 		}
 
 		/// <summary>
@@ -97,7 +99,7 @@ public sealed partial class ValueList<T>
 
 			if (BuilderState.IsImmutable(list.state))
 			{
-				return list;
+				return list.IsEmpty ? Empty : list;
 			}
 			else
 			{

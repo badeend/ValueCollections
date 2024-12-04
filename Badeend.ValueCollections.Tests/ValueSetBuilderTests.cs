@@ -231,4 +231,14 @@ public class ValueSetBuilderTests
             }
         }
     }
+
+    [Fact]
+    public void EmptyBuilderReturnsEmptySingleton()
+    {
+        var b = ValueSet.CreateBuilderWithCapacity<int>(100);
+
+        Assert.True(object.ReferenceEquals(ValueSet<int>.Empty, b.ToValueSet()));
+        Assert.True(object.ReferenceEquals(ValueSet<int>.Empty, b.Build()));
+        Assert.True(object.ReferenceEquals(ValueSet<int>.Empty, b.ToValueSet()));
+    }
 }
