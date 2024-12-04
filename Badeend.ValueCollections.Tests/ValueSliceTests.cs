@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Badeend.ValueCollections.Tests;
 
 public class ValueSliceTests
@@ -210,6 +212,30 @@ public class ValueSliceTests
 
         Assert.Same(a.AsCollection(), a.AsCollection());
         Assert.NotSame(b.AsCollection(), b.AsCollection());
+    }
+
+    [Theory]
+    [InlineData(3, 1, true)]
+    [InlineData(3, 3, true)]
+    [InlineData(16, 1, false)]
+    [InlineData(16, 8, false)]
+    [InlineData(16, 12, true)]
+    [InlineData(1000, 250, false)]
+    [InlineData(1000, 500, false)]
+    [InlineData(1000, 750, true)]
+    [InlineData(1000, 1000, true)]
+    public void ToValueListBufferReuse(int capacity, int count, bool shouldReuse)
+    {
+        Debug.Assert(count <= capacity);
+
+        var builder = ValueList.CreateBuilderWithCapacity<int>(capacity);
+        ValueCollectionsMarshal.SetCount(builder, count);
+        var list = builder.Build();
+
+        var a = list.AsSpan();
+        var b = list.AsValueSlice().ToValueList().AsSpan();
+
+        Assert.Equal(shouldReuse, a == b);
     }
 
     [Fact]

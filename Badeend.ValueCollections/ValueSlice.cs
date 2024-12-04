@@ -214,10 +214,8 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 		}
 
 		// Try to reuse the existing buffer
-		if (this.offset == 0)
+		if (this.offset == 0 && Utilities.IsReuseWorthwhile(this.items!.Length, this.length))
 		{
-			// TODO: check that the length meets a minimum threshold of the total
-			// capacity, to prevent unnecessarily keeping large arrays alive.
 			return ValueList<T>.CreateImmutableUnsafe(RawList.CreateFromArrayUnsafe(this.items!, this.length));
 		}
 
