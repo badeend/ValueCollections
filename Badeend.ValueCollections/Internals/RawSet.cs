@@ -1208,18 +1208,18 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 
 	private void Resize() => this.Resize(HashHelpers.ExpandPrime(this.end));
 
-	private void Resize(int newSize)
+	private void Resize(int newCapacity)
 	{
 		Debug.Assert(this.entries != null, "_entries should be non-null");
-		Debug.Assert(newSize >= this.entries!.Length);
+		Debug.Assert(newCapacity >= this.entries!.Length);
 
-		var entries = new Entry[newSize];
+		var entries = new Entry[newCapacity];
 
 		int end = this.end;
 		Array.Copy(this.entries!, entries, end);
 
 		// Assign member variables after both arrays allocated to guard against corruption from OOM if second fails
-		this.buckets = new int[newSize];
+		this.buckets = new int[newCapacity];
 		for (int i = 0; i < end; i++)
 		{
 			ref Entry entry = ref entries[i];
@@ -1243,19 +1243,19 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.targetCapacity);
 		}
 
-		var newSize = HashHelpers.GetPrime(targetCapacity);
+		var newCapacity = HashHelpers.GetPrime(targetCapacity);
 		var oldEntries = this.entries;
 		var currentCapacity = oldEntries is null ? 0 : oldEntries.Length;
-		if (newSize >= currentCapacity)
+		if (newCapacity >= currentCapacity)
 		{
 			return;
 		}
 
-		var oldCount = this.end;
-		this.Initialize(newSize);
+		var oldEnd = this.end;
+		this.Initialize(newCapacity);
 		var entries = this.entries;
 		var count = 0;
-		for (int i = 0; i < oldCount; i++)
+		for (int i = 0; i < oldEnd; i++)
 		{
 			var hashCode = oldEntries![i].HashCode; // At this point, we know we have entries.
 			if (oldEntries[i].Next >= -1)
@@ -1277,18 +1277,18 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 	/// Initializes buckets and slots arrays. Uses suggested capacity by finding next prime
 	/// greater than or equal to capacity.
 	/// </summary>
-	private int Initialize(int capacity)
+	private int Initialize(int minimumCapacity)
 	{
-		int size = HashHelpers.GetPrime(capacity);
-		var buckets = new int[size];
-		var entries = new Entry[size];
+		int capacity = HashHelpers.GetPrime(minimumCapacity);
+		var buckets = new int[capacity];
+		var entries = new Entry[capacity];
 
 		// Assign member variables after both arrays are allocated to guard against corruption from OOM if second fails.
 		this.firstFreeIndex = -1;
 		this.buckets = buckets;
 		this.entries = entries;
 
-		return size;
+		return capacity;
 	}
 
 	/// <summary>Adds the specified element to the set if it's not already contained.</summary>
