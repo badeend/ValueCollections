@@ -756,15 +756,15 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			}
 		}
 
-		using var matcher = new Matcher(in this);
+		using var marker = new Marker(in this);
 
 		// Note that enumerating `other` might trigger mutations on `this`.
 		foreach (var item in other)
 		{
-			matcher.Match(item);
+			marker.Mark(item);
 		}
 
-		return matcher.UniqueMatches == count;
+		return marker.UnmarkedCount == 0;
 	}
 
 	internal readonly bool IsProperSubsetOf(ref readonly RawSet<T> other)
@@ -828,15 +828,20 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			}
 		}
 
-		using var matcher = new Matcher(in this);
+		using var marker = new Marker(in this);
+
+		var otherHasAdditionalItems = false;
 
 		// Note that enumerating `other` might trigger mutations on `this`.
 		foreach (var item in other)
 		{
-			matcher.Match(item);
+			if (!marker.Mark(item))
+			{
+				otherHasAdditionalItems = true;
+			}
 		}
 
-		return matcher.UniqueMatches == count && matcher.UnmatchedCount > 0;
+		return marker.UnmarkedCount == 0 && otherHasAdditionalItems;
 	}
 
 	internal readonly bool IsSupersetOf(ref readonly RawSet<T> other)
@@ -987,18 +992,18 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			}
 		}
 
-		using var matcher = new Matcher(in this);
+		using var marker = new Marker(in this);
 
 		// Note that enumerating `other` might trigger mutations on `this`.
 		foreach (var item in other)
 		{
-			if (matcher.Match(item) == RawSet.Match.None)
+			if (!marker.Mark(item))
 			{
 				return false;
 			}
 		}
 
-		return matcher.UniqueMatches < count;
+		return marker.UnmarkedCount > 0;
 	}
 
 	internal readonly bool Overlaps(ref readonly RawSet<T> other)
@@ -1127,18 +1132,18 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			}
 		}
 
-		using var matcher = new Matcher(in this);
+		using var marker = new Marker(in this);
 
 		// Note that enumerating `other` might trigger mutations on `this`.
 		foreach (var item in other)
 		{
-			if (matcher.Match(item) == RawSet.Match.None)
+			if (!marker.Mark(item))
 			{
 				return false;
 			}
 		}
 
-		return matcher.UniqueMatches == count;
+		return marker.UnmarkedCount == 0;
 	}
 
 	internal readonly void CopyTo(Span<T> destination)
@@ -1374,60 +1379,60 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		return true;
 	}
 
-	internal ref struct Matcher
+	internal ref struct Marker
 	{
 		private readonly RawSet<T> set;
-		private readonly bool[]? matches;
-		private int unmatchedCount;
-		private int uniqueMatchCount;
+		private readonly bool[]? marks;
+		private int unmarked;
 
 		/// <summary>
-		/// The number of times Match returned `None`.
+		/// How many elements in the set have not been marked yet.
 		/// </summary>
-		public readonly int UnmatchedCount => this.unmatchedCount;
+		public readonly int UnmarkedCount
+		{
+			get
+			{
+				Debug.Assert(this.unmarked >= 0);
 
-		/// <summary>
-		/// The number of times Match returned `New`.
-		/// </summary>
-		public readonly int UniqueMatches => this.uniqueMatchCount;
+				return this.unmarked;
+			}
+		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public Matcher(ref readonly RawSet<T> set)
+		public Marker(ref readonly RawSet<T> set)
 		{
 			this.set = set;
+			this.unmarked = set.Count;
 
 			var end = set.end;
 			if (end > 0)
 			{
-				this.matches = new bool[end];
+				this.marks = new bool[end];
 			}
 		}
 
-		// The RawSet may not be mutated in between calls to Match.
-		public RawSet.Match Match(T item)
+		// The RawSet may not be mutated in between calls to Mark.
+		public bool Mark(T item)
 		{
-			var matches = this.matches;
-			if (matches is null)
+			var marks = this.marks;
+			if (marks is null)
 			{
-				this.unmatchedCount++;
-				return RawSet.Match.None;
+				return false;
 			}
 
 			int index = this.set.FindItemIndex(item);
 			if (index < 0)
 			{
-				this.unmatchedCount++;
-				return RawSet.Match.None;
+				return false;
 			}
 
-			if (!matches[index])
+			if (!marks[index])
 			{
-				matches[index] = true;
-				this.uniqueMatchCount++;
-				return RawSet.Match.New;
+				marks[index] = true;
+				this.unmarked--;
 			}
 
-			return RawSet.Match.AlreadyMatched;
+			return true;
 		}
 
 #pragma warning disable CA1822 // Mark members as static
@@ -1566,13 +1571,6 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 
 internal static class RawSet
 {
-	internal enum Match
-	{
-		None,
-		New,
-		AlreadyMatched,
-	}
-
 	[Pure]
 	internal static int GetSequenceHashCode<T>(this ref readonly RawSet<T> set)
 	{
