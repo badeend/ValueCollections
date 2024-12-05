@@ -221,6 +221,8 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		var i = this.GetBucketRef(hashCode) - 1; // Value in _buckets is 1-based
 		while (i >= 0)
 		{
+			Debug.Assert(i < this.end);
+
 			ref Entry entry = ref entries![i];
 			if (entry.HashCode == hashCode && comparer.Equals(entry.Value, item))
 			{
@@ -269,12 +271,14 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 
 		while (i >= 0)
 		{
+			Debug.Assert(i < this.end);
 			ref Entry entry = ref entries![i];
 
 			if (entry.HashCode == hashCode && comparer.Equals(entry.Value, item))
 			{
 				if (last < 0)
 				{
+					Debug.Assert(entry.Next < this.end);
 					bucket = entry.Next + 1; // Value in buckets is 1-based
 				}
 				else
@@ -329,6 +333,8 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			var index = this.FindItemIndex(equalValue);
 			if (index >= 0)
 			{
+				Debug.Assert(index < this.end);
+
 				actualValue = this.entries![index].Value;
 				return true;
 			}
@@ -1315,6 +1321,8 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		int i = bucket - 1; // Value in _buckets is 1-based
 		while (i >= 0)
 		{
+			Debug.Assert(i < this.end);
+
 			ref Entry entry = ref entries![i];
 			if (entry.HashCode == hashCode && comparer.Equals(entry.Value, value))
 			{
@@ -1354,6 +1362,8 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		}
 
 		{
+			Debug.Assert(index < this.end);
+
 			ref Entry entry = ref entries![index];
 			entry.HashCode = hashCode;
 			entry.Next = bucket - 1; // Value in _buckets is 1-based
