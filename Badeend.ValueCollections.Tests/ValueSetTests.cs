@@ -211,4 +211,138 @@ public class ValueSetTests
             }
         }
     }
+
+    [Fact]
+    public void SetRelationships()
+    {
+        ValueSet<int> r345 = [3, 4, 5];
+
+        ValueSet<int> set345 = [3, 4, 5];
+        ValueSet<int> set45 = [4, 5];
+        ValueSet<int> set3456 = [3, 4, 5, 6];
+        ValueSet<int> set12 = [1, 2];
+
+        IEnumerable<int> enumerable345 = [3, 4, 5];
+        IEnumerable<int> enumerable34444445 = [3, 4, 4, 4, 4, 4, 4, 5];
+        IEnumerable<int> enumerable45 = [4, 5];
+        IEnumerable<int> enumerable4444445 = [4, 4, 4, 4, 4, 4, 5];
+        IEnumerable<int> enumerable3456 = [3, 4, 5, 6];
+        IEnumerable<int> enumerable344444456 = [3, 4, 4, 4, 4, 4, 4, 5, 6];
+        IEnumerable<int> enumerable12 = [1, 2];
+
+        ReadOnlySpan<int> span345 = [3, 4, 5];
+        ReadOnlySpan<int> span45 = [4, 5];
+        ReadOnlySpan<int> span4444445 = [4, 4, 4, 4, 4, 4, 5];
+        ReadOnlySpan<int> span3456 = [3, 4, 5, 6];
+        ReadOnlySpan<int> span12 = [1, 2];
+
+        {
+            Assert.True(r345.IsSubsetOf(r345));
+
+            Assert.True(r345.IsSubsetOf(set345));
+            Assert.False(r345.IsSubsetOf(set45));
+            Assert.True(r345.IsSubsetOf(set3456));
+            Assert.False(r345.IsSubsetOf(set12));
+
+            Assert.True(r345.IsSubsetOf(enumerable345));
+            Assert.True(r345.IsSubsetOf(enumerable34444445));
+            Assert.False(r345.IsSubsetOf(enumerable45));
+            Assert.False(r345.IsSubsetOf(enumerable4444445));
+            Assert.True(r345.IsSubsetOf(enumerable3456));
+            Assert.True(r345.IsSubsetOf(enumerable344444456));
+            Assert.False(r345.IsSubsetOf(enumerable12));
+        }
+        {
+            Assert.False(r345.IsProperSubsetOf(r345));
+
+            Assert.False(r345.IsProperSubsetOf(set345));
+            Assert.False(r345.IsProperSubsetOf(set45));
+            Assert.True(r345.IsProperSubsetOf(set3456));
+            Assert.False(r345.IsProperSubsetOf(set12));
+
+            Assert.False(r345.IsProperSubsetOf(enumerable345));
+            Assert.False(r345.IsProperSubsetOf(enumerable34444445));
+            Assert.False(r345.IsProperSubsetOf(enumerable45));
+            Assert.False(r345.IsProperSubsetOf(enumerable4444445));
+            Assert.True(r345.IsProperSubsetOf(enumerable3456));
+            Assert.True(r345.IsProperSubsetOf(enumerable344444456));
+            Assert.False(r345.IsProperSubsetOf(enumerable12));
+        }
+        {
+            Assert.True(r345.IsSupersetOf(r345));
+
+            Assert.True(r345.IsSupersetOf(set345));
+            Assert.True(r345.IsSupersetOf(set45));
+            Assert.False(r345.IsSupersetOf(set3456));
+            Assert.False(r345.IsSupersetOf(set12));
+
+            Assert.True(r345.IsSupersetOf(enumerable345));
+            Assert.True(r345.IsSupersetOf(enumerable34444445));
+            Assert.True(r345.IsSupersetOf(enumerable45));
+            Assert.True(r345.IsSupersetOf(enumerable4444445));
+            Assert.False(r345.IsSupersetOf(enumerable3456));
+            Assert.False(r345.IsSupersetOf(enumerable344444456));
+            Assert.False(r345.IsSupersetOf(enumerable12));
+
+            Assert.True(r345.IsSupersetOf(span345));
+            Assert.True(r345.IsSupersetOf(span45));
+            Assert.True(r345.IsSupersetOf(span4444445));
+            Assert.False(r345.IsSupersetOf(span3456));
+            Assert.False(r345.IsSupersetOf(span12));
+        }
+        {
+            Assert.False(r345.IsProperSupersetOf(r345));
+
+            Assert.False(r345.IsProperSupersetOf(set345));
+            Assert.True(r345.IsProperSupersetOf(set45));
+            Assert.False(r345.IsProperSupersetOf(set3456));
+            Assert.False(r345.IsProperSupersetOf(set12));
+
+            Assert.False(r345.IsProperSupersetOf(enumerable345));
+            Assert.False(r345.IsProperSupersetOf(enumerable34444445));
+            Assert.True(r345.IsProperSupersetOf(enumerable45));
+            Assert.True(r345.IsProperSupersetOf(enumerable4444445));
+            Assert.False(r345.IsProperSupersetOf(enumerable3456));
+            Assert.False(r345.IsProperSupersetOf(enumerable344444456));
+            Assert.False(r345.IsProperSupersetOf(enumerable12));
+        }
+        {
+            Assert.True(r345.Overlaps(r345));
+
+            Assert.True(r345.Overlaps(set345));
+            Assert.True(r345.Overlaps(set45));
+            Assert.True(r345.Overlaps(set3456));
+            Assert.False(r345.Overlaps(set12));
+
+            Assert.True(r345.Overlaps(enumerable345));
+            Assert.True(r345.Overlaps(enumerable34444445));
+            Assert.True(r345.Overlaps(enumerable45));
+            Assert.True(r345.Overlaps(enumerable4444445));
+            Assert.True(r345.Overlaps(enumerable3456));
+            Assert.True(r345.Overlaps(enumerable344444456));
+            Assert.False(r345.Overlaps(enumerable12));
+
+            Assert.True(r345.Overlaps(span345));
+            Assert.True(r345.Overlaps(span45));
+            Assert.True(r345.Overlaps(span4444445));
+            Assert.True(r345.Overlaps(span3456));
+            Assert.False(r345.Overlaps(span12));
+        }
+        {
+            Assert.True(r345.SetEquals(r345));
+
+            Assert.True(r345.SetEquals(set345));
+            Assert.False(r345.SetEquals(set45));
+            Assert.False(r345.SetEquals(set3456));
+            Assert.False(r345.SetEquals(set12));
+
+            Assert.True(r345.SetEquals(enumerable345));
+            Assert.True(r345.SetEquals(enumerable34444445));
+            Assert.False(r345.SetEquals(enumerable45));
+            Assert.False(r345.SetEquals(enumerable4444445));
+            Assert.False(r345.SetEquals(enumerable3456));
+            Assert.False(r345.SetEquals(enumerable344444456));
+            Assert.False(r345.SetEquals(enumerable12));
+        }
+    }
 }
