@@ -836,12 +836,25 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			return true;
 		}
 
-		// Try to compare based on counts alone if other is a hashset with same equality comparer.
+		// Try to compare based on counts alone.
 		if (other.Count > this.Count)
 		{
 			return false;
 		}
 
+		foreach (var element in other)
+		{
+			if (!this.Contains(element))
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	internal readonly bool IsSupersetOf(scoped ReadOnlySpan<T> other)
+	{
 		foreach (var element in other)
 		{
 			if (!this.Contains(element))

@@ -189,8 +189,28 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool Contains(T item) => this.inner.Contains(item);
 
-	/// <inheritdoc/>
-	public bool IsSubsetOf(IEnumerable<T> other)
+	/// <summary>
+	/// Check whether <c>this</c> set is a subset of the provided collection.
+	/// </summary>
+	/// <remarks>
+	/// This is an <c>O(n)</c> operation, where <c>n</c> is the number of elements in <c>this</c>.
+	///
+	/// An overload that takes any <c>IEnumerable&lt;T&gt;</c> exists as an
+	/// <see cref="ValueCollectionExtensions.IsSubsetOf">extension method</see>.
+	/// Beware of the performance implications though.
+	/// </remarks>
+	public bool IsSubsetOf(ValueSet<T> other)
+	{
+		if (other is null)
+		{
+			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
+		}
+
+		return this.inner.IsSubsetOf(ref other.inner);
+	}
+
+	// Accessible through extension method.
+	internal bool IsSubsetOfEnumerable(IEnumerable<T> other)
 	{
 		if (other.AsValueSetUnsafe() is { } otherSet)
 		{
@@ -203,33 +223,33 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	}
 
 	/// <inheritdoc/>
-	public bool IsSupersetOf(IEnumerable<T> other)
-	{
-		if (other.AsValueSetUnsafe() is { } otherSet)
-		{
-			return this.inner.IsSupersetOf(ref otherSet.inner);
-		}
-		else
-		{
-			return this.inner.IsSupersetOf(other);
-		}
-	}
+	bool ISet<T>.IsSubsetOf(IEnumerable<T> other) => this.IsSubsetOfEnumerable(other);
 
 	/// <inheritdoc/>
-	public bool IsProperSupersetOf(IEnumerable<T> other)
+	bool IReadOnlySet<T>.IsSubsetOf(IEnumerable<T> other) => this.IsSubsetOfEnumerable(other);
+
+	/// <summary>
+	/// Check whether <c>this</c> set is a proper subset of the provided collection.
+	/// </summary>
+	/// <remarks>
+	/// This is an <c>O(n)</c> operation, where <c>n</c> is the number of elements in <c>this</c>.
+	///
+	/// An overload that takes any <c>IEnumerable&lt;T&gt;</c> exists as an
+	/// <see cref="ValueCollectionExtensions.IsProperSubsetOf">extension method</see>.
+	/// Beware of the performance implications though.
+	/// </remarks>
+	public bool IsProperSubsetOf(ValueSet<T> other)
 	{
-		if (other.AsValueSetUnsafe() is { } otherSet)
+		if (other is null)
 		{
-			return this.inner.IsProperSupersetOf(ref otherSet.inner);
+			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
 		}
-		else
-		{
-			return this.inner.IsProperSupersetOf(other);
-		}
+
+		return this.inner.IsProperSubsetOf(ref other.inner);
 	}
 
-	/// <inheritdoc/>
-	public bool IsProperSubsetOf(IEnumerable<T> other)
+	// Accessible through extension method.
+	internal bool IsProperSubsetOfEnumerable(IEnumerable<T> other)
 	{
 		if (other.AsValueSetUnsafe() is { } otherSet)
 		{
@@ -242,7 +262,128 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	}
 
 	/// <inheritdoc/>
-	public bool Overlaps(IEnumerable<T> other)
+	bool ISet<T>.IsProperSubsetOf(IEnumerable<T> other) => this.IsProperSubsetOfEnumerable(other);
+
+	/// <inheritdoc/>
+	bool IReadOnlySet<T>.IsProperSubsetOf(IEnumerable<T> other) => this.IsProperSubsetOfEnumerable(other);
+
+	/// <summary>
+	/// Check whether <c>this</c> set is a superset of the provided collection.
+	/// </summary>
+	/// <remarks>
+	/// This is an <c>O(n)</c> operation, where <c>n</c> is the number of elements in <paramref name="other"/>.
+	///
+	/// An overload that takes any <c>IEnumerable&lt;T&gt;</c> exists as an
+	/// <see cref="ValueCollectionExtensions.IsSupersetOf">extension method</see>.
+	/// </remarks>
+	public bool IsSupersetOf(ValueSet<T> other)
+	{
+		if (other is null)
+		{
+			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
+		}
+
+		return this.inner.IsSupersetOf(ref other.inner);
+	}
+
+	/// <summary>
+	/// Check whether <c>this</c> set is a superset of the provided sequence.
+	/// </summary>
+	/// <remarks>
+	/// This is an <c>O(n)</c> operation, where <c>n</c> is the number of elements in <paramref name="other"/>.
+	/// </remarks>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public bool IsSupersetOf(scoped ReadOnlySpan<T> other) => this.inner.IsSupersetOf(other);
+
+	// Accessible through extension method.
+	internal bool IsSupersetOfEnumerable(IEnumerable<T> other)
+	{
+		if (other.AsValueSetUnsafe() is { } otherSet)
+		{
+			return this.inner.IsSupersetOf(ref otherSet.inner);
+		}
+		else
+		{
+			return this.inner.IsSupersetOf(other);
+		}
+	}
+
+	/// <inheritdoc/>
+	bool ISet<T>.IsSupersetOf(IEnumerable<T> other) => this.IsSupersetOfEnumerable(other);
+
+	/// <inheritdoc/>
+	bool IReadOnlySet<T>.IsSupersetOf(IEnumerable<T> other) => this.IsSupersetOfEnumerable(other);
+
+	/// <summary>
+	/// Check whether <c>this</c> set is a proper superset of the provided collection.
+	/// </summary>
+	/// <remarks>
+	/// This is an <c>O(n)</c> operation, where <c>n</c> is the number of elements in <c>this</c>.
+	///
+	/// An overload that takes any <c>IEnumerable&lt;T&gt;</c> exists as an
+	/// <see cref="ValueCollectionExtensions.IsProperSupersetOf">extension method</see>.
+	/// Beware of the performance implications though.
+	/// </remarks>
+	public bool IsProperSupersetOf(ValueSet<T> other)
+	{
+		if (other is null)
+		{
+			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
+		}
+
+		return this.inner.IsProperSupersetOf(ref other.inner);
+	}
+
+	internal bool IsProperSupersetOfEnumerable(IEnumerable<T> other)
+	{
+		if (other.AsValueSetUnsafe() is { } otherSet)
+		{
+			return this.inner.IsProperSupersetOf(ref otherSet.inner);
+		}
+		else
+		{
+			return this.inner.IsProperSupersetOf(other);
+		}
+	}
+
+	/// <inheritdoc/>
+	bool ISet<T>.IsProperSupersetOf(IEnumerable<T> other) => this.IsProperSupersetOfEnumerable(other);
+
+	/// <inheritdoc/>
+	bool IReadOnlySet<T>.IsProperSupersetOf(IEnumerable<T> other) => this.IsProperSupersetOfEnumerable(other);
+
+	/// <summary>
+	/// Check whether <c>this</c> set and the provided collection share any common elements.
+	/// </summary>
+	/// <remarks>
+	/// This is an <c>O(n)</c> operation, where <c>n</c> is the number of elements in <paramref name="other"/>.
+	///
+	/// An overload that takes any <c>IEnumerable&lt;T&gt;</c> exists as an
+	/// <see cref="ValueCollectionExtensions.Overlaps">extension method</see>.
+	/// </remarks>
+	public bool Overlaps(ValueSet<T> other)
+	{
+		if (other is null)
+		{
+			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
+		}
+
+		return this.inner.Overlaps(ref other.inner);
+	}
+
+	/// <summary>
+	/// Check whether <c>this</c> set and the provided sequence share any common elements.
+	/// </summary>
+	/// <remarks>
+	/// This is an <c>O(n)</c> operation, where <c>n</c> is the number of elements in <paramref name="other"/>.
+	/// </remarks>
+	public bool Overlaps(scoped ReadOnlySpan<T> other)
+	{
+		return this.inner.Overlaps(other);
+	}
+
+	// Accessible through extension method.
+	internal bool OverlapsEnumerable(IEnumerable<T> other)
 	{
 		if (other.AsValueSetUnsafe() is { } otherSet)
 		{
@@ -255,7 +396,34 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	}
 
 	/// <inheritdoc/>
-	public bool SetEquals(IEnumerable<T> other)
+	bool ISet<T>.Overlaps(IEnumerable<T> other) => this.OverlapsEnumerable(other);
+
+	/// <inheritdoc/>
+	bool IReadOnlySet<T>.Overlaps(IEnumerable<T> other) => this.OverlapsEnumerable(other);
+
+	/// <summary>
+	/// Check whether <c>this</c> set and the provided collection contain
+	/// the same elements, ignoring the order of the elements.
+	/// </summary>
+	/// <remarks>
+	/// This is an <c>O(n)</c> operation, where <c>n</c> is the number of elements in <paramref name="other"/>.
+	///
+	/// An overload that takes any <c>IEnumerable&lt;T&gt;</c> exists as an
+	/// <see cref="ValueCollectionExtensions.SetEquals">extension method</see>.
+	/// Beware of the performance implications though.
+	/// </remarks>
+	public bool SetEquals(ValueSet<T> other)
+	{
+		if (other is null)
+		{
+			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
+		}
+
+		return this.inner.SetEquals(ref other.inner);
+	}
+
+	// Accessible through extension method.
+	internal bool SetEqualsEnumerable(IEnumerable<T> other)
 	{
 		if (other.AsValueSetUnsafe() is { } otherSet)
 		{
@@ -266,6 +434,12 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 			return this.inner.SetEquals(other);
 		}
 	}
+
+	/// <inheritdoc/>
+	bool ISet<T>.SetEquals(IEnumerable<T> other) => this.SetEqualsEnumerable(other);
+
+	/// <inheritdoc/>
+	bool IReadOnlySet<T>.SetEquals(IEnumerable<T> other) => this.SetEqualsEnumerable(other);
 
 	/// <inheritdoc/>
 	[Pure]

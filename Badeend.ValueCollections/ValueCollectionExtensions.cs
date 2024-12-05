@@ -199,6 +199,63 @@ public static class ValueCollectionExtensions
 	}
 
 	/// <summary>
+	/// Check whether <c>this</c> set is a subset of the provided collection.
+	/// </summary>
+	/// <remarks>
+	/// > [!WARNING]
+	/// > In the worst case scenario this ends up allocating a temporary copy of
+	/// the <paramref name="other"/> collection.
+	/// </remarks>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool IsSubsetOf<T>(this ValueSet<T> set, IEnumerable<T> other) => set.IsSubsetOfEnumerable(other);
+
+	/// <summary>
+	/// Check whether <c>this</c> set is a proper subset of the provided collection.
+	/// </summary>
+	/// <remarks>
+	/// > [!WARNING]
+	/// > In the worst case scenario this ends up allocating a temporary copy of
+	/// the <paramref name="other"/> collection.
+	/// </remarks>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool IsProperSubsetOf<T>(this ValueSet<T> set, IEnumerable<T> other) => set.IsProperSubsetOfEnumerable(other);
+
+	/// <summary>
+	/// Check whether <c>this</c> set is a superset of the provided collection.
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool IsSupersetOf<T>(this ValueSet<T> set, IEnumerable<T> other) => set.IsSupersetOfEnumerable(other);
+
+	/// <summary>
+	/// Check whether <c>this</c> set is a proper superset of the provided collection.
+	/// </summary>
+	/// <remarks>
+	/// > [!WARNING]
+	/// > In the worst case scenario this ends up allocating a temporary copy of
+	/// the <paramref name="other"/> collection.
+	/// </remarks>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool IsProperSupersetOf<T>(this ValueSet<T> set, IEnumerable<T> other) => set.IsProperSupersetOfEnumerable(other);
+
+	/// <summary>
+	/// Check whether <c>this</c> set and the provided collection share any common elements.
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool Overlaps<T>(this ValueSet<T> set, IEnumerable<T> other) => set.OverlapsEnumerable(other);
+
+	/// <summary>
+	/// Check whether <c>this</c> set and the provided collection contain
+	/// the same elements, ignoring duplicates and the order of the elements.
+	/// </summary>
+	/// <remarks>
+	/// > [!WARNING]
+	/// > In the worst case scenario this ends up allocating a temporary copy of
+	/// the <paramref name="other"/> collection.
+	/// </remarks>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool SetEquals<T>(this ValueSet<T> set, IEnumerable<T> other) => set.SetEqualsEnumerable(other);
+
+	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueDictionary{TKey, TValue}"/>.
 	/// </summary>
 	/// <exception cref="ArgumentException">
