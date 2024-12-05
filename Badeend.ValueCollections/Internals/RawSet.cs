@@ -727,7 +727,8 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		}
 
 		// The empty set is a subset of any set, and a set is a subset of itself.
-		if (this.Count == 0)
+		var count = this.Count;
+		if (count == 0)
 		{
 			return true;
 		}
@@ -735,7 +736,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		if (other is ICollection<T> otherAsCollection)
 		{
 			// If this has more elements then it can't be a subset.
-			if (this.Count > otherAsCollection.Count)
+			if (count > otherAsCollection.Count)
 			{
 				return false;
 			}
@@ -749,11 +750,15 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			}
 		}
 
-		// Fall back to creating an intermediate heap copy (sigh...)
-		// Note that enumerating `other` might trigger mutations on `this`.
-		var copy = new RawSet<T>(other);
+		using var matcher = new Matcher(in this);
 
-		return this.IsSubsetOf(ref copy);
+		// Note that enumerating `other` might trigger mutations on `this`.
+		foreach (var item in other)
+		{
+			matcher.Match(item);
+		}
+
+		return matcher.UniqueMatches == count;
 	}
 
 	internal readonly bool IsProperSubsetOf(ref readonly RawSet<T> other)
@@ -789,16 +794,18 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
 		}
 
+		var count = this.Count;
+
 		if (other is ICollection<T> otherAsCollection)
 		{
 			// No set is a proper subset of a set with less or equal number of elements.
-			if (otherAsCollection.Count <= this.Count)
+			if (otherAsCollection.Count <= count)
 			{
 				return false;
 			}
 
 			// The empty set is a proper subset of anything but the empty set.
-			if (this.Count == 0)
+			if (count == 0)
 			{
 				// Based on check above, other is not empty when Count == 0.
 				return true;
@@ -815,11 +822,15 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			}
 		}
 
-		// Fall back to creating an intermediate heap copy (sigh...)
-		// Note that enumerating `other` might trigger mutations on `this`.
-		var copy = new RawSet<T>(other);
+		using var matcher = new Matcher(in this);
 
-		return this.IsProperSubsetOf(ref copy);
+		// Note that enumerating `other` might trigger mutations on `this`.
+		foreach (var item in other)
+		{
+			matcher.Match(item);
+		}
+
+		return matcher.UniqueMatches == count && matcher.UnmatchedCount > 0;
 	}
 
 	internal readonly bool IsSupersetOf(ref readonly RawSet<T> other)
@@ -939,8 +950,10 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
 		}
 
+		var count = this.Count;
+
 		// The empty set isn't a proper superset of any set.
-		if (this.Count == 0)
+		if (count == 0)
 		{
 			return false;
 		}
@@ -959,7 +972,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			// to not mutate `this` during enumeration.
 			if (other is HashSet<T> otherHashSet && otherHashSet.Comparer == EqualityComparer<T>.Default)
 			{
-				if (otherHashSet.Count >= this.Count)
+				if (otherHashSet.Count >= count)
 				{
 					return false;
 				}
@@ -968,11 +981,18 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			}
 		}
 
-		// Fall back to creating an intermediate heap copy (sigh...)
-		// Note that enumerating `other` might trigger mutations on `this`.
-		var copy = new RawSet<T>(other);
+		using var matcher = new Matcher(in this);
 
-		return this.IsProperSupersetOf(ref copy);
+		// Note that enumerating `other` might trigger mutations on `this`.
+		foreach (var item in other)
+		{
+			if (matcher.Match(item) == RawSet.Match.None)
+			{
+				return false;
+			}
+		}
+
+		return matcher.UniqueMatches < count;
 	}
 
 	internal readonly bool Overlaps(ref readonly RawSet<T> other)
@@ -1067,10 +1087,12 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
 		}
 
+		var count = this.Count;
+
 		if (other is ICollection<T> otherAsCollection)
 		{
 			// If this is empty, they are equal iff other is empty.
-			if (this.Count == 0)
+			if (count == 0)
 			{
 				return otherAsCollection.Count == 0;
 			}
@@ -1082,7 +1104,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			{
 				// Attempt to return early: since both contain unique elements, if they have
 				// different counts, then they can't be equal.
-				if (this.Count != otherHashSet.Count)
+				if (count != otherHashSet.Count)
 				{
 					return false;
 				}
@@ -1093,17 +1115,24 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			}
 
 			// Can't be equal if other set contains fewer elements than this.
-			if (this.Count > otherAsCollection.Count)
+			if (count > otherAsCollection.Count)
 			{
 				return false;
 			}
 		}
 
-		// Fall back to creating an intermediate heap copy (sigh...)
-		// Note that enumerating `other` might trigger mutations on `this`.
-		var copy = new RawSet<T>(other);
+		using var matcher = new Matcher(in this);
 
-		return this.SetEquals(ref copy);
+		// Note that enumerating `other` might trigger mutations on `this`.
+		foreach (var item in other)
+		{
+			if (matcher.Match(item) == RawSet.Match.None)
+			{
+				return false;
+			}
+		}
+
+		return matcher.UniqueMatches == count;
 	}
 
 	internal readonly void CopyTo(Span<T> destination)
@@ -1335,6 +1364,69 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		return true;
 	}
 
+	internal ref struct Matcher
+	{
+		private readonly RawSet<T> set;
+		private readonly bool[]? matches;
+		private int unmatchedCount;
+		private int uniqueMatchCount;
+
+		/// <summary>
+		/// The number of times Match returned `None`.
+		/// </summary>
+		public readonly int UnmatchedCount => this.unmatchedCount;
+
+		/// <summary>
+		/// The number of times Match returned `New`.
+		/// </summary>
+		public readonly int UniqueMatches => this.uniqueMatchCount;
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public Matcher(ref readonly RawSet<T> set)
+		{
+			this.set = set;
+
+			var end = set.end;
+			if (end > 0)
+			{
+				this.matches = new bool[end];
+			}
+		}
+
+		// The RawSet may not be mutated in between calls to Match.
+		public RawSet.Match Match(T item)
+		{
+			var matches = this.matches;
+			if (matches is null)
+			{
+				this.unmatchedCount++;
+				return RawSet.Match.None;
+			}
+
+			int index = this.set.FindItemIndex(item);
+			if (index < 0)
+			{
+				this.unmatchedCount++;
+				return RawSet.Match.None;
+			}
+
+			if (!matches[index])
+			{
+				matches[index] = true;
+				this.uniqueMatchCount++;
+				return RawSet.Match.New;
+			}
+
+			return RawSet.Match.AlreadyMatched;
+		}
+
+#pragma warning disable CA1822 // Mark members as static
+		public void Dispose()
+		{
+		}
+#pragma warning restore CA1822 // Mark members as static
+	}
+
 	private readonly int GetArbitraryIndex()
 	{
 		// Use the hashcode of the backing `entries` array as a semi-random seed.
@@ -1464,6 +1556,13 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 
 internal static class RawSet
 {
+	internal enum Match
+	{
+		None,
+		New,
+		AlreadyMatched,
+	}
+
 	[Pure]
 	internal static int GetSequenceHashCode<T>(this ref readonly RawSet<T> set)
 	{
