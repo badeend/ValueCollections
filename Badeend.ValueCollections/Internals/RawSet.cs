@@ -1382,7 +1382,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 	internal ref struct Marker
 	{
 		private readonly RawSet<T> set;
-		private readonly bool[]? marks;
+		private readonly RawBitArray marks;
 		private int unmarked;
 
 		/// <summary>
@@ -1402,33 +1402,22 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		public Marker(ref readonly RawSet<T> set)
 		{
 			this.set = set;
+			this.marks = new RawBitArray(set.end);
 			this.unmarked = set.Count;
-
-			var end = set.end;
-			if (end > 0)
-			{
-				this.marks = new bool[end];
-			}
 		}
 
 		// The RawSet may not be mutated in between calls to Mark.
 		public bool Mark(T item)
 		{
-			var marks = this.marks;
-			if (marks is null)
-			{
-				return false;
-			}
-
 			int index = this.set.FindItemIndex(item);
 			if (index < 0)
 			{
 				return false;
 			}
 
-			if (!marks[index])
+			if (!this.marks[index])
 			{
-				marks[index] = true;
+				this.marks[index] = true;
 				this.unmarked--;
 			}
 
