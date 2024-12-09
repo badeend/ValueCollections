@@ -268,7 +268,7 @@ public sealed partial class ValueSet<T>
 		/// Add the <paramref name="item"/> to the set if it isn't already present.
 		/// </summary>
 		/// <remarks>
-		/// Use <see cref="UnionWith"/> to add multiple values at once.
+		/// Use <see cref="UnionWith(ValueSet{T})"/> to add multiple values at once.
 		/// Use <see cref="TryAdd"/> if you want to know whether the element was
 		/// actually added.
 		/// </remarks>
@@ -300,7 +300,7 @@ public sealed partial class ValueSet<T>
 		/// Remove a specific element from the set if it exists.
 		/// </summary>
 		/// <remarks>
-		/// Use <see cref="ExceptWith"/> to remove multiple values at once.
+		/// Use <see cref="ExceptWith(ValueSet{T})"/> to remove multiple values at once.
 		/// Use <see cref="TryRemove"/> if you want to know whether any element was
 		/// actually removed.
 		/// </remarks>
@@ -359,44 +359,131 @@ public sealed partial class ValueSet<T>
 		public void CopyTo(Span<T> destination) => this.Read().inner.CopyTo(destination);
 
 		/// <summary>
-		/// Check whether <c>this</c> set is a proper subset of the provided collection.
-		/// </summary>
-		public bool IsProperSubsetOf(IEnumerable<T> other) => this.Read().IsProperSubsetOf(other);
-
-		/// <summary>
-		/// Check whether <c>this</c> set is a proper superset of the provided collection.
-		/// </summary>
-		public bool IsProperSupersetOf(IEnumerable<T> other) => this.Read().IsProperSupersetOf(other);
-
-		/// <summary>
 		/// Check whether <c>this</c> set is a subset of the provided collection.
 		/// </summary>
-		public bool IsSubsetOf(IEnumerable<T> other) => this.Read().IsSubsetOf(other);
+		/// <remarks>
+		/// This is an <c>O(n)</c> operation, where <c>n</c> is the number of elements in <c>this</c>.
+		///
+		/// An overload that takes any <c>IEnumerable&lt;T&gt;</c> exists as an
+		/// <see cref="ValueCollectionExtensions.IsSubsetOf{T}(ValueSet{T}.Builder, IEnumerable{T})">extension method</see>.
+		/// Beware of the performance implications though.
+		/// </remarks>
+		public bool IsSubsetOf(ValueSet<T> other) => this.Read().IsSubsetOf(other);
+
+		// Accessible through extension method.
+		internal bool IsSubsetOfEnumerable(IEnumerable<T> other) => this.Read().IsSubsetOf(other);
+
+		/// <summary>
+		/// Check whether <c>this</c> set is a proper subset of the provided collection.
+		/// </summary>
+		/// <remarks>
+		/// This is an <c>O(n)</c> operation, where <c>n</c> is the number of elements in <c>this</c>.
+		///
+		/// An overload that takes any <c>IEnumerable&lt;T&gt;</c> exists as an
+		/// <see cref="ValueCollectionExtensions.IsProperSubsetOf{T}(ValueSet{T}.Builder, IEnumerable{T})">extension method</see>.
+		/// Beware of the performance implications though.
+		/// </remarks>
+		public bool IsProperSubsetOf(ValueSet<T> other) => this.Read().IsProperSubsetOf(other);
+
+		// Accessible through extension method.
+		internal bool IsProperSubsetOfEnumerable(IEnumerable<T> other) => this.Read().IsProperSubsetOf(other);
 
 		/// <summary>
 		/// Check whether <c>this</c> set is a superset of the provided collection.
 		/// </summary>
-		public bool IsSupersetOf(IEnumerable<T> other) => this.Read().IsSupersetOf(other);
+		/// <remarks>
+		/// This is an <c>O(n)</c> operation, where <c>n</c> is the number of elements in <paramref name="other"/>.
+		///
+		/// An overload that takes any <c>IEnumerable&lt;T&gt;</c> exists as an
+		/// <see cref="ValueCollectionExtensions.IsSupersetOf{T}(ValueSet{T}.Builder, IEnumerable{T})">extension method</see>.
+		/// </remarks>
+		public bool IsSupersetOf(ValueSet<T> other) => this.Read().IsSupersetOf(other);
+
+		// Accessible through extension method.
+		internal bool IsSupersetOfEnumerable(IEnumerable<T> other) => this.Read().IsSupersetOf(other);
+
+		/// <summary>
+		/// Check whether <c>this</c> set is a proper superset of the provided collection.
+		/// </summary>
+		/// <remarks>
+		/// This is an <c>O(n)</c> operation, where <c>n</c> is the number of elements in <c>this</c>.
+		///
+		/// An overload that takes any <c>IEnumerable&lt;T&gt;</c> exists as an
+		/// <see cref="ValueCollectionExtensions.IsProperSupersetOf{T}(ValueSet{T}.Builder, IEnumerable{T})">extension method</see>.
+		/// Beware of the performance implications though.
+		/// </remarks>
+		public bool IsProperSupersetOf(ValueSet<T> other) => this.Read().IsProperSupersetOf(other);
+
+		// Accessible through extension method.
+		internal bool IsProperSupersetOfEnumerable(IEnumerable<T> other) => this.Read().IsProperSupersetOf(other);
 
 		/// <summary>
 		/// Check whether <c>this</c> set and the provided collection share any common elements.
 		/// </summary>
-		public bool Overlaps(IEnumerable<T> other) => this.Read().Overlaps(other);
+		/// <remarks>
+		/// This is an <c>O(n)</c> operation, where <c>n</c> is the number of elements in <paramref name="other"/>.
+		///
+		/// An overload that takes any <c>IEnumerable&lt;T&gt;</c> exists as an
+		/// <see cref="ValueCollectionExtensions.Overlaps{T}(ValueSet{T}.Builder, IEnumerable{T})">extension method</see>.
+		/// </remarks>
+		public bool Overlaps(ValueSet<T> other) => this.Read().Overlaps(other);
+
+		// Accessible through extension method.
+		internal bool OverlapsEnumerable(IEnumerable<T> other) => this.Read().Overlaps(other);
 
 		/// <summary>
 		/// Check whether <c>this</c> set and the provided collection contain
 		/// the same elements, ignoring duplicates and the order of the elements.
 		/// </summary>
-		public bool SetEquals(IEnumerable<T> other) => this.Read().SetEquals(other);
+		/// <remarks>
+		/// This is an <c>O(n)</c> operation, where <c>n</c> is the number of elements in <paramref name="other"/>.
+		///
+		/// An overload that takes any <c>IEnumerable&lt;T&gt;</c> exists as an
+		/// <see cref="ValueCollectionExtensions.SetEquals{T}(ValueSet{T}.Builder, IEnumerable{T})">extension method</see>.
+		/// Beware of the performance implications though.
+		/// </remarks>
+		public bool SetEquals(ValueSet<T> other) => this.Read().SetEquals(other);
+
+		// Accessible through extension method.
+		internal bool SetEqualsEnumerable(IEnumerable<T> other) => this.Read().SetEquals(other);
 
 		/// <summary>
 		/// Remove all elements that appear in the <paramref name="other"/> collection.
 		/// </summary>
 		/// <remarks>
-		/// <see cref="ValueCollectionExtensions.ExceptWith">More overloads</see> are
-		/// available as extension methods.
+		/// This is an <c>O(n)</c> operation, where <c>n</c> is the number of elements in <paramref name="other"/>.
+		///
+		/// An overload that takes any <c>IEnumerable&lt;T&gt;</c> exists as an
+		/// <see cref="ValueCollectionExtensions.ExceptWith{T}(ValueSet{T}.Builder, IEnumerable{T})">extension method</see>.
 		/// </remarks>
-		public Builder ExceptWith(IEnumerable<T> other)
+		public Builder ExceptWith(ValueSet<T> other)
+		{
+			if (other is null)
+			{
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
+			}
+
+			var set = this.Mutate();
+
+			set.inner.ExceptWith(ref other.inner);
+
+			return this;
+		}
+
+		/// <summary>
+		/// Remove all elements that appear in the <paramref name="items"/> sequence.
+		/// </summary>
+		/// <remarks>
+		/// This is an <c>O(n)</c> operation, where <c>n</c> is the number of elements in <paramref name="items"/>.
+		/// </remarks>
+		public Builder ExceptWith(scoped ReadOnlySpan<T> items)
+		{
+			this.Mutate().inner.ExceptWith(items);
+			return this;
+		}
+
+		// Accessible through extension method.
+		internal Builder ExceptWithEnumerable(IEnumerable<T> other)
 		{
 			var set = this.Mutate();
 
@@ -426,18 +513,33 @@ public sealed partial class ValueSet<T>
 			}
 		}
 
-		// Accessible through an extension method.
-		internal Builder ExceptWithSpan(scoped ReadOnlySpan<T> items)
-		{
-			this.Mutate().inner.ExceptWith(items);
-			return this;
-		}
-
 		/// <summary>
 		/// Remove all elements that appear in both <see langword="this"/>
 		/// <em>and</em> the <paramref name="other"/> collection.
 		/// </summary>
-		public Builder SymmetricExceptWith(IEnumerable<T> other)
+		/// <remarks>
+		/// This is an <c>O(n)</c> operation, where <c>n</c> is the number of elements in <paramref name="other"/>.
+		///
+		/// An overload that takes any <c>IEnumerable&lt;T&gt;</c> exists as an
+		/// <see cref="ValueCollectionExtensions.SymmetricExceptWith{T}(ValueSet{T}.Builder, IEnumerable{T})">extension method</see>.
+		/// Beware of the performance implications though.
+		/// </remarks>
+		public Builder SymmetricExceptWith(ValueSet<T> other)
+		{
+			if (other is null)
+			{
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
+			}
+
+			var set = this.Mutate();
+
+			set.inner.SymmetricExceptWith(ref other.inner);
+
+			return this;
+		}
+
+		// Accessible through extension method.
+		internal Builder SymmetricExceptWithEnumerable(IEnumerable<T> other)
 		{
 			var set = this.Mutate();
 
@@ -469,7 +571,29 @@ public sealed partial class ValueSet<T>
 		/// both <see langword="this"/> <em>and</em> the <paramref name="other"/>
 		/// collection.
 		/// </summary>
-		public Builder IntersectWith(IEnumerable<T> other)
+		/// <remarks>
+		/// This is an <c>O(n)</c> operation, where <c>n</c> is the number of elements in <c>this</c>.
+		///
+		/// An overload that takes any <c>IEnumerable&lt;T&gt;</c> exists as an
+		/// <see cref="ValueCollectionExtensions.IntersectWith{T}(ValueSet{T}.Builder, IEnumerable{T})">extension method</see>.
+		/// Beware of the performance implications though.
+		/// </remarks>
+		public Builder IntersectWith(ValueSet<T> other)
+		{
+			if (other is null)
+			{
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
+			}
+
+			var set = this.Mutate();
+
+			set.inner.IntersectWith(ref other.inner);
+
+			return this;
+		}
+
+		// Accessible through extension method.
+		internal Builder IntersectWithEnumerable(IEnumerable<T> other)
 		{
 			var set = this.Mutate();
 
@@ -500,10 +624,36 @@ public sealed partial class ValueSet<T>
 		/// Add all elements from the <paramref name="other"/> collection.
 		/// </summary>
 		/// <remarks>
-		/// <see cref="ValueCollectionExtensions.UnionWith">More overloads</see> are
-		/// available as extension methods.
+		/// This is an <c>O(n)</c> operation, where <c>n</c> is the number of elements in <paramref name="other"/>.
+		///
+		/// An overload that takes any <c>IEnumerable&lt;T&gt;</c> exists as an
+		/// <see cref="ValueCollectionExtensions.UnionWith{T}(ValueSet{T}.Builder, IEnumerable{T})">extension method</see>.
 		/// </remarks>
-		public Builder UnionWith(IEnumerable<T> other)
+		public Builder UnionWith(ValueSet<T> other)
+		{
+			if (other is null)
+			{
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
+			}
+
+			var set = this.Mutate();
+
+			set.inner.UnionWith(ref other.inner);
+
+			return this;
+		}
+
+		/// <summary>
+		/// Add all elements from the <paramref name="items"/> sequence.
+		/// </summary>
+		public Builder UnionWith(scoped ReadOnlySpan<T> items)
+		{
+			this.Mutate().inner.UnionWith(items);
+			return this;
+		}
+
+		// Accessible through extension method.
+		internal Builder UnionWithEnumerable(IEnumerable<T> other)
 		{
 			var set = this.Mutate();
 
@@ -531,13 +681,6 @@ public sealed partial class ValueSet<T>
 				// - Invalidate all our enumerators because `other` may be (indirectly) derived from us.
 				this.Mutate().inner.Add(element);
 			}
-		}
-
-		// Accessible through an extension method.
-		internal Builder UnionWithSpan(scoped ReadOnlySpan<T> items)
-		{
-			this.Mutate().inner.UnionWith(items);
-			return this;
 		}
 
 		/// <summary>

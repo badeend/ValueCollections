@@ -175,30 +175,6 @@ public static class ValueCollectionExtensions
 	}
 
 	/// <summary>
-	/// Add the <paramref name="items"/> to the set.
-	/// </summary>
-	/// <remarks>
-	/// This overload is an extension method to avoid call site ambiguity.
-	/// </remarks>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueSet<T>.Builder UnionWith<T>(this ValueSet<T>.Builder builder, scoped ReadOnlySpan<T> items)
-	{
-		return builder.UnionWithSpan(items);
-	}
-
-	/// <summary>
-	/// Remove the <paramref name="items"/> from the set.
-	/// </summary>
-	/// <remarks>
-	/// This overload is an extension method to avoid call site ambiguity.
-	/// </remarks>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueSet<T>.Builder ExceptWith<T>(this ValueSet<T>.Builder builder, scoped ReadOnlySpan<T> items)
-	{
-		return builder.ExceptWithSpan(items);
-	}
-
-	/// <summary>
 	/// Check whether <c>this</c> set is a subset of the provided collection.
 	/// </summary>
 	/// <remarks>
@@ -254,6 +230,100 @@ public static class ValueCollectionExtensions
 	/// </remarks>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool SetEquals<T>(this ValueSet<T> set, IEnumerable<T> other) => set.SetEqualsEnumerable(other);
+
+	/// <summary>
+	/// Check whether <c>this</c> set is a subset of the provided collection.
+	/// </summary>
+	/// <remarks>
+	/// > [!WARNING]
+	/// > In the worst case scenario this ends up allocating a temporary copy of
+	/// the <paramref name="other"/> collection.
+	/// </remarks>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool IsSubsetOf<T>(this ValueSet<T>.Builder builder, IEnumerable<T> other) => builder.IsSubsetOfEnumerable(other);
+
+	/// <summary>
+	/// Check whether <c>this</c> set is a proper subset of the provided collection.
+	/// </summary>
+	/// <remarks>
+	/// > [!WARNING]
+	/// > In the worst case scenario this ends up allocating a temporary copy of
+	/// the <paramref name="other"/> collection.
+	/// </remarks>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool IsProperSubsetOf<T>(this ValueSet<T>.Builder builder, IEnumerable<T> other) => builder.IsProperSubsetOfEnumerable(other);
+
+	/// <summary>
+	/// Check whether <c>this</c> set is a superset of the provided collection.
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool IsSupersetOf<T>(this ValueSet<T>.Builder builder, IEnumerable<T> other) => builder.IsSupersetOfEnumerable(other);
+
+	/// <summary>
+	/// Check whether <c>this</c> set is a proper superset of the provided collection.
+	/// </summary>
+	/// <remarks>
+	/// > [!WARNING]
+	/// > In the worst case scenario this ends up allocating a temporary copy of
+	/// the <paramref name="other"/> collection.
+	/// </remarks>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool IsProperSupersetOf<T>(this ValueSet<T>.Builder builder, IEnumerable<T> other) => builder.IsProperSupersetOfEnumerable(other);
+
+	/// <summary>
+	/// Check whether <c>this</c> set and the provided collection share any common elements.
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool Overlaps<T>(this ValueSet<T>.Builder builder, IEnumerable<T> other) => builder.OverlapsEnumerable(other);
+
+	/// <summary>
+	/// Check whether <c>this</c> set and the provided collection contain
+	/// the same elements, ignoring duplicates and the order of the elements.
+	/// </summary>
+	/// <remarks>
+	/// > [!WARNING]
+	/// > In the worst case scenario this ends up allocating a temporary copy of
+	/// the <paramref name="other"/> collection.
+	/// </remarks>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool SetEquals<T>(this ValueSet<T>.Builder builder, IEnumerable<T> other) => builder.SetEqualsEnumerable(other);
+
+	/// <summary>
+	/// Remove all elements that appear in the <paramref name="other"/> collection.
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ValueSet<T>.Builder ExceptWith<T>(this ValueSet<T>.Builder builder, IEnumerable<T> other) => builder.ExceptWithEnumerable(other);
+
+	/// <summary>
+	/// Remove all elements that appear in both <see langword="this"/>
+	/// <em>and</em> the <paramref name="other"/> collection.
+	/// </summary>
+	/// <remarks>
+	/// > [!WARNING]
+	/// > In the worst case scenario this ends up allocating a temporary copy of
+	/// the <paramref name="other"/> collection.
+	/// </remarks>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ValueSet<T>.Builder SymmetricExceptWith<T>(this ValueSet<T>.Builder builder, IEnumerable<T> other) => builder.SymmetricExceptWithEnumerable(other);
+
+	/// <summary>
+	/// Modify the current builder to contain only elements that are present in
+	/// both <see langword="this"/> <em>and</em> the <paramref name="other"/>
+	/// collection.
+	/// </summary>
+	/// <remarks>
+	/// > [!WARNING]
+	/// > In the worst case scenario this ends up allocating a temporary copy of
+	/// the <paramref name="other"/> collection.
+	/// </remarks>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ValueSet<T>.Builder IntersectWith<T>(this ValueSet<T>.Builder builder, IEnumerable<T> other) => builder.IntersectWithEnumerable(other);
+
+	/// <summary>
+	/// Add all elements from the <paramref name="other"/> collection.
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ValueSet<T>.Builder UnionWith<T>(this ValueSet<T>.Builder builder, IEnumerable<T> other) => builder.UnionWithEnumerable(other);
 
 	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueDictionary{TKey, TValue}"/>.

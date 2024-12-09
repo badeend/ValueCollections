@@ -196,7 +196,7 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	/// This is an <c>O(n)</c> operation, where <c>n</c> is the number of elements in <c>this</c>.
 	///
 	/// An overload that takes any <c>IEnumerable&lt;T&gt;</c> exists as an
-	/// <see cref="ValueCollectionExtensions.IsSubsetOf">extension method</see>.
+	/// <see cref="ValueCollectionExtensions.IsSubsetOf{T}(ValueSet{T}, IEnumerable{T})">extension method</see>.
 	/// Beware of the performance implications though.
 	/// </remarks>
 	public bool IsSubsetOf(ValueSet<T> other)
@@ -235,7 +235,7 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	/// This is an <c>O(n)</c> operation, where <c>n</c> is the number of elements in <c>this</c>.
 	///
 	/// An overload that takes any <c>IEnumerable&lt;T&gt;</c> exists as an
-	/// <see cref="ValueCollectionExtensions.IsProperSubsetOf">extension method</see>.
+	/// <see cref="ValueCollectionExtensions.IsProperSubsetOf{T}(ValueSet{T}, IEnumerable{T})">extension method</see>.
 	/// Beware of the performance implications though.
 	/// </remarks>
 	public bool IsProperSubsetOf(ValueSet<T> other)
@@ -274,7 +274,7 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	/// This is an <c>O(n)</c> operation, where <c>n</c> is the number of elements in <paramref name="other"/>.
 	///
 	/// An overload that takes any <c>IEnumerable&lt;T&gt;</c> exists as an
-	/// <see cref="ValueCollectionExtensions.IsSupersetOf">extension method</see>.
+	/// <see cref="ValueCollectionExtensions.IsSupersetOf{T}(ValueSet{T}, IEnumerable{T})">extension method</see>.
 	/// </remarks>
 	public bool IsSupersetOf(ValueSet<T> other)
 	{
@@ -321,7 +321,7 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	/// This is an <c>O(n)</c> operation, where <c>n</c> is the number of elements in <c>this</c>.
 	///
 	/// An overload that takes any <c>IEnumerable&lt;T&gt;</c> exists as an
-	/// <see cref="ValueCollectionExtensions.IsProperSupersetOf">extension method</see>.
+	/// <see cref="ValueCollectionExtensions.IsProperSupersetOf{T}(ValueSet{T}, IEnumerable{T})">extension method</see>.
 	/// Beware of the performance implications though.
 	/// </remarks>
 	public bool IsProperSupersetOf(ValueSet<T> other)
@@ -359,7 +359,7 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	/// This is an <c>O(n)</c> operation, where <c>n</c> is the number of elements in <paramref name="other"/>.
 	///
 	/// An overload that takes any <c>IEnumerable&lt;T&gt;</c> exists as an
-	/// <see cref="ValueCollectionExtensions.Overlaps">extension method</see>.
+	/// <see cref="ValueCollectionExtensions.Overlaps{T}(ValueSet{T}, IEnumerable{T})">extension method</see>.
 	/// </remarks>
 	public bool Overlaps(ValueSet<T> other)
 	{
@@ -409,7 +409,7 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	/// This is an <c>O(n)</c> operation, where <c>n</c> is the number of elements in <paramref name="other"/>.
 	///
 	/// An overload that takes any <c>IEnumerable&lt;T&gt;</c> exists as an
-	/// <see cref="ValueCollectionExtensions.SetEquals">extension method</see>.
+	/// <see cref="ValueCollectionExtensions.SetEquals{T}(ValueSet{T}, IEnumerable{T})">extension method</see>.
 	/// Beware of the performance implications though.
 	/// </remarks>
 	public bool SetEquals(ValueSet<T> other)

@@ -90,14 +90,12 @@ public class ValueSetBuilderTests
         builder.UnionWith(c);
         builder.UnionWith(d);
         builder.UnionWith(e);
-        builder.UnionWith([1, 2]);
 
         builder.ExceptWith(a);
         builder.ExceptWith(b);
         builder.ExceptWith(c);
         builder.ExceptWith(d);
         builder.ExceptWith(e);
-        builder.ExceptWith([1, 2]);
     }
 
     [Fact]
