@@ -250,6 +250,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		return ref buckets[(uint)hashCode % (uint)buckets.Length];
 	}
 
+	// Callers within this class depend on Remove only marking the entry as free, and not shuffling things around.
 	internal bool Remove(T item)
 	{
 		if (this.buckets is null)
@@ -1382,7 +1383,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 	internal ref struct Marker
 	{
 		private readonly RawSet<T> set;
-		private readonly RawBitArray marks;
+		private readonly RawBitArray markings;
 		private int unmarked;
 
 		/// <summary>
@@ -1402,7 +1403,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		public Marker(ref readonly RawSet<T> set)
 		{
 			this.set = set;
-			this.marks = new RawBitArray(set.end);
+			this.markings = new RawBitArray(set.end);
 			this.unmarked = set.Count;
 		}
 
@@ -1415,9 +1416,9 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 				return false;
 			}
 
-			if (!this.marks[index])
+			if (!this.markings[index])
 			{
-				this.marks[index] = true;
+				this.markings[index] = true;
 				this.unmarked--;
 			}
 
