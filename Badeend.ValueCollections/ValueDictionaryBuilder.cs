@@ -672,6 +672,9 @@ public sealed partial class ValueDictionaryBuilder<TKey, TValue> : IDictionary<T
 	/// <summary>
 	/// Remove all elements from the dictionary.
 	/// </summary>
+	/// <remarks>
+	/// The capacity remains unchanged until a call to <see cref="TrimExcess()"/> is made.
+	/// </remarks>
 	public ValueDictionaryBuilder<TKey, TValue> Clear()
 	{
 		this.Mutate().Clear();

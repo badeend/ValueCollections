@@ -560,6 +560,9 @@ public sealed partial class ValueList<T>
 		/// <summary>
 		/// Remove all elements from the list.
 		/// </summary>
+		/// <remarks>
+		/// The capacity remains unchanged until a call to <see cref="TrimExcess"/> is made.
+		/// </remarks>
 		public Builder Clear()
 		{
 			this.MutateOnce().Clear();

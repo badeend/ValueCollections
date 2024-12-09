@@ -281,6 +281,9 @@ public sealed partial class ValueSet<T>
 		/// <summary>
 		/// Remove all elements from the set.
 		/// </summary>
+		/// <remarks>
+		/// The capacity remains unchanged until a call to <see cref="TrimExcess()"/> is made.
+		/// </remarks>
 		public Builder Clear()
 		{
 			this.Mutate().inner.Clear();
