@@ -877,14 +877,14 @@ public sealed partial class ValueList<T>
 		[StructLayout(LayoutKind.Auto)]
 		public struct Enumerator : IEnumeratorLike<T>
 		{
-			private readonly Snapshot guard;
+			private readonly Snapshot snapshot;
 			private RawList<T>.Enumerator inner;
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			internal Enumerator(Builder builder)
 			{
 				var snapshot = builder.Read();
-				this.guard = snapshot;
+				this.snapshot = snapshot;
 				this.inner = snapshot.AssertAlive().GetEnumerator();
 			}
 
@@ -899,7 +899,7 @@ public sealed partial class ValueList<T>
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public bool MoveNext()
 			{
-				this.guard.AssertAlive();
+				this.snapshot.AssertAlive();
 
 				return this.inner.MoveNext();
 			}
