@@ -121,13 +121,13 @@ public sealed partial class ValueList<T>
 		}
 
 		[StructLayout(LayoutKind.Auto)]
-		private readonly struct ReadGuard
+		private readonly struct Snapshot
 		{
 			private readonly ValueList<T> list;
 			private readonly int expectedState;
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			internal ReadGuard(ValueList<T> list, int expectedState)
+			internal Snapshot(ValueList<T> list, int expectedState)
 			{
 				this.list = list;
 				this.expectedState = expectedState;
@@ -200,7 +200,7 @@ public sealed partial class ValueList<T>
 			}
 		}
 
-		private ReadGuard Read()
+		private Snapshot Read()
 		{
 			var list = this.list ?? Empty;
 
@@ -209,7 +209,7 @@ public sealed partial class ValueList<T>
 				ThrowHelpers.ThrowInvalidOperationException_Locked();
 			}
 
-			return new ReadGuard(list, list.state);
+			return new Snapshot(list, list.state);
 		}
 
 		private ref readonly RawList<T> ReadOnce()
@@ -877,7 +877,7 @@ public sealed partial class ValueList<T>
 		[StructLayout(LayoutKind.Auto)]
 		public struct Enumerator : IEnumeratorLike<T>
 		{
-			private readonly ReadGuard guard;
+			private readonly Snapshot guard;
 			private RawList<T>.Enumerator inner;
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
