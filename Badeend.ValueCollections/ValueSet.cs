@@ -78,16 +78,10 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	[Pure]
 	public static ValueSet<T> Empty { get; } = new(new(), BuilderState.InitialImmutable);
 
-#pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
-#pragma warning disable SA1401 // Fields should be private
-
-	internal RawSet<T> inner;
+	private RawSet<T> inner;
 
 	// See the BuilderState utility class for more info.
 	private int state;
-
-#pragma warning restore SA1401 // Fields should be private
-#pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
 
 	/// <summary>
 	/// Number of items in the set.

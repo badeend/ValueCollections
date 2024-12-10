@@ -120,9 +120,14 @@ public static class ValueCollectionExtensions
 	/// </summary>
 	public static ValueSet<T> ToValueSet<T>(this IEnumerable<T> items)
 	{
-		if (items.AsValueSetUnsafe() is { } valueSet)
+		if (items is null)
 		{
-			return ValueSet<T>.CreateImmutableUnsafe(new(ref valueSet.inner));
+			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.items);
+		}
+
+		if (items is ValueSet<T> valueSet)
+		{
+			return valueSet;
 		}
 
 		return ValueSet<T>.CreateImmutableUnsafe(new(items));
