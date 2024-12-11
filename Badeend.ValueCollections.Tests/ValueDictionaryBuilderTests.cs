@@ -269,6 +269,20 @@ public class ValueDictionaryBuilderTests
         Assert.True(a.GetValueOrDefault("d", -1) == -1);
     }
 
+    [Fact]
+    public void GetOrAdd()
+    {
+        var a = ValueDictionary.Builder([
+            Entry("c", 3),
+            Entry("b", 2),
+            Entry("a", 1),
+        ]);
+
+        Assert.True(a.GetOrAdd("c", _ => throw new Exception()) == 3);
+
+        Assert.True(a.GetOrAdd("d", _ => 4) == 4);
+        Assert.True(a.GetOrAdd("d", _ => throw new Exception()) == 4);
+    }
 
     [Fact]
     public void BuildIsFinal()

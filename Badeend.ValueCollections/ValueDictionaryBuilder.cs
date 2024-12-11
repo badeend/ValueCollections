@@ -402,6 +402,25 @@ public sealed partial class ValueDictionaryBuilder<TKey, TValue> : IDictionary<T
 		return this.TryGetValue(key, out var value) ? value : defaultValue;
 	}
 
+	/// <summary>
+	/// Get the value by the provided <paramref name="key"/>. If the key does
+	/// not already exist, the <paramref name="valueFactory"/> is invoked to
+	/// generate a new value, which will then be inserted and returned.
+	/// </summary>
+	public TValue GetOrAdd(TKey key, Func<TKey, TValue> valueFactory)
+	{
+		var dictionary = this.Mutate();
+
+		if (dictionary.TryGetValue(key, out var existingValue))
+		{
+			return existingValue;
+		}
+
+		var newValue = valueFactory(key);
+		dictionary.Add(key, newValue);
+		return newValue;
+	}
+
 	/// <inheritdoc/>
 	void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
 	{
