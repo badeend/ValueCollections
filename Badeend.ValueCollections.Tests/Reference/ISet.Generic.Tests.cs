@@ -115,10 +115,16 @@ namespace Badeend.ValueCollections.Tests.Reference
 
         private void Validate_ExceptWith(ISet<T> set, IEnumerable<T> enumerable)
         {
-            if (set.Count == 0 || enumerable == set)
+            if (set.Count == 0)
             {
                 set.ExceptWith(enumerable);
                 Assert.Equal(0, set.Count);
+            }
+            else if (set == enumerable)
+            {
+                HashSet<T> beforeOperation = new HashSet<T>(set, GetIEqualityComparer());
+                Assert.Throws<InvalidOperationException>(() => set.ExceptWith(enumerable));
+                Assert.True(beforeOperation.SetEquals(set));
             }
             else
             {
@@ -141,7 +147,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             else if (set == enumerable)
             {
                 HashSet<T> beforeOperation = new HashSet<T>(set, GetIEqualityComparer());
-                set.IntersectWith(enumerable);
+                Assert.Throws<InvalidOperationException>(() => set.IntersectWith(enumerable));
                 Assert.True(beforeOperation.SetEquals(set));
             }
             else
@@ -268,29 +274,47 @@ namespace Badeend.ValueCollections.Tests.Reference
 
         private void Validate_SymmetricExceptWith(ISet<T> set, IEnumerable<T> enumerable)
         {
-            IEqualityComparer<T> comparer = GetIEqualityComparer();
-            HashSet<T> expected = new HashSet<T>(comparer);
-            foreach (T element in enumerable)
-                if (!set.Contains(element, comparer))
-                    expected.Add(element);
-            foreach (T element in set)
-                if (!enumerable.Contains(element, comparer))
-                    expected.Add(element);
-            set.SymmetricExceptWith(enumerable);
-            Assert.Equal(expected.Count, set.Count);
-            Assert.True(expected.SetEquals(set));
+            if (set == enumerable)
+            {
+                HashSet<T> beforeOperation = new HashSet<T>(set, GetIEqualityComparer());
+                Assert.Throws<InvalidOperationException>(() => set.SymmetricExceptWith(enumerable));
+                Assert.True(beforeOperation.SetEquals(set));
+            }
+            else
+            {
+                IEqualityComparer<T> comparer = GetIEqualityComparer();
+                HashSet<T> expected = new HashSet<T>(comparer);
+                foreach (T element in enumerable)
+                    if (!set.Contains(element, comparer))
+                        expected.Add(element);
+                foreach (T element in set)
+                    if (!enumerable.Contains(element, comparer))
+                        expected.Add(element);
+                set.SymmetricExceptWith(enumerable);
+                Assert.Equal(expected.Count, set.Count);
+                Assert.True(expected.SetEquals(set));
+            }
         }
 
         private void Validate_UnionWith(ISet<T> set, IEnumerable<T> enumerable)
         {
-            IEqualityComparer<T> comparer = GetIEqualityComparer();
-            HashSet<T> expected = new HashSet<T>(set, comparer);
-            foreach (T element in enumerable)
-                if (!set.Contains(element, comparer))
-                    expected.Add(element);
-            set.UnionWith(enumerable);
-            Assert.Equal(expected.Count, set.Count);
-            Assert.True(expected.SetEquals(set));
+            if (set == enumerable)
+            {
+                HashSet<T> beforeOperation = new HashSet<T>(set, GetIEqualityComparer());
+                Assert.Throws<InvalidOperationException>(() => set.UnionWith(enumerable));
+                Assert.True(beforeOperation.SetEquals(set));
+            }
+            else
+            {
+                IEqualityComparer<T> comparer = GetIEqualityComparer();
+                HashSet<T> expected = new HashSet<T>(set, comparer);
+                foreach (T element in enumerable)
+                    if (!set.Contains(element, comparer))
+                        expected.Add(element);
+                set.UnionWith(enumerable);
+                Assert.Equal(expected.Count, set.Count);
+                Assert.True(expected.SetEquals(set));
+            }
         }
 
         #endregion

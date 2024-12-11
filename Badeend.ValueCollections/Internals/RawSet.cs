@@ -477,6 +477,17 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		return false;
 	}
 
+	// Does not check/guard against concurrent mutation during enumeration!
+	internal void IntersectWith(IEnumerable<T> other)
+	{
+		if (!this.TryIntersectWithNonEnumerated(other))
+		{
+			var otherRaw = new RawSet<T>(other); // Create an intermediate heap copy (sigh...)
+
+			this.IntersectWith(ref otherRaw);
+		}
+	}
+
 	/// <summary>
 	/// If other is a hashset that uses same equality comparer, intersect is much faster
 	/// because we can use other's Contains.
@@ -669,6 +680,17 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		return false;
 	}
 
+	// Does not check/guard against concurrent mutation during enumeration!
+	internal void SymmetricExceptWith(IEnumerable<T> other)
+	{
+		if (!this.TrySymmetricExceptWithNonEnumerated(other))
+		{
+			var otherRaw = new RawSet<T>(other); // Create an intermediate heap copy (sigh...)
+
+			this.SymmetricExceptWith(ref otherRaw);
+		}
+	}
+
 	internal readonly bool IsSubsetOf(ref readonly RawSet<T> other)
 	{
 		// The empty set is a subset of any set, and a set is a subset of itself.
@@ -726,17 +748,18 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		return true;
 	}
 
-	internal readonly bool IsSubsetOf(IEnumerable<T> other)
+	internal readonly bool TryIsSubsetOfNonEnumerated(IEnumerable<T> other, out bool result)
 	{
 		if (other is null)
 		{
 			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
 		}
 
-		// The empty set is a subset of any set, and a set is a subset of itself.
+		// The empty set is a subset of any set.
 		var count = this.Count;
 		if (count == 0)
 		{
+			result = true;
 			return true;
 		}
 
@@ -745,7 +768,8 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			// If this has more elements then it can't be a subset.
 			if (count > otherAsCollection.Count)
 			{
-				return false;
+				result = false;
+				return true;
 			}
 
 			// Special case for HashSet as that's the most commonly used set type
@@ -753,8 +777,21 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			// to not mutate `this` during enumeration.
 			if (other is HashSet<T> otherHashSet && otherHashSet.Comparer == EqualityComparer<T>.Default)
 			{
-				return this.IsSubsetOf_Common(otherHashSet);
+				result = this.IsSubsetOf_Common(otherHashSet);
+				return true;
 			}
+		}
+
+		result = default;
+		return false;
+	}
+
+	// Does not check/guard against concurrent mutation during enumeration!
+	internal readonly bool IsSubsetOf(IEnumerable<T> other)
+	{
+		if (this.TryIsSubsetOfNonEnumerated(other, out var result))
+		{
+			return result;
 		}
 
 		using var marker = new Marker(in this);
@@ -794,7 +831,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		return this.IsSubsetOf_Common(in other);
 	}
 
-	internal readonly bool IsProperSubsetOf(IEnumerable<T> other)
+	internal readonly bool TryIsProperSubsetOfNonEnumerated(IEnumerable<T> other, out bool result)
 	{
 		if (other is null)
 		{
@@ -808,13 +845,15 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			// No set is a proper subset of a set with less or equal number of elements.
 			if (otherAsCollection.Count <= count)
 			{
-				return false;
+				result = false;
+				return true;
 			}
 
 			// The empty set is a proper subset of anything but the empty set.
 			if (count == 0)
 			{
 				// Based on check above, other is not empty when Count == 0.
+				result = true;
 				return true;
 			}
 
@@ -825,8 +864,21 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			{
 				// This has strictly less than number of items in other, so the following
 				// check suffices for proper subset.
-				return this.IsSubsetOf_Common(otherHashSet);
+				result = this.IsSubsetOf_Common(otherHashSet);
+				return true;
 			}
+		}
+
+		result = default;
+		return false;
+	}
+
+	// Does not check/guard against concurrent mutation during enumeration!
+	internal readonly bool IsProperSubsetOf(IEnumerable<T> other)
+	{
+		if (this.TryIsProperSubsetOfNonEnumerated(other, out var result))
+		{
+			return result;
 		}
 
 		using var marker = new Marker(in this);
@@ -889,7 +941,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		return true;
 	}
 
-	internal readonly bool IsSupersetOf(IEnumerable<T> other)
+	internal readonly bool TryIsSupersetOfNonEnumerated(IEnumerable<T> other, out bool result)
 	{
 		if (other is null)
 		{
@@ -902,6 +954,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			// If other is the empty set then this is a superset.
 			if (otherAsCollection.Count == 0)
 			{
+				result = true;
 				return true;
 			}
 
@@ -912,11 +965,25 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			{
 				if (otherHashSet.Count > this.Count)
 				{
-					return false;
+					result = false;
+					return true;
 				}
 
-				return this.IsSupersetOf_Common(otherHashSet);
+				result = this.IsSupersetOf_Common(otherHashSet);
+				return true;
 			}
+		}
+
+		result = default;
+		return false;
+	}
+
+	// Does not check/guard against concurrent mutation during enumeration!
+	internal readonly bool IsSupersetOf(IEnumerable<T> other)
+	{
+		if (this.TryIsSupersetOfNonEnumerated(other, out var result))
+		{
+			return result;
 		}
 
 		// Note that enumerating `other` might trigger mutations on `this`.
@@ -955,7 +1022,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		return other.IsSubsetOf_Common(in this);
 	}
 
-	internal readonly bool IsProperSupersetOf(IEnumerable<T> other)
+	internal readonly bool TryIsProperSupersetOfNonEnumerated(IEnumerable<T> other, out bool result)
 	{
 		if (other is null)
 		{
@@ -967,7 +1034,8 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		// The empty set isn't a proper superset of any set.
 		if (count == 0)
 		{
-			return false;
+			result = false;
+			return true;
 		}
 
 		if (other is ICollection<T> otherAsCollection)
@@ -976,6 +1044,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			if (otherAsCollection.Count == 0)
 			{
 				// Note that this has at least one element, based on above check.
+				result = true;
 				return true;
 			}
 
@@ -986,11 +1055,25 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			{
 				if (otherHashSet.Count >= count)
 				{
-					return false;
+					result = false;
+					return true;
 				}
 
-				return this.IsSupersetOf_Common(otherHashSet);
+				result = this.IsSupersetOf_Common(otherHashSet);
+				return true;
 			}
+		}
+
+		result = default;
+		return false;
+	}
+
+	// Does not check/guard against concurrent mutation during enumeration!
+	internal readonly bool IsProperSupersetOf(IEnumerable<T> other)
+	{
+		if (this.TryIsProperSupersetOfNonEnumerated(other, out var result))
+		{
+			return result;
 		}
 
 		using var marker = new Marker(in this);
@@ -1049,7 +1132,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		return false;
 	}
 
-	internal readonly bool Overlaps(IEnumerable<T> other)
+	internal readonly bool TryOverlapsNonEnumerated(IEnumerable<T> other, out bool result)
 	{
 		if (other is null)
 		{
@@ -1058,9 +1141,23 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 
 		if (this.Count == 0)
 		{
-			return false;
+			result = false;
+			return true;
 		}
 
+		result = default;
+		return false;
+	}
+
+	// Does not check/guard against concurrent mutation during enumeration!
+	internal readonly bool Overlaps(IEnumerable<T> other)
+	{
+		if (this.TryOverlapsNonEnumerated(other, out var result))
+		{
+			return result;
+		}
+
+		// Note that enumerating `other` might trigger mutations on `this`.
 		foreach (T element in other)
 		{
 			if (this.Contains(element))
@@ -1092,7 +1189,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		return this.IsSubsetOf_Common(in other);
 	}
 
-	internal readonly bool SetEquals(IEnumerable<T> other)
+	internal readonly bool TrySetEqualsNonEnumerated(IEnumerable<T> other, out bool result)
 	{
 		if (other is null)
 		{
@@ -1106,7 +1203,8 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			// If this is empty, they are equal iff other is empty.
 			if (count == 0)
 			{
-				return otherAsCollection.Count == 0;
+				result = otherAsCollection.Count == 0;
+				return true;
 			}
 
 			// Special case for HashSet as that's the most commonly used set type
@@ -1118,19 +1216,34 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 				// different counts, then they can't be equal.
 				if (count != otherHashSet.Count)
 				{
-					return false;
+					result = false;
+					return true;
 				}
 
 				// Already confirmed that the sets have the same number of distinct elements, so if
 				// one is a subset of the other then they must be equal.
-				return this.IsSubsetOf_Common(otherHashSet);
+				result = this.IsSubsetOf_Common(otherHashSet);
+				return true;
 			}
 
 			// Can't be equal if other set contains fewer elements than this.
 			if (count > otherAsCollection.Count)
 			{
-				return false;
+				result = false;
+				return true;
 			}
+		}
+
+		result = default;
+		return false;
+	}
+
+	// Does not check/guard against concurrent mutation during enumeration!
+	internal readonly bool SetEquals(IEnumerable<T> other)
+	{
+		if (this.TrySetEqualsNonEnumerated(other, out var result))
+		{
+			return result;
 		}
 
 		using var marker = new Marker(in this);

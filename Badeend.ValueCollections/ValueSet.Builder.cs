@@ -58,7 +58,7 @@ public sealed partial class ValueSet<T>
 		/// now read-only.
 		/// </summary>
 		[Pure]
-		public bool IsReadOnly => BuilderState.IsImmutable(this.Read().state);
+		public bool IsReadOnly => this.set is null || BuilderState.IsImmutable(this.set.state);
 
 		/// <summary>
 		/// Finalize the builder and export its contents as a <see cref="ValueSet{T}"/>.
@@ -97,7 +97,11 @@ public sealed partial class ValueSet<T>
 		[Pure]
 		public ValueSet<T> ToValueSet()
 		{
-			var set = this.Read();
+			var set = this.set;
+			if (set is null)
+			{
+				return Empty;
+			}
 
 			if (BuilderState.IsImmutable(set.state))
 			{
@@ -119,12 +123,132 @@ public sealed partial class ValueSet<T>
 		[Pure]
 		public Builder ToValueSetBuilder()
 		{
-			var set = this.Read();
-
-			return ValueSet<T>.Builder.CreateUnsafe(new(ref set.inner));
+			return ValueSet<T>.Builder.CreateUnsafe(new(in this.ReadOnce()));
 		}
 
-		private ValueSet<T> Mutate()
+		[StructLayout(LayoutKind.Auto)]
+		private readonly struct Snapshot
+		{
+			private readonly ValueSet<T> set;
+			private readonly int expectedState;
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			internal Snapshot(ValueSet<T> set, int expectedState)
+			{
+				this.set = set;
+				this.expectedState = expectedState;
+			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			internal ref readonly RawSet<T> AssertAlive()
+			{
+				if (this.expectedState != this.set.state)
+				{
+					this.AssertAliveUncommon();
+				}
+
+				return ref this.set.inner;
+			}
+
+			private void AssertAliveUncommon()
+			{
+				// The only valid reason for ending up here is when the snapshot
+				// was obtained in an already-built state and the hash code was
+				// materialized afterwards.
+				if (BuilderState.IsImmutable(this.expectedState))
+				{
+					Debug.Assert(BuilderState.IsImmutable(this.set.state));
+
+					return;
+				}
+
+				if (this.set.state == BuilderState.ExclusiveMode)
+				{
+					ThrowHelpers.ThrowInvalidOperationException_Locked();
+				}
+				else
+				{
+					ThrowHelpers.ThrowInvalidOperationException_CollectionModifiedDuringEnumeration();
+				}
+			}
+		}
+
+		[StructLayout(LayoutKind.Auto)]
+		private readonly ref struct MutationGuard
+		{
+			private readonly ValueSet<T> set;
+			private readonly int restoreState;
+
+			internal readonly ref RawSet<T> Inner
+			{
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
+				get
+				{
+					Debug.Assert(this.set.state == BuilderState.ExclusiveMode);
+
+					return ref this.set.inner;
+				}
+			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			internal MutationGuard(ValueSet<T> set, int restoreState)
+			{
+				this.set = set;
+				this.restoreState = restoreState;
+			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			public void Dispose()
+			{
+				Debug.Assert(this.set.state == BuilderState.ExclusiveMode);
+
+				this.set.state = this.restoreState;
+			}
+		}
+
+		private Snapshot Read()
+		{
+			var set = this.set ?? Empty;
+
+			if (set.state == BuilderState.ExclusiveMode)
+			{
+				ThrowHelpers.ThrowInvalidOperationException_Locked();
+			}
+
+			return new Snapshot(set, set.state);
+		}
+
+		private ref readonly RawSet<T> ReadOnce()
+		{
+			var set = this.set ?? Empty;
+
+			if (set.state == BuilderState.ExclusiveMode)
+			{
+				ThrowHelpers.ThrowInvalidOperationException_Locked();
+			}
+
+			return ref set.inner;
+		}
+
+		private MutationGuard Mutate()
+		{
+			var set = this.set;
+			if (set is null || BuilderState.MutateRequiresAttention(set.state))
+			{
+				MutateUncommon(set);
+			}
+
+			var stateToRestore = set.state + 1;
+			set.state = BuilderState.ExclusiveMode;
+
+			Debug.Assert(BuilderState.IsMutable(stateToRestore));
+
+			return new MutationGuard(set, stateToRestore);
+		}
+
+		// Only to be used if the mutation can be done at once (i.e. "atomically"),
+		// and the outside world can not observe the builder in a temporary intermediate state.
+		private ref RawSet<T> MutateOnce()
 		{
 			var set = this.set;
 			if (set is null || BuilderState.MutateRequiresAttention(set.state))
@@ -136,7 +260,7 @@ public sealed partial class ValueSet<T>
 
 			Debug.Assert(BuilderState.IsMutable(set.state));
 
-			return set;
+			return ref set.inner;
 		}
 
 		[MethodImpl(MethodImplOptions.NoInlining)]
@@ -159,6 +283,10 @@ public sealed partial class ValueSet<T>
 			{
 				set.state = BuilderState.InitialMutable;
 			}
+			else if (set.state == BuilderState.ExclusiveMode)
+			{
+				ThrowHelpers.ThrowInvalidOperationException_Locked();
+			}
 			else
 			{
 				Debug.Assert(BuilderState.IsImmutable(set.state));
@@ -167,13 +295,11 @@ public sealed partial class ValueSet<T>
 			}
 		}
 
-		internal ValueSet<T> Read() => this.set ?? Empty;
-
 		/// <summary>
 		/// Current size of the set.
 		/// </summary>
 		[Pure]
-		public int Count => this.Read().inner.Count;
+		public int Count => this.ReadOnce().Count;
 
 		/// <summary>
 		/// Shortcut for <c>.Count == 0</c>.
@@ -189,7 +315,7 @@ public sealed partial class ValueSet<T>
 		/// The total number of elements the internal data structure can hold without resizing.
 		/// </summary>
 		[Pure]
-		public int Capacity => this.Read().inner.Capacity;
+		public int Capacity => this.ReadOnce().Capacity;
 
 		/// <summary>
 		/// Ensures that the capacity of this set is at least the specified capacity.
@@ -201,7 +327,7 @@ public sealed partial class ValueSet<T>
 		/// </exception>
 		public Builder EnsureCapacity(int minimumCapacity)
 		{
-			this.Mutate().inner.EnsureCapacity(minimumCapacity);
+			this.MutateOnce().EnsureCapacity(minimumCapacity);
 			return this;
 		}
 
@@ -217,7 +343,7 @@ public sealed partial class ValueSet<T>
 		/// </exception>
 		public Builder TrimExcess(int targetCapacity)
 		{
-			this.Mutate().inner.TrimExcess(targetCapacity);
+			this.MutateOnce().TrimExcess(targetCapacity);
 			return this;
 		}
 
@@ -262,7 +388,7 @@ public sealed partial class ValueSet<T>
 		/// <remarks>
 		/// This is the equivalent of <see cref="HashSet{T}.Add(T)">HashSet.Add</see>.
 		/// </remarks>
-		public bool TryAdd(T item) => this.Mutate().inner.Add(item);
+		public bool TryAdd(T item) => this.MutateOnce().Add(item);
 
 		/// <summary>
 		/// Add the <paramref name="item"/> to the set if it isn't already present.
@@ -286,7 +412,7 @@ public sealed partial class ValueSet<T>
 		/// </remarks>
 		public Builder Clear()
 		{
-			this.Mutate().inner.Clear();
+			this.MutateOnce().Clear();
 			return this;
 		}
 
@@ -297,7 +423,7 @@ public sealed partial class ValueSet<T>
 		/// <remarks>
 		/// This is the equivalent of <see cref="HashSet{T}.Remove(T)">HashSet.Remove</see>.
 		/// </remarks>
-		public bool TryRemove(T item) => this.Mutate().inner.Remove(item);
+		public bool TryRemove(T item) => this.MutateOnce().Remove(item);
 
 		/// <summary>
 		/// Remove a specific element from the set if it exists.
@@ -318,7 +444,11 @@ public sealed partial class ValueSet<T>
 		/// </summary>
 		public Builder RemoveWhere(Predicate<T> match)
 		{
-			this.Mutate().inner.RemoveWhere(match);
+			using (var guard = this.Mutate())
+			{
+				guard.Inner.RemoveWhere(match);
+			}
+
 			return this;
 		}
 
@@ -339,7 +469,7 @@ public sealed partial class ValueSet<T>
 		/// </remarks>
 		public Builder TrimExcess()
 		{
-			this.Mutate().inner.TrimExcess();
+			this.MutateOnce().TrimExcess();
 			return this;
 		}
 
@@ -348,7 +478,7 @@ public sealed partial class ValueSet<T>
 		/// <paramref name="item"/>.
 		/// </summary>
 		[Pure]
-		public bool Contains(T item) => this.Read().Contains(item);
+		public bool Contains(T item) => this.ReadOnce().Contains(item);
 
 		/// <summary>
 		/// Copy the contents of the set into an existing <see cref="Span{T}"/>.
@@ -359,7 +489,7 @@ public sealed partial class ValueSet<T>
 		/// <remarks>
 		/// The order in which the elements are copied is undefined.
 		/// </remarks>
-		public void CopyTo(Span<T> destination) => this.Read().inner.CopyTo(destination);
+		public void CopyTo(Span<T> destination) => this.ReadOnce().CopyTo(destination);
 
 		/// <summary>
 		/// Check whether <c>this</c> set is a subset of the provided collection.
@@ -371,10 +501,50 @@ public sealed partial class ValueSet<T>
 		/// <see cref="ValueCollectionExtensions.IsSubsetOf{T}(ValueSet{T}.Builder, IEnumerable{T})">extension method</see>.
 		/// Beware of the performance implications though.
 		/// </remarks>
-		public bool IsSubsetOf(ValueSet<T> other) => this.Read().IsSubsetOf(other);
+		public bool IsSubsetOf(ValueSet<T> other)
+		{
+			if (other is null)
+			{
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
+			}
+
+			return this.ReadOnce().IsSubsetOf(ref other.inner);
+		}
 
 		// Accessible through extension method.
-		internal bool IsSubsetOfEnumerable(IEnumerable<T> other) => this.Read().IsSubsetOf(other);
+		internal bool IsSubsetOfEnumerable(IEnumerable<T> other)
+		{
+			if (other is null)
+			{
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
+			}
+
+			if (other is ValueSet<T> valueSet)
+			{
+				return this.ReadOnce().IsSubsetOf(ref valueSet.inner);
+			}
+
+			var snapshot = this.Read();
+
+			ref readonly var inner = ref snapshot.AssertAlive();
+
+			if (inner.TryIsSubsetOfNonEnumerated(other, out var result))
+			{
+				return result;
+			}
+
+			using var marker = new RawSet<T>.Marker(in inner);
+
+			// Note that enumerating `other` might trigger mutations on `this`.
+			foreach (var item in other)
+			{
+				snapshot.AssertAlive();
+
+				marker.Mark(item);
+			}
+
+			return marker.UnmarkedCount == 0;
+		}
 
 		/// <summary>
 		/// Check whether <c>this</c> set is a proper subset of the provided collection.
@@ -386,10 +556,55 @@ public sealed partial class ValueSet<T>
 		/// <see cref="ValueCollectionExtensions.IsProperSubsetOf{T}(ValueSet{T}.Builder, IEnumerable{T})">extension method</see>.
 		/// Beware of the performance implications though.
 		/// </remarks>
-		public bool IsProperSubsetOf(ValueSet<T> other) => this.Read().IsProperSubsetOf(other);
+		public bool IsProperSubsetOf(ValueSet<T> other)
+		{
+			if (other is null)
+			{
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
+			}
+
+			return this.ReadOnce().IsProperSubsetOf(ref other.inner);
+		}
 
 		// Accessible through extension method.
-		internal bool IsProperSubsetOfEnumerable(IEnumerable<T> other) => this.Read().IsProperSubsetOf(other);
+		internal bool IsProperSubsetOfEnumerable(IEnumerable<T> other)
+		{
+			if (other is null)
+			{
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
+			}
+
+			if (other is ValueSet<T> valueSet)
+			{
+				return this.ReadOnce().IsProperSubsetOf(ref valueSet.inner);
+			}
+
+			var snapshot = this.Read();
+
+			ref readonly var inner = ref snapshot.AssertAlive();
+
+			if (inner.TryIsProperSubsetOfNonEnumerated(other, out var result))
+			{
+				return result;
+			}
+
+			using var marker = new RawSet<T>.Marker(in inner);
+
+			var otherHasAdditionalItems = false;
+
+			// Note that enumerating `other` might trigger mutations on `this`.
+			foreach (var item in other)
+			{
+				snapshot.AssertAlive();
+
+				if (!marker.Mark(item))
+				{
+					otherHasAdditionalItems = true;
+				}
+			}
+
+			return marker.UnmarkedCount == 0 && otherHasAdditionalItems;
+		}
 
 		/// <summary>
 		/// Check whether <c>this</c> set is a superset of the provided collection.
@@ -400,10 +615,59 @@ public sealed partial class ValueSet<T>
 		/// An overload that takes any <c>IEnumerable&lt;T&gt;</c> exists as an
 		/// <see cref="ValueCollectionExtensions.IsSupersetOf{T}(ValueSet{T}.Builder, IEnumerable{T})">extension method</see>.
 		/// </remarks>
-		public bool IsSupersetOf(ValueSet<T> other) => this.Read().IsSupersetOf(other);
+		public bool IsSupersetOf(ValueSet<T> other)
+		{
+			if (other is null)
+			{
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
+			}
+
+			return this.ReadOnce().IsSupersetOf(ref other.inner);
+		}
+
+		/// <summary>
+		/// Check whether <c>this</c> set is a superset of the provided sequence.
+		/// </summary>
+		/// <remarks>
+		/// This is an <c>O(n)</c> operation, where <c>n</c> is the number of elements in <paramref name="other"/>.
+		/// </remarks>
+		public bool IsSupersetOf(scoped ReadOnlySpan<T> other) => this.ReadOnce().IsSupersetOf(other);
 
 		// Accessible through extension method.
-		internal bool IsSupersetOfEnumerable(IEnumerable<T> other) => this.Read().IsSupersetOf(other);
+		internal bool IsSupersetOfEnumerable(IEnumerable<T> other)
+		{
+			if (other is null)
+			{
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
+			}
+
+			if (other is ValueSet<T> valueSet)
+			{
+				return this.ReadOnce().IsSupersetOf(ref valueSet.inner);
+			}
+
+			var snapshot = this.Read();
+
+			ref readonly var inner = ref snapshot.AssertAlive();
+
+			if (inner.TryIsSupersetOfNonEnumerated(other, out var result))
+			{
+				return result;
+			}
+
+			// Note that enumerating `other` might trigger mutations on `this`.
+			foreach (T element in other)
+			{
+				snapshot.AssertAlive();
+
+				if (!inner.Contains(element))
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
 
 		/// <summary>
 		/// Check whether <c>this</c> set is a proper superset of the provided collection.
@@ -415,10 +679,53 @@ public sealed partial class ValueSet<T>
 		/// <see cref="ValueCollectionExtensions.IsProperSupersetOf{T}(ValueSet{T}.Builder, IEnumerable{T})">extension method</see>.
 		/// Beware of the performance implications though.
 		/// </remarks>
-		public bool IsProperSupersetOf(ValueSet<T> other) => this.Read().IsProperSupersetOf(other);
+		public bool IsProperSupersetOf(ValueSet<T> other)
+		{
+			if (other is null)
+			{
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
+			}
+
+			return this.ReadOnce().IsProperSupersetOf(ref other.inner);
+		}
 
 		// Accessible through extension method.
-		internal bool IsProperSupersetOfEnumerable(IEnumerable<T> other) => this.Read().IsProperSupersetOf(other);
+		internal bool IsProperSupersetOfEnumerable(IEnumerable<T> other)
+		{
+			if (other is null)
+			{
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
+			}
+
+			if (other is ValueSet<T> valueSet)
+			{
+				return this.ReadOnce().IsProperSupersetOf(ref valueSet.inner);
+			}
+
+			var snapshot = this.Read();
+
+			ref readonly var inner = ref snapshot.AssertAlive();
+
+			if (inner.TryIsProperSupersetOfNonEnumerated(other, out var result))
+			{
+				return result;
+			}
+
+			using var marker = new RawSet<T>.Marker(in inner);
+
+			// Note that enumerating `other` might trigger mutations on `this`.
+			foreach (var item in other)
+			{
+				snapshot.AssertAlive();
+
+				if (!marker.Mark(item))
+				{
+					return false;
+				}
+			}
+
+			return marker.UnmarkedCount > 0;
+		}
 
 		/// <summary>
 		/// Check whether <c>this</c> set and the provided collection share any common elements.
@@ -429,10 +736,59 @@ public sealed partial class ValueSet<T>
 		/// An overload that takes any <c>IEnumerable&lt;T&gt;</c> exists as an
 		/// <see cref="ValueCollectionExtensions.Overlaps{T}(ValueSet{T}.Builder, IEnumerable{T})">extension method</see>.
 		/// </remarks>
-		public bool Overlaps(ValueSet<T> other) => this.Read().Overlaps(other);
+		public bool Overlaps(ValueSet<T> other)
+		{
+			if (other is null)
+			{
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
+			}
+
+			return this.ReadOnce().Overlaps(ref other.inner);
+		}
+
+		/// <summary>
+		/// Check whether <c>this</c> set and the provided collection share any common elements.
+		/// </summary>
+		/// <remarks>
+		/// This is an <c>O(n)</c> operation, where <c>n</c> is the number of elements in <paramref name="other"/>.
+		/// </remarks>
+		public bool Overlaps(scoped ReadOnlySpan<T> other) => this.ReadOnce().Overlaps(other);
 
 		// Accessible through extension method.
-		internal bool OverlapsEnumerable(IEnumerable<T> other) => this.Read().Overlaps(other);
+		internal bool OverlapsEnumerable(IEnumerable<T> other)
+		{
+			if (other is null)
+			{
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
+			}
+
+			if (other is ValueSet<T> valueSet)
+			{
+				return this.ReadOnce().Overlaps(ref valueSet.inner);
+			}
+
+			var snapshot = this.Read();
+
+			ref readonly var inner = ref snapshot.AssertAlive();
+
+			if (inner.TryOverlapsNonEnumerated(other, out var result))
+			{
+				return result;
+			}
+
+			// Note that enumerating `other` might trigger mutations on `this`.
+			foreach (T element in other)
+			{
+				snapshot.AssertAlive();
+
+				if (inner.Contains(element))
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
 
 		/// <summary>
 		/// Check whether <c>this</c> set and the provided collection contain
@@ -445,10 +801,53 @@ public sealed partial class ValueSet<T>
 		/// <see cref="ValueCollectionExtensions.SetEquals{T}(ValueSet{T}.Builder, IEnumerable{T})">extension method</see>.
 		/// Beware of the performance implications though.
 		/// </remarks>
-		public bool SetEquals(ValueSet<T> other) => this.Read().SetEquals(other);
+		public bool SetEquals(ValueSet<T> other)
+		{
+			if (other is null)
+			{
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
+			}
+
+			return this.ReadOnce().SetEquals(ref other.inner);
+		}
 
 		// Accessible through extension method.
-		internal bool SetEqualsEnumerable(IEnumerable<T> other) => this.Read().SetEquals(other);
+		internal bool SetEqualsEnumerable(IEnumerable<T> other)
+		{
+			if (other is null)
+			{
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
+			}
+
+			if (other is ValueSet<T> valueSet)
+			{
+				return this.ReadOnce().SetEquals(ref valueSet.inner);
+			}
+
+			var snapshot = this.Read();
+
+			ref readonly var inner = ref snapshot.AssertAlive();
+
+			if (inner.TrySetEqualsNonEnumerated(other, out var result))
+			{
+				return result;
+			}
+
+			using var marker = new RawSet<T>.Marker(in inner);
+
+			// Note that enumerating `other` might trigger mutations on `this`.
+			foreach (var item in other)
+			{
+				snapshot.AssertAlive();
+
+				if (!marker.Mark(item))
+				{
+					return false;
+				}
+			}
+
+			return marker.UnmarkedCount == 0;
+		}
 
 		/// <summary>
 		/// Remove all elements that appear in the <paramref name="other"/> collection.
@@ -466,10 +865,7 @@ public sealed partial class ValueSet<T>
 				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
 			}
 
-			var set = this.Mutate();
-
-			set.inner.ExceptWith(ref other.inner);
-
+			this.MutateOnce().ExceptWith(ref other.inner);
 			return this;
 		}
 
@@ -481,39 +877,29 @@ public sealed partial class ValueSet<T>
 		/// </remarks>
 		public Builder ExceptWith(scoped ReadOnlySpan<T> items)
 		{
-			this.Mutate().inner.ExceptWith(items);
+			this.MutateOnce().ExceptWith(items);
 			return this;
 		}
 
 		// Accessible through extension method.
 		internal Builder ExceptWithEnumerable(IEnumerable<T> other)
 		{
-			var set = this.Mutate();
-
-			if (other.AsValueSetUnsafe() is { } otherSet)
+			if (other is null)
 			{
-				set.inner.ExceptWith(ref otherSet.inner);
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
 			}
-			else
+
+			if (other is ValueSet<T> valueSet)
 			{
-				if (!set.inner.TryExceptWithNonEnumerated(other))
-				{
-					this.ExceptWithSlow(other); // Invalidates our .Mutate() guard.
-				}
+				return this.ExceptWith(valueSet);
+			}
+
+			using (var guard = this.Mutate())
+			{
+				guard.Inner.ExceptWith(other);
 			}
 
 			return this;
-		}
-
-		private void ExceptWithSlow(IEnumerable<T> other)
-		{
-			foreach (T element in other)
-			{
-				// Call Mutate on each iteration to:
-				// - Verify we're stil mutable. MoveNext() might have triggered this builder to be built.
-				// - Invalidate all our enumerators because `other` may be (indirectly) derived from us.
-				this.Mutate().inner.Remove(element);
-			}
 		}
 
 		/// <summary>
@@ -534,39 +920,29 @@ public sealed partial class ValueSet<T>
 				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
 			}
 
-			var set = this.Mutate();
-
-			set.inner.SymmetricExceptWith(ref other.inner);
-
+			this.MutateOnce().SymmetricExceptWith(ref other.inner);
 			return this;
 		}
 
 		// Accessible through extension method.
 		internal Builder SymmetricExceptWithEnumerable(IEnumerable<T> other)
 		{
-			var set = this.Mutate();
-
-			if (other.AsValueSetUnsafe() is { } otherSet)
+			if (other is null)
 			{
-				set.inner.SymmetricExceptWith(ref otherSet.inner);
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
 			}
-			else
+
+			if (other is ValueSet<T> valueSet)
 			{
-				if (!set.inner.TrySymmetricExceptWithNonEnumerated(other))
-				{
-					this.SymmetricExceptWithSlow(other); // Invalidates our .Mutate() guard.
-				}
+				return this.SymmetricExceptWith(valueSet);
+			}
+
+			using (var guard = this.Mutate())
+			{
+				guard.Inner.SymmetricExceptWith(other);
 			}
 
 			return this;
-		}
-
-		private void SymmetricExceptWithSlow(IEnumerable<T> other)
-		{
-			var otherRaw = new RawSet<T>(other); // Create an intermediate heap copy (sigh...)
-
-			// The RawSet constructor triggered enumeration. We must revalidate we're still mutable.
-			this.Mutate().inner.SymmetricExceptWith(ref otherRaw);
 		}
 
 		/// <summary>
@@ -588,39 +964,29 @@ public sealed partial class ValueSet<T>
 				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
 			}
 
-			var set = this.Mutate();
-
-			set.inner.IntersectWith(ref other.inner);
-
+			this.MutateOnce().IntersectWith(ref other.inner);
 			return this;
 		}
 
 		// Accessible through extension method.
 		internal Builder IntersectWithEnumerable(IEnumerable<T> other)
 		{
-			var set = this.Mutate();
-
-			if (other.AsValueSetUnsafe() is { } otherSet)
+			if (other is null)
 			{
-				set.inner.IntersectWith(ref otherSet.inner);
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
 			}
-			else
+
+			if (other is ValueSet<T> valueSet)
 			{
-				if (!set.inner.TryIntersectWithNonEnumerated(other))
-				{
-					this.IntersectWithSlow(other); // Invalidates our .Mutate() guard.
-				}
+				return this.IntersectWith(valueSet);
+			}
+
+			using (var guard = this.Mutate())
+			{
+				guard.Inner.IntersectWith(other);
 			}
 
 			return this;
-		}
-
-		private void IntersectWithSlow(IEnumerable<T> other)
-		{
-			var otherRaw = new RawSet<T>(other); // Create an intermediate heap copy (sigh...)
-
-			// The RawSet constructor triggered enumeration. We must revalidate we're still mutable.
-			this.Mutate().inner.IntersectWith(ref otherRaw);
 		}
 
 		/// <summary>
@@ -639,10 +1005,7 @@ public sealed partial class ValueSet<T>
 				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
 			}
 
-			var set = this.Mutate();
-
-			set.inner.UnionWith(ref other.inner);
-
+			this.MutateOnce().UnionWith(ref other.inner);
 			return this;
 		}
 
@@ -651,39 +1014,29 @@ public sealed partial class ValueSet<T>
 		/// </summary>
 		public Builder UnionWith(scoped ReadOnlySpan<T> items)
 		{
-			this.Mutate().inner.UnionWith(items);
+			this.MutateOnce().UnionWith(items);
 			return this;
 		}
 
 		// Accessible through extension method.
 		internal Builder UnionWithEnumerable(IEnumerable<T> other)
 		{
-			var set = this.Mutate();
-
-			if (other.AsValueSetUnsafe() is { } otherSet)
+			if (other is null)
 			{
-				set.inner.UnionWith(ref otherSet.inner);
+				ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
 			}
-			else
+
+			if (other is ValueSet<T> valueSet)
 			{
-				if (!set.inner.TryUnionWithNonEnumerated(other))
-				{
-					this.UnionWithSlow(other); // Invalidates our .Mutate() guard.
-				}
+				return this.UnionWith(valueSet);
+			}
+
+			using (var guard = this.Mutate())
+			{
+				guard.Inner.UnionWith(other);
 			}
 
 			return this;
-		}
-
-		private void UnionWithSlow(IEnumerable<T> other)
-		{
-			foreach (T element in other)
-			{
-				// Call Mutate on each iteration to:
-				// - Verify we're stil mutable. MoveNext() might have triggered this builder to be built.
-				// - Invalidate all our enumerators because `other` may be (indirectly) derived from us.
-				this.Mutate().inner.Add(element);
-			}
 		}
 
 		/// <summary>
@@ -828,7 +1181,7 @@ public sealed partial class ValueSet<T>
 		/// </summary>
 		[Pure]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public Enumerator GetEnumerator() => new Enumerator(this.Read());
+		public Enumerator GetEnumerator() => new Enumerator(this);
 
 		/// <summary>
 		/// Enumerator for <see cref="ValueSet{T}.Builder"/>.
@@ -838,16 +1191,15 @@ public sealed partial class ValueSet<T>
 		[StructLayout(LayoutKind.Auto)]
 		public struct Enumerator : IEnumeratorLike<T>
 		{
-			private readonly ValueSet<T> set;
-			private readonly int expectedState;
+			private readonly Snapshot snapshot;
 			private RawSet<T>.Enumerator inner;
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			internal Enumerator(ValueSet<T> set)
+			internal Enumerator(Builder builder)
 			{
-				this.set = set;
-				this.expectedState = set.state;
-				this.inner = set.inner.GetEnumerator();
+				var snapshot = builder.Read();
+				this.snapshot = snapshot;
+				this.inner = snapshot.AssertAlive().GetEnumerator();
 			}
 
 			/// <inheritdoc/>
@@ -861,27 +1213,9 @@ public sealed partial class ValueSet<T>
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public bool MoveNext()
 			{
-				if (this.expectedState != this.set.state)
-				{
-					this.MoveNextSlow();
-				}
+				this.snapshot.AssertAlive();
 
 				return this.inner.MoveNext();
-			}
-
-			private readonly void MoveNextSlow()
-			{
-				// The only valid reason for ending up here is when the enumerator
-				// was obtained in an already-built state and the hash code was
-				// materialized during enumeration.
-				if (BuilderState.IsImmutable(this.expectedState))
-				{
-					Debug.Assert(BuilderState.IsImmutable(this.set.state));
-
-					return;
-				}
-
-				ThrowHelpers.ThrowInvalidOperationException_CollectionModifiedDuringEnumeration();
 			}
 		}
 #pragma warning restore CA1815 // Override equals and operator equals on value types
@@ -892,7 +1226,7 @@ public sealed partial class ValueSet<T>
 		/// The format is not stable and may change without prior notice.
 		/// </summary>
 		[Pure]
-		public override string ToString() => this.Read().inner.ToString();
+		public override string ToString() => this.ReadOnce().ToString();
 
 		/// <inheritdoc/>
 		[Pure]

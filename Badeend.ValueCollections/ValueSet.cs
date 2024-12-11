@@ -206,7 +206,7 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	// Accessible through extension method.
 	internal bool IsSubsetOfEnumerable(IEnumerable<T> other)
 	{
-		if (other.AsValueSetUnsafe() is { } otherSet)
+		if (other is ValueSet<T> otherSet)
 		{
 			return this.inner.IsSubsetOf(ref otherSet.inner);
 		}
@@ -245,7 +245,7 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	// Accessible through extension method.
 	internal bool IsProperSubsetOfEnumerable(IEnumerable<T> other)
 	{
-		if (other.AsValueSetUnsafe() is { } otherSet)
+		if (other is ValueSet<T> otherSet)
 		{
 			return this.inner.IsProperSubsetOf(ref otherSet.inner);
 		}
@@ -292,7 +292,7 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	// Accessible through extension method.
 	internal bool IsSupersetOfEnumerable(IEnumerable<T> other)
 	{
-		if (other.AsValueSetUnsafe() is { } otherSet)
+		if (other is ValueSet<T> otherSet)
 		{
 			return this.inner.IsSupersetOf(ref otherSet.inner);
 		}
@@ -330,7 +330,7 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 
 	internal bool IsProperSupersetOfEnumerable(IEnumerable<T> other)
 	{
-		if (other.AsValueSetUnsafe() is { } otherSet)
+		if (other is ValueSet<T> otherSet)
 		{
 			return this.inner.IsProperSupersetOf(ref otherSet.inner);
 		}
@@ -379,7 +379,7 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	// Accessible through extension method.
 	internal bool OverlapsEnumerable(IEnumerable<T> other)
 	{
-		if (other.AsValueSetUnsafe() is { } otherSet)
+		if (other is ValueSet<T> otherSet)
 		{
 			return this.inner.Overlaps(ref otherSet.inner);
 		}
@@ -419,7 +419,7 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	// Accessible through extension method.
 	internal bool SetEqualsEnumerable(IEnumerable<T> other)
 	{
-		if (other.AsValueSetUnsafe() is { } otherSet)
+		if (other is ValueSet<T> otherSet)
 		{
 			return this.inner.SetEquals(ref otherSet.inner);
 		}

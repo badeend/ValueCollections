@@ -107,14 +107,6 @@ public static class ValueCollectionExtensions
 		return builder.InsertRangeEnumerable(index, items);
 	}
 
-	// The returned set should never be mutated!
-	internal static ValueSet<T>? AsValueSetUnsafe<T>(this IEnumerable<T> items) => items switch
-	{
-		ValueSet<T> valueSet => valueSet,
-		ValueSet<T>.Builder.Collection collection => collection.Builder.Read(),
-		_ => null,
-	};
-
 	/// <summary>
 	/// Copy the <paramref name="items"/> into a new <see cref="ValueSet{T}"/>.
 	/// </summary>
