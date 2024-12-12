@@ -336,7 +336,7 @@ public static class ValueCollectionExtensions
 			return dictionary;
 		}
 
-		if (items is ValueDictionaryBuilder<TKey, TValue> builder)
+		if (items is ValueDictionary<TKey, TValue>.Builder builder)
 		{
 			return builder.ToValueDictionary();
 		}
@@ -451,7 +451,7 @@ public static class ValueCollectionExtensions
 	}
 
 	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueDictionaryBuilder{TKey, TValue}"/>.
+	/// Copy the <paramref name="items"/> into a new <see cref="ValueDictionary{TKey, TValue}.Builder"/>.
 	/// </summary>
 	/// <exception cref="ArgumentException">
 	/// <paramref name="items"/> contains duplicate keys.
@@ -459,11 +459,11 @@ public static class ValueCollectionExtensions
 	[Obsolete("Use .ToBuilder() instead.")]
 	[Browsable(false)]
 	[EditorBrowsable(EditorBrowsableState.Never)]
-	public static ValueDictionaryBuilder<TKey, TValue> ToValueDictionaryBuilder<TKey, TValue>(this ValueDictionary<TKey, TValue> items)
+	public static ValueDictionary<TKey, TValue>.Builder ToValueDictionaryBuilder<TKey, TValue>(this ValueDictionary<TKey, TValue> items)
 		where TKey : notnull => items.ToBuilder();
 
 	/// <summary>
-	/// Copy the <paramref name="items"/> into a new <see cref="ValueDictionaryBuilder{TKey, TValue}"/>.
+	/// Copy the <paramref name="items"/> into a new <see cref="ValueDictionary{TKey, TValue}.Builder"/>.
 	/// </summary>
 	/// <remarks>
 	/// The capacity of the returned builder may be larger than the size of the
@@ -472,7 +472,7 @@ public static class ValueCollectionExtensions
 	/// <exception cref="ArgumentException">
 	/// <paramref name="items"/> contains duplicate keys.
 	/// </exception>
-	public static ValueDictionaryBuilder<TKey, TValue> ToValueDictionaryBuilder<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> items)
+	public static ValueDictionary<TKey, TValue>.Builder ToValueDictionaryBuilder<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> items)
 		where TKey : notnull
 	{
 		if (items is ValueDictionary<TKey, TValue> dictionary)
@@ -482,7 +482,7 @@ public static class ValueCollectionExtensions
 
 		var inner = ValueDictionary<TKey, TValue>.EnumerableToDictionary(items);
 
-		return ValueDictionaryBuilder<TKey, TValue>.FromDictionaryUnsafe(inner);
+		return ValueDictionary<TKey, TValue>.Builder.FromDictionaryUnsafe(inner);
 	}
 
 	/// <summary>
@@ -495,7 +495,7 @@ public static class ValueCollectionExtensions
 	/// <paramref name="items"/> contains a duplicate key or a key that already
 	/// exists in the dictionary.
 	/// </exception>
-	public static ValueDictionaryBuilder<TKey, TValue> AddRange<TKey, TValue>(this ValueDictionaryBuilder<TKey, TValue> builder, scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
+	public static ValueDictionary<TKey, TValue>.Builder AddRange<TKey, TValue>(this ValueDictionary<TKey, TValue>.Builder builder, scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
 		where TKey : notnull
 	{
 		if (builder is null)
@@ -516,7 +516,7 @@ public static class ValueCollectionExtensions
 	///
 	/// This overload is an extension method to avoid call site ambiguity.
 	/// </remarks>
-	public static ValueDictionaryBuilder<TKey, TValue> SetItems<TKey, TValue>(this ValueDictionaryBuilder<TKey, TValue> builder, scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
+	public static ValueDictionary<TKey, TValue>.Builder SetItems<TKey, TValue>(this ValueDictionary<TKey, TValue>.Builder builder, scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
 		where TKey : notnull
 	{
 		if (builder is null)
@@ -533,7 +533,7 @@ public static class ValueCollectionExtensions
 	/// <remarks>
 	/// This overload is an extension method to avoid call site ambiguity.
 	/// </remarks>
-	public static ValueDictionaryBuilder<TKey, TValue> RemoveRange<TKey, TValue>(this ValueDictionaryBuilder<TKey, TValue> builder, scoped ReadOnlySpan<TKey> keys)
+	public static ValueDictionary<TKey, TValue>.Builder RemoveRange<TKey, TValue>(this ValueDictionary<TKey, TValue>.Builder builder, scoped ReadOnlySpan<TKey> keys)
 		where TKey : notnull
 	{
 		if (builder is null)

@@ -56,7 +56,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(100)]
         public void Dictionary_CreateWithCapacity_CapacityAtLeastPassedValue(int capacity)
         {
-            ValueDictionaryBuilder<TKey, TValue> dict = ValueDictionary.CreateBuilderWithCapacity<TKey, TValue>(capacity);
+            ValueDictionary<TKey, TValue>.Builder dict = ValueDictionary.CreateBuilderWithCapacity<TKey, TValue>(capacity);
             Assert.True(capacity <= dict.Capacity);
         }
 #endif
@@ -66,7 +66,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
         public void DictResized_CapacityChanged()
         {
-            var dict = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(1);
+            var dict = (ValueDictionary<TKey, TValue>.Builder)GenericIDictionaryFactory(1);
             int initialCapacity = dict.Capacity;
 
             int seed = 85877;
@@ -87,7 +87,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void ValueDictionaryBuilder_ContainsValue_NotPresent(int count)
         {
-            ValueDictionaryBuilder<TKey, TValue> dictionary = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(count);
+            ValueDictionary<TKey, TValue>.Builder dictionary = (ValueDictionary<TKey, TValue>.Builder)GenericIDictionaryFactory(count);
             int seed = 4315;
             TValue notPresent = CreateTValue(seed++);
             while (dictionary.Values.AsCollection().Contains(notPresent))
@@ -99,7 +99,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void ValueDictionaryBuilder_ContainsValue_Present(int count)
         {
-            ValueDictionaryBuilder<TKey, TValue> dictionary = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(count);
+            ValueDictionary<TKey, TValue>.Builder dictionary = (ValueDictionary<TKey, TValue>.Builder)GenericIDictionaryFactory(count);
             int seed = 4315;
             KeyValuePair<TKey, TValue> notPresent = CreateT(seed++);
             while (dictionary.Contains(notPresent))
@@ -112,7 +112,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void ValueDictionaryBuilder_ContainsValue_DefaultValueNotPresent(int count)
         {
-            ValueDictionaryBuilder<TKey, TValue> dictionary = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(count);
+            ValueDictionary<TKey, TValue>.Builder dictionary = (ValueDictionary<TKey, TValue>.Builder)GenericIDictionaryFactory(count);
             Assert.False(dictionary.ContainsValue(default(TValue)));
         }
 
@@ -120,7 +120,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void ValueDictionaryBuilder_ContainsValue_DefaultValuePresent(int count)
         {
-            ValueDictionaryBuilder<TKey, TValue> dictionary = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(count);
+            ValueDictionary<TKey, TValue>.Builder dictionary = (ValueDictionary<TKey, TValue>.Builder)GenericIDictionaryFactory(count);
             int seed = 4315;
             TKey notPresent = CreateTKey(seed++);
             while (dictionary.ContainsKey(notPresent))
@@ -161,7 +161,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void ValueDictionaryBuilder_RemoveKey_ValidKeyNotContainedInDictionary(int count)
         {
-            ValueDictionaryBuilder<TKey, TValue> dictionary = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(count);
+            ValueDictionary<TKey, TValue>.Builder dictionary = (ValueDictionary<TKey, TValue>.Builder)GenericIDictionaryFactory(count);
             TValue value;
             TKey missingKey = GetNewKey(dictionary);
 
@@ -174,7 +174,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void ValueDictionaryBuilder_RemoveKey_ValidKeyContainedInDictionary(int count)
         {
-            ValueDictionaryBuilder<TKey, TValue> dictionary = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(count);
+            ValueDictionary<TKey, TValue>.Builder dictionary = (ValueDictionary<TKey, TValue>.Builder)GenericIDictionaryFactory(count);
             TKey missingKey = GetNewKey(dictionary);
             TValue outValue;
             TValue inValue = CreateTValue(count);
@@ -190,7 +190,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void ValueDictionaryBuilder_RemoveKey_DefaultKeyNotContainedInDictionary(int count)
         {
-            ValueDictionaryBuilder<TKey, TValue> dictionary = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(count);
+            ValueDictionary<TKey, TValue>.Builder dictionary = (ValueDictionary<TKey, TValue>.Builder)GenericIDictionaryFactory(count);
             TValue outValue;
 
             if (DefaultValueAllowed)
@@ -216,7 +216,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         {
             if (DefaultValueAllowed)
             {
-                ValueDictionaryBuilder<TKey, TValue> dictionary = (ValueDictionaryBuilder<TKey, TValue>)(GenericIDictionaryFactory(count));
+                ValueDictionary<TKey, TValue>.Builder dictionary = (ValueDictionary<TKey, TValue>.Builder)(GenericIDictionaryFactory(count));
                 TKey missingKey = default(TKey);
                 TValue value;
 
@@ -228,7 +228,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void ValueDictionaryBuilder_Remove_RemoveFirstEnumerationThrows()
         {
-            ValueDictionaryBuilder<TKey,TValue> dict = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(3);
+            ValueDictionary<TKey,TValue>.Builder dict = (ValueDictionary<TKey, TValue>.Builder)GenericIDictionaryFactory(3);
             var enumerator = dict.GetEnumerator();
             enumerator.MoveNext();
             TKey key = enumerator.Current.Key;
@@ -240,7 +240,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void ValueDictionaryBuilder_Remove_RemoveCurrentEnumerationThrows()
         {
-            ValueDictionaryBuilder<TKey, TValue> dict = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(3);
+            ValueDictionary<TKey, TValue>.Builder dict = (ValueDictionary<TKey, TValue>.Builder)GenericIDictionaryFactory(3);
             var enumerator = dict.GetEnumerator();
             enumerator.MoveNext();
             enumerator.MoveNext();
@@ -251,7 +251,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void ValueDictionaryBuilder_Remove_RemoveLastEnumerationThrows()
         {
-            ValueDictionaryBuilder<TKey, TValue> dict = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(3);
+            ValueDictionary<TKey, TValue>.Builder dict = (ValueDictionary<TKey, TValue>.Builder)GenericIDictionaryFactory(3);
             TKey key = default;
             {
                 var enumerator = dict.GetEnumerator();
@@ -277,7 +277,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void EnsureCapacity_Generic_RequestingLargerCapacity_DoesInvalidateEnumeration(int count)
         {
-            var dictionary = (ValueDictionaryBuilder<TKey, TValue>)(GenericIDictionaryFactory(count));
+            var dictionary = (ValueDictionary<TKey, TValue>.Builder)(GenericIDictionaryFactory(count));
             var capacity = dictionary.EnsureCapacity(0);
             var enumerator = dictionary.GetEnumerator();
 
@@ -318,7 +318,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(7)]
         public void EnsureCapacity_Generic_RequestedCapacitySmallerThanCurrent_CapacityUnchanged(int currentCapacity)
         {
-            ValueDictionaryBuilder<TKey, TValue> dictionary;
+            ValueDictionary<TKey, TValue>.Builder dictionary;
 
             // assert capacity remains the same when ensuring a capacity smaller or equal than existing
             for (int i = 0; i <= currentCapacity; i++)
@@ -337,7 +337,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             dictionary.EnsureCapacity(capacity);
             Assert.Equal(capacity, dictionary.Capacity);
 
-            dictionary = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(capacity);
+            dictionary = (ValueDictionary<TKey, TValue>.Builder)GenericIDictionaryFactory(capacity);
             dictionary.EnsureCapacity(capacity);
             Assert.Equal(capacity, dictionary.Capacity);
         }
@@ -348,7 +348,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(7)]
         public void EnsureCapacity_Generic_DictionaryNotEmpty_RequestedSmallerThanCount_ReturnsAtLeastSizeOfCount(int count)
         {
-            var dictionary = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(count);
+            var dictionary = (ValueDictionary<TKey, TValue>.Builder)GenericIDictionaryFactory(count);
             dictionary.EnsureCapacity(count - 1);
             Assert.InRange(dictionary.Capacity, count, int.MaxValue);
         }
@@ -358,7 +358,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(20)]
         public void EnsureCapacity_Generic_DictionaryNotEmpty_SetsToAtLeastTheRequested(int count)
         {
-            var dictionary = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(count);
+            var dictionary = (ValueDictionary<TKey, TValue>.Builder)GenericIDictionaryFactory(count);
 
             // get current capacity
             int currentCapacity = dictionary.Capacity;
@@ -449,7 +449,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(89)]
         public void TrimExcess_Generic_ClearThenTrimNonEmptyDictionary_SetsCapacityTo3(int count)
         {
-            ValueDictionaryBuilder<TKey, TValue> dictionary = (ValueDictionaryBuilder<TKey, TValue>)GenericIDictionaryFactory(count);
+            ValueDictionary<TKey, TValue>.Builder dictionary = (ValueDictionary<TKey, TValue>.Builder)GenericIDictionaryFactory(count);
             Assert.Equal(count, dictionary.Count);
             // The smallest possible capacity size after clearing a dictionary is 3
             dictionary.Clear();

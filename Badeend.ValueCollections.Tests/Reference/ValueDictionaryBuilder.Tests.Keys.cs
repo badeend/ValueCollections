@@ -26,7 +26,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
         protected override ISet<string> GenericISetFactory(int count)
         {
-            ValueDictionaryBuilder<string, string> list = ValueDictionary.CreateBuilder<string, string>();
+            ValueDictionary<string, string>.Builder list = ValueDictionary.CreateBuilder<string, string>();
             int seed = 13453;
             for (int i = 0; i < count; i++)
                 list.Add(CreateT(seed++), CreateT(seed++));
@@ -48,7 +48,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void ValueDictionaryBuilder_KeyCollection_GetEnumerator(int count)
         {
-            ValueDictionaryBuilder<string, string> dictionary = ValueDictionary.CreateBuilder<string, string>();
+            ValueDictionary<string, string>.Builder dictionary = ValueDictionary.CreateBuilder<string, string>();
             int seed = 13453;
             while (dictionary.Count < count)
                 dictionary.Add(CreateT(seed++), CreateT(seed++));

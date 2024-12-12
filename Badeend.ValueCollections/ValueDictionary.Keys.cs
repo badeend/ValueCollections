@@ -12,8 +12,7 @@ namespace Badeend.ValueCollections;
 /// <content>
 /// Keys collections.
 /// </content>
-public sealed partial class ValueDictionary<TKey, TValue>
-	where TKey : notnull
+public partial class ValueDictionary<TKey, TValue>
 {
 	/// <summary>
 	/// All keys in the dictionary in no particular order.

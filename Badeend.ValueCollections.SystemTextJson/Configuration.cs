@@ -22,7 +22,7 @@ public static class Configuration
 
 	private static readonly JsonConverter ValueDictionaryConverterFactory = new JsonObjectConverterFactory(typeof(ValueDictionary<,>), typeof(ValueDictionaryConverter<,>));
 
-	private static readonly JsonConverter ValueDictionaryBuilderConverterFactory = new JsonObjectConverterFactory(typeof(ValueDictionaryBuilder<,>), typeof(ValueDictionaryBuilderConverter<,>));
+	private static readonly JsonConverter ValueDictionaryBuilderConverterFactory = new JsonObjectConverterFactory(typeof(ValueDictionary<,>.Builder), typeof(ValueDictionaryBuilderConverter<,>));
 
 	/// <summary>
 	/// Configure <c>System.Text.Json</c> to serialize and deserialize <c>Badeend.ValueCollections</c> data types.

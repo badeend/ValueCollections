@@ -360,7 +360,7 @@ public class ValueDictionaryBuilderTests
             return a;
         });
 
-        static void AssertEnumerationOrder(KeyValuePair<int, int>[] input, Func<ValueDictionaryBuilder<int, int>, KeyValuePair<int, int>[]> transform)
+        static void AssertEnumerationOrder(KeyValuePair<int, int>[] input, Func<ValueDictionary<int, int>.Builder, KeyValuePair<int, int>[]> transform)
         {
             var referenceDictionary = input.ToValueDictionaryBuilder();
             var referenceOrder = referenceDictionary.ToArray();

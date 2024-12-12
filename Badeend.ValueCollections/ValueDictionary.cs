@@ -27,16 +27,16 @@ public static class ValueDictionary
 		where TKey : notnull => ValueDictionary<TKey, TValue>.FromReadOnlySpan(items);
 
 	/// <summary>
-	/// Create a new empty <see cref="ValueDictionaryBuilder{TKey, TValue}"/>. This builder can
+	/// Create a new empty <see cref="ValueDictionary{TKey, TValue}.Builder"/>. This builder can
 	/// then be used to efficiently construct an immutable <see cref="ValueDictionary{TKey, TValue}"/>.
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueDictionaryBuilder<TKey, TValue> CreateBuilder<TKey, TValue>()
-		where TKey : notnull => ValueDictionaryBuilder<TKey, TValue>.FromValueDictionary(ValueDictionary<TKey, TValue>.Empty);
+	public static ValueDictionary<TKey, TValue>.Builder CreateBuilder<TKey, TValue>()
+		where TKey : notnull => ValueDictionary<TKey, TValue>.Builder.FromValueDictionary(ValueDictionary<TKey, TValue>.Empty);
 
 	/// <summary>
-	/// Create a new <see cref="ValueDictionaryBuilder{TKey,TValue}"/> with the provided
+	/// Create a new <see cref="ValueDictionary{TKey, TValue}.Builder"/> with the provided
 	/// <paramref name="items"/> as its initial content.
 	/// </summary>
 	/// <exception cref="ArgumentException">
@@ -44,8 +44,8 @@ public static class ValueDictionary
 	/// </exception>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueDictionaryBuilder<TKey, TValue> CreateBuilder<TKey, TValue>(scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
-		where TKey : notnull => ValueDictionaryBuilder<TKey, TValue>.FromReadOnlySpan(items);
+	public static ValueDictionary<TKey, TValue>.Builder CreateBuilder<TKey, TValue>(scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
+		where TKey : notnull => ValueDictionary<TKey, TValue>.Builder.FromReadOnlySpan(items);
 
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
 	/// <summary>
@@ -60,16 +60,16 @@ public static class ValueDictionary
 	/// </exception>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueDictionaryBuilder<TKey, TValue> CreateBuilderWithCapacity<TKey, TValue>(int minimumCapacity)
+	public static ValueDictionary<TKey, TValue>.Builder CreateBuilderWithCapacity<TKey, TValue>(int minimumCapacity)
 		where TKey : notnull
 	{
 		if (minimumCapacity == 0)
 		{
-			return ValueDictionaryBuilder<TKey, TValue>.FromValueDictionary(ValueDictionary<TKey, TValue>.Empty);
+			return ValueDictionary<TKey, TValue>.Builder.FromValueDictionary(ValueDictionary<TKey, TValue>.Empty);
 		}
 		else
 		{
-			return ValueDictionaryBuilder<TKey, TValue>.FromDictionaryUnsafe(new Dictionary<TKey, TValue>(minimumCapacity));
+			return ValueDictionary<TKey, TValue>.Builder.FromDictionaryUnsafe(new Dictionary<TKey, TValue>(minimumCapacity));
 		}
 	}
 #endif
@@ -85,7 +85,7 @@ public static class ValueDictionary
 /// Constructing new instances can be done using
 /// <see cref="ValueDictionary.CreateBuilder{TKey, TValue}()"/> or
 /// <see cref="ValueDictionary{TKey, TValue}.ToBuilder()"/>. For creating
-/// ValueDictionaries, <see cref="ValueDictionaryBuilder{TKey, TValue}"/> is
+/// ValueDictionaries, <see cref="ValueDictionary{TKey, TValue}.Builder"/> is
 /// generally more efficient than <see cref="Dictionary{TKey, TValue}"/>.
 ///
 /// ValueDictionaries have "structural equality". This means that two dictionaries
@@ -231,7 +231,7 @@ public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TV
 	}
 
 	/// <summary>
-	/// Create a new <see cref="ValueDictionaryBuilder{TKey, TValue}"/> with this
+	/// Create a new <see cref="ValueDictionary{TKey, TValue}.Builder"/> with this
 	/// dictionary as its initial content. This builder can then be used to
 	/// efficiently construct a new immutable <see cref="ValueDictionary{TKey, TValue}"/>.
 	/// </summary>
@@ -240,7 +240,7 @@ public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TV
 	/// dictionary. How much larger exactly is undefined.
 	/// </remarks>
 	[Pure]
-	public ValueDictionaryBuilder<TKey, TValue> ToBuilder() => ValueDictionaryBuilder<TKey, TValue>.FromValueDictionary(this);
+	public ValueDictionary<TKey, TValue>.Builder ToBuilder() => ValueDictionary<TKey, TValue>.Builder.FromValueDictionary(this);
 
 	/// <summary>
 	/// Determines whether this dictionary contains an element with the specified value.
