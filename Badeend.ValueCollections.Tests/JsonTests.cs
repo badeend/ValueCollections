@@ -45,7 +45,7 @@ public abstract class JsonTests
 		Assert.Equal("[]", Serialize<ValueSet<string?>.Builder?>([]));
 		Assert.Equal("{}", Serialize<Dictionary<string, string?>?>([]));
 		Assert.Equal("{}", Serialize<ValueDictionary<string, string?>?>(ValueDictionary.Create<string, string?>([])));
-		Assert.Equal("{}", Serialize<ValueDictionaryBuilder<string, string?>?>([]));
+		Assert.Equal("{}", Serialize<ValueDictionaryBuilder<string, string?>?>(ValueDictionary.CreateBuilder<string, string?>()));
 
 		Assert.Equal(0, Deserialize<ValueSlice<string>>("[]").Length);
 		Assert.Equal(0, Deserialize<ValueSlice<string>?>("[]")!.Value.Length);
@@ -90,8 +90,8 @@ public abstract class JsonTests
 		Assert.Contains(Serialize<ValueSet<string?>?>(["a", null, "b"]), setJsons);
 		Assert.Contains(Serialize<ValueSet<string?>.Builder?>(["a", null, "b"]), setJsons);
 		Assert.Contains(Serialize<Dictionary<string, string?>?>(new Dictionary<string, string?> { ["a"] = "1", ["b"] = null, ["c"] = "3" }), dictionaryJsons);
-		Assert.Contains(Serialize<ValueDictionary<string, string?>?>(new ValueDictionaryBuilder<string, string?> { ["a"] = "1", ["b"] = null, ["c"] = "3" }.Build()), dictionaryJsons);
-		Assert.Contains(Serialize<ValueDictionaryBuilder<string, string?>?>(new ValueDictionaryBuilder<string, string?> { ["a"] = "1", ["b"] = null, ["c"] = "3" }), dictionaryJsons);
+		Assert.Contains(Serialize<ValueDictionary<string, string?>?>(ValueDictionary.CreateBuilder<string, string?>().Add("a", "1").Add("b", null).Add("c", "3").Build()), dictionaryJsons);
+		Assert.Contains(Serialize<ValueDictionaryBuilder<string, string?>?>(ValueDictionary.CreateBuilder<string, string?>().Add("a", "1").Add("b", null).Add("c", "3")), dictionaryJsons);
 	}
 
 	[Fact]

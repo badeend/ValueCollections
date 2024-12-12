@@ -32,8 +32,8 @@ public static class ValueDictionary
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueDictionaryBuilder<TKey, TValue> Builder<TKey, TValue>()
-		where TKey : notnull => new();
+	public static ValueDictionaryBuilder<TKey, TValue> CreateBuilder<TKey, TValue>()
+		where TKey : notnull => ValueDictionaryBuilder<TKey, TValue>.FromValueDictionary(ValueDictionary<TKey, TValue>.Empty);
 
 	/// <summary>
 	/// Create a new <see cref="ValueDictionaryBuilder{TKey,TValue}"/> with the provided
@@ -44,8 +44,35 @@ public static class ValueDictionary
 	/// </exception>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static ValueDictionaryBuilder<TKey, TValue> Builder<TKey, TValue>(scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
+	public static ValueDictionaryBuilder<TKey, TValue> CreateBuilder<TKey, TValue>(scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
 		where TKey : notnull => ValueDictionaryBuilder<TKey, TValue>.FromReadOnlySpan(items);
+
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
+	/// <summary>
+	/// Construct a new empty dictionary builder with at least the specified
+	/// initial capacity.
+	/// </summary>
+	/// <remarks>
+	/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
+	/// </remarks>
+	/// <exception cref="ArgumentOutOfRangeException">
+	///   <paramref name="minimumCapacity"/> is less than 0.
+	/// </exception>
+	[Pure]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ValueDictionaryBuilder<TKey, TValue> CreateBuilderWithCapacity<TKey, TValue>(int minimumCapacity)
+		where TKey : notnull
+	{
+		if (minimumCapacity == 0)
+		{
+			return ValueDictionaryBuilder<TKey, TValue>.FromValueDictionary(ValueDictionary<TKey, TValue>.Empty);
+		}
+		else
+		{
+			return ValueDictionaryBuilder<TKey, TValue>.FromDictionaryUnsafe(new Dictionary<TKey, TValue>(minimumCapacity));
+		}
+	}
+#endif
 }
 
 /// <summary>
@@ -56,7 +83,7 @@ public static class ValueDictionary
 /// contains no duplicate keys, and stores its elements in no particular order.
 ///
 /// Constructing new instances can be done using
-/// <see cref="ValueDictionary.Builder{TKey, TValue}()"/> or
+/// <see cref="ValueDictionary.CreateBuilder{TKey, TValue}()"/> or
 /// <see cref="ValueDictionary{TKey, TValue}.ToBuilder()"/>. For creating
 /// ValueDictionaries, <see cref="ValueDictionaryBuilder{TKey, TValue}"/> is
 /// generally more efficient than <see cref="Dictionary{TKey, TValue}"/>.

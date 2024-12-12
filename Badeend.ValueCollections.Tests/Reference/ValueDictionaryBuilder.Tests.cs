@@ -25,7 +25,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
         #region IDictionary<TKey, TValue Helper Methods
 
-        protected override IDictionary<TKey, TValue> GenericIDictionaryFactory() => new ValueDictionaryBuilder<TKey, TValue>();
+        protected override IDictionary<TKey, TValue> GenericIDictionaryFactory() => ValueDictionary.CreateBuilder<TKey, TValue>();
 
         protected override IDictionary<TKey, TValue> GenericIDictionaryFactory(IEqualityComparer<TKey> comparer) => null;
 
@@ -38,7 +38,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void ValueDictionaryBuilder_Constructor_IDictionary(int count)
         {
             IDictionary<TKey, TValue> source = GenericIDictionaryFactory(count);
-            IDictionary<TKey, TValue> copied = new ValueDictionaryBuilder<TKey, TValue>(source);
+            IDictionary<TKey, TValue> copied = source.ToValueDictionaryBuilder();
             Assert.True(source.EqualsUnordered(copied));
         }
 
@@ -47,7 +47,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [MemberData(nameof(ValidCollectionSizes))]
         public void ValueDictionaryBuilder_Constructor_int(int count)
         {
-            IDictionary<TKey, TValue> dictionary = new ValueDictionaryBuilder<TKey, TValue>(count);
+            IDictionary<TKey, TValue> dictionary = ValueDictionary.CreateBuilderWithCapacity<TKey, TValue>(count);
             Assert.Equal(0, dictionary.Count);
         }
 
@@ -56,7 +56,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(100)]
         public void Dictionary_CreateWithCapacity_CapacityAtLeastPassedValue(int capacity)
         {
-            ValueDictionaryBuilder<TKey, TValue> dict = new ValueDictionaryBuilder<TKey, TValue>(capacity);
+            ValueDictionaryBuilder<TKey, TValue> dict = ValueDictionary.CreateBuilderWithCapacity<TKey, TValue>(capacity);
             Assert.True(capacity <= dict.Capacity);
         }
 #endif
@@ -289,14 +289,14 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void EnsureCapacity_Generic_NegativeCapacityRequested_Throws()
         {
-            var dictionary = new ValueDictionaryBuilder<TKey, TValue>();
+            var dictionary = ValueDictionary.CreateBuilder<TKey, TValue>();
             AssertExtensions.Throws<ArgumentOutOfRangeException>("capacity", () => dictionary.EnsureCapacity(-1));
         }
 
         [Fact]
         public void EnsureCapacity_Generic_DictionaryNotInitialized_RequestedZero_ReturnsZero()
         {
-            var dictionary = new ValueDictionaryBuilder<TKey, TValue>();
+            var dictionary = ValueDictionary.CreateBuilder<TKey, TValue>();
             dictionary.EnsureCapacity(0);
             Assert.Equal(0, dictionary.Capacity);
         }
@@ -308,7 +308,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(4)]
         public void EnsureCapacity_Generic_DictionaryNotInitialized_RequestedNonZero_CapacityIsSetToAtLeastTheRequested(int requestedCapacity)
         {
-            var dictionary = new ValueDictionaryBuilder<TKey, TValue>();
+            var dictionary = ValueDictionary.CreateBuilder<TKey, TValue>();
             dictionary.EnsureCapacity(requestedCapacity);
             Assert.InRange(dictionary.Capacity, requestedCapacity, int.MaxValue);
         }
@@ -323,7 +323,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             // assert capacity remains the same when ensuring a capacity smaller or equal than existing
             for (int i = 0; i <= currentCapacity; i++)
             {
-                dictionary = new ValueDictionaryBuilder<TKey, TValue>(currentCapacity);
+                dictionary = ValueDictionary.CreateBuilderWithCapacity<TKey, TValue>(currentCapacity);
                 dictionary.EnsureCapacity(i);
                 Assert.Equal(currentCapacity, dictionary.Capacity);
             }
@@ -333,7 +333,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(7)]
         public void EnsureCapacity_Generic_ExistingCapacityRequested_SameValueReturned(int capacity)
         {
-            var dictionary = new ValueDictionaryBuilder<TKey, TValue>(capacity);
+            var dictionary = ValueDictionary.CreateBuilderWithCapacity<TKey, TValue>(capacity);
             dictionary.EnsureCapacity(capacity);
             Assert.Equal(capacity, dictionary.Capacity);
 
@@ -372,15 +372,15 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void EnsureCapacity_Generic_CapacityIsSetToPrimeNumberLargerOrEqualToRequested()
         {
-            var dictionary = new ValueDictionaryBuilder<TKey, TValue>();
+            var dictionary = ValueDictionary.CreateBuilder<TKey, TValue>();
             dictionary.EnsureCapacity(17);
             Assert.Equal(17, dictionary.Capacity);
 
-            dictionary = new ValueDictionaryBuilder<TKey, TValue>();
+            dictionary = ValueDictionary.CreateBuilder<TKey, TValue>();
             dictionary.EnsureCapacity(15);
             Assert.Equal(17, dictionary.Capacity);
 
-            dictionary = new ValueDictionaryBuilder<TKey, TValue>();
+            dictionary = ValueDictionary.CreateBuilder<TKey, TValue>();
             dictionary.EnsureCapacity(13);
             Assert.Equal(17, dictionary.Capacity);
         }
@@ -392,7 +392,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void TrimExcess_Generic_NegativeCapacity_Throw()
         {
-            var dictionary = new ValueDictionaryBuilder<TKey, TValue>();
+            var dictionary = ValueDictionary.CreateBuilder<TKey, TValue>();
             AssertExtensions.Throws<ArgumentOutOfRangeException>("capacity", () => dictionary.TrimExcess(-1));
         }
 
@@ -401,11 +401,11 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(23)]
         public void TrimExcess_Generic_CapacitySmallerThanCount_Throws(int suggestedCapacity)
         {
-            var dictionary = new ValueDictionaryBuilder<TKey, TValue>();
+            var dictionary = ValueDictionary.CreateBuilder<TKey, TValue>();
             dictionary.Add(GetNewKey(dictionary), CreateTValue(0));
             AssertExtensions.Throws<ArgumentOutOfRangeException>("capacity", () => dictionary.TrimExcess(0));
 
-            dictionary = new ValueDictionaryBuilder<TKey, TValue>(suggestedCapacity);
+            dictionary = ValueDictionary.CreateBuilderWithCapacity<TKey, TValue>(suggestedCapacity);
             dictionary.Add(GetNewKey(dictionary), CreateTValue(0));
             AssertExtensions.Throws<ArgumentOutOfRangeException>("capacity", () => dictionary.TrimExcess(0));
         }
@@ -413,7 +413,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void TrimExcess_Generic_LargeInitialCapacity_TrimReducesSize()
         {
-            var dictionary = new ValueDictionaryBuilder<TKey, TValue>(20);
+            var dictionary = ValueDictionary.CreateBuilderWithCapacity<TKey, TValue>(20);
             dictionary.TrimExcess(7);
             Assert.Equal(7, dictionary.Capacity);
         }
@@ -423,12 +423,12 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(23)]
         public void TrimExcess_Generic_TrimToLargerThanExistingCapacity_DoesNothing(int suggestedCapacity)
         {
-            var dictionary = new ValueDictionaryBuilder<TKey, TValue>();
+            var dictionary = ValueDictionary.CreateBuilder<TKey, TValue>();
             int capacity = dictionary.Capacity;
             dictionary.TrimExcess(suggestedCapacity);
             Assert.Equal(capacity, dictionary.Capacity);
 
-            dictionary = new ValueDictionaryBuilder<TKey, TValue>(suggestedCapacity/2);
+            dictionary = ValueDictionary.CreateBuilderWithCapacity<TKey, TValue>(suggestedCapacity/2);
             capacity = dictionary.Capacity;
             dictionary.TrimExcess(suggestedCapacity);
             Assert.Equal(capacity, dictionary.Capacity);
@@ -437,7 +437,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void TrimExcess_Generic_DictionaryNotInitialized_CapacityRemainsAsMinPossible()
         {
-            var dictionary = new ValueDictionaryBuilder<TKey, TValue>();
+            var dictionary = ValueDictionary.CreateBuilder<TKey, TValue>();
             Assert.Equal(0, dictionary.Capacity);
             dictionary.TrimExcess();
             Assert.Equal(0, dictionary.Capacity);
@@ -462,7 +462,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [InlineData(89)]
         public void TrimExcess_NoArguments_TrimsToAtLeastCount(int count)
         {
-            var dictionary = new ValueDictionaryBuilder<int, int>(20);
+            var dictionary = ValueDictionary.CreateBuilderWithCapacity<int, int>(20);
             for (int i = 0; i < count; i++)
             {
                 dictionary.Add(i, 0);
@@ -478,7 +478,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         {
             const int InitToFinalRatio = 10;
             int initialCount = InitToFinalRatio * finalCount;
-            var dictionary = new ValueDictionaryBuilder<int, int>(initialCount);
+            var dictionary = ValueDictionary.CreateBuilderWithCapacity<int, int>(initialCount);
             Assert.InRange(dictionary.Capacity, initialCount, int.MaxValue);
             for (int i = 0; i < initialCount; i++)
             {
@@ -504,7 +504,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void TrimExcess_NoArgument_TrimAfterEachBulkAddOrRemove_TrimsToAtLeastCount(int initialCount, int numRemove, int numAdd, int newCount, int newCapacity)
         {
             Random random = new Random(32);
-            var dictionary = new ValueDictionaryBuilder<int, int>();
+            var dictionary = ValueDictionary.CreateBuilder<int, int>();
             dictionary.TrimExcess();
             Assert.InRange(dictionary.Capacity, dictionary.Count, int.MaxValue);
 
@@ -560,7 +560,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void TrimExcess_DictionaryHasElementsChainedWithSameHashcode_Success()
         {
-            var dictionary = new ValueDictionaryBuilder<string, int>(7);
+            var dictionary = ValueDictionary.CreateBuilderWithCapacity<string, int>(7);
             for (int i = 0; i < 4; i++)
             {
                 dictionary.Add(i.ToString(), 0);
@@ -584,7 +584,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         [Fact]
         public void TrimExcess_Generic_DoesInvalidateEnumeration()
         {
-            var dictionary = new ValueDictionaryBuilder<TKey, TValue>(20);
+            var dictionary = ValueDictionary.CreateBuilderWithCapacity<TKey, TValue>(20);
             var enumerator = dictionary.GetEnumerator();
 
             dictionary.TrimExcess(7); // Verify TrimExcess does invalidate enumeration

@@ -63,7 +63,7 @@ public class ValueDictionaryTests
         var c = ValueDictionary.Create<string, int>([]);
         var d = new Dictionary<string, int>().ToValueDictionary();
         var e = new Dictionary<string, int>().ToValueDictionaryBuilder().ToValueDictionary();
-        var f = new ValueDictionaryBuilder<string, int>().ToValueDictionary();
+        var f = ValueDictionary.CreateBuilder<string, int>().ToValueDictionary();
 
         Assert.True(object.ReferenceEquals(a, b));
         Assert.True(object.ReferenceEquals(a, c));

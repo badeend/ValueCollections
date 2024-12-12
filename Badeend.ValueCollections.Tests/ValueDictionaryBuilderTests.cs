@@ -3,20 +3,9 @@ namespace Badeend.ValueCollections.Tests;
 public class ValueDictionaryBuilderTests
 {
     [Fact]
-    public void CollectionInitializer()
-    {
-        _ = new ValueDictionaryBuilder<string, int>
-        {
-            ["a"] = 1,
-            ["b"] = 2,
-            ["c"] = 3,
-        };
-    }
-
-    [Fact]
     public void FluentInterface()
     {
-        _ = ValueDictionary.Builder<string, int>()
+        _ = ValueDictionary.CreateBuilder<string, int>()
             .Add("a", 1)
             .Add("b", 2)
             .Add("c", 3)
@@ -26,8 +15,8 @@ public class ValueDictionaryBuilderTests
     [Fact]
     public void ReferenceSemantics()
     {
-        var a = new ValueDictionaryBuilder<string, int> { ["a"] = 1 };
-        var b = new ValueDictionaryBuilder<string, int> { ["a"] = 1 };
+        var a = ValueDictionary.CreateBuilder<string, int>([Entry("a", 1)]);
+        var b = ValueDictionary.CreateBuilder<string, int>([Entry("a", 1)]);
 
         Assert.True(a != b);
     }
@@ -35,7 +24,7 @@ public class ValueDictionaryBuilderTests
     [Fact]
     public void DuplicatesNotAllowed()
     {
-        Assert.Throws<ArgumentException>(() => ValueDictionary.Builder([
+        Assert.Throws<ArgumentException>(() => ValueDictionary.CreateBuilder([
             Entry("a", 1),
             Entry("a", 2),
             Entry("a", 3),
@@ -49,7 +38,7 @@ public class ValueDictionaryBuilderTests
 
         Assert.Throws<ArgumentException>(() => enumerable.ToValueDictionaryBuilder());
 
-        var a = new ValueDictionaryBuilder<string, int>();
+        var a = ValueDictionary.CreateBuilder<string, int>();
         a.Add("a", 1);
 
         Assert.Throws<ArgumentException>(() => a.Add("a", 1));
@@ -58,7 +47,7 @@ public class ValueDictionaryBuilderTests
     [Fact]
     public void Empty()
     {
-        var a = new ValueDictionaryBuilder<string, int>();
+        var a = ValueDictionary.CreateBuilder<string, int>();
 
         Assert.True(a.IsEmpty == true);
         Assert.True(a.Count == 0);
@@ -68,7 +57,7 @@ public class ValueDictionaryBuilderTests
     [Fact]
     public void KeysValues()
     {
-        var a = ValueDictionary.Builder([
+        var a = ValueDictionary.CreateBuilder([
             Entry("c", 3),
             Entry("b", 2),
             Entry("a", 1),
@@ -99,7 +88,7 @@ public class ValueDictionaryBuilderTests
     [Fact]
     public void ToValueDictionaryPerformsCopy()
     {
-        var builder = ValueDictionary.Builder([
+        var builder = ValueDictionary.CreateBuilder([
             Entry("c", 3),
             Entry("b", 2),
             Entry("a", 1),
@@ -115,7 +104,7 @@ public class ValueDictionaryBuilderTests
     [Fact]
     public void ValueDictionaryIsCached()
     {
-        var builder = ValueDictionary.Builder([
+        var builder = ValueDictionary.CreateBuilder([
             Entry("c", 3),
             Entry("b", 2),
             Entry("a", 1),
@@ -130,7 +119,7 @@ public class ValueDictionaryBuilderTests
     [Fact]
     public void SetItemAddRemove()
     {
-        var a = new ValueDictionaryBuilder<string, int>();
+        var a = ValueDictionary.CreateBuilder<string, int>();
 
         Assert.True(a.ToValueDictionary() == ValueDictionary.Create<string, int>([]));
 
@@ -198,7 +187,7 @@ public class ValueDictionaryBuilderTests
         Span<KeyValuePair<string, int>> d = [];
         ReadOnlySpan<KeyValuePair<string, int>> e = [];
 
-        var builder = ValueDictionary.Builder<string, int>();
+        var builder = ValueDictionary.CreateBuilder<string, int>();
 
         builder.AddRange(a);
         builder.AddRange(b);
@@ -224,7 +213,7 @@ public class ValueDictionaryBuilderTests
         Span<string> d = [];
         ReadOnlySpan<string> e = [];
 
-        var builder = ValueDictionary.Builder<string, int>();
+        var builder = ValueDictionary.CreateBuilder<string, int>();
 
         builder.RemoveRange(a);
         builder.RemoveRange(b);
@@ -237,7 +226,7 @@ public class ValueDictionaryBuilderTests
     [Fact]
     public void Contains()
     {
-        var a = ValueDictionary.Builder([
+        var a = ValueDictionary.CreateBuilder([
             Entry("c", 3),
             Entry("b", 2),
             Entry("a", 1),
@@ -253,7 +242,7 @@ public class ValueDictionaryBuilderTests
     [Fact]
     public void GetValue()
     {
-        var a = ValueDictionary.Builder([
+        var a = ValueDictionary.CreateBuilder([
             Entry("c", 3),
             Entry("b", 2),
             Entry("a", 1),
@@ -272,7 +261,7 @@ public class ValueDictionaryBuilderTests
     [Fact]
     public void GetOrAdd()
     {
-        var a = ValueDictionary.Builder([
+        var a = ValueDictionary.CreateBuilder([
             Entry("c", 3),
             Entry("b", 2),
             Entry("a", 1),
@@ -287,7 +276,7 @@ public class ValueDictionaryBuilderTests
     [Fact]
     public void BuildIsFinal()
     {
-        var builder = new ValueDictionaryBuilder<string, int>();
+        var builder = ValueDictionary.CreateBuilder<string, int>();
 
         Assert.False(builder.IsReadOnly);
         builder.Add("a", 1);
@@ -308,14 +297,14 @@ public class ValueDictionaryBuilderTests
     [Fact]
     public void SerializeToString()
     {
-        var a = new ValueDictionaryBuilder<string, int>();
-        var b = ValueDictionary.Builder([
+        var a = ValueDictionary.CreateBuilder<string, int>();
+        var b = ValueDictionary.CreateBuilder([
             Entry("abc", 42),
         ]);
-        var c = ValueDictionary.Builder([
+        var c = ValueDictionary.CreateBuilder([
             Entry("abc", (string?)null),
         ]);
-        var d = ValueDictionary.Builder([
+        var d = ValueDictionary.CreateBuilder([
             Entry("a", 1),
             Entry("b", 2),
             Entry("c", 3),

@@ -33,7 +33,7 @@ namespace Badeend.ValueCollections.Tests.Reference
 
         protected override IDictionary<TKey, TValue> GenericIDictionaryFactory(int count)
         {
-            var collection = new ValueDictionaryBuilder<TKey, TValue>();
+            var collection = ValueDictionary.CreateBuilder<TKey, TValue>();
             AddToCollection(collection, count);
             return collection.Build();
         }

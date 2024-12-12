@@ -440,7 +440,7 @@ public static class ValueCollectionExtensions
 			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.valueSelector);
 		}
 
-		var builder = new ValueDictionaryBuilder<TKey, TValue>();
+		var builder = ValueDictionary.CreateBuilder<TKey, TValue>();
 
 		await foreach (var element in source.WithCancellation(cancellationToken).ConfigureAwait(false))
 		{

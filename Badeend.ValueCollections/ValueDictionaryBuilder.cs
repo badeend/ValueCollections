@@ -216,38 +216,6 @@ public sealed partial class ValueDictionaryBuilder<TKey, TValue> : IDictionary<T
 		set => this.Mutate()[key] = value;
 	}
 
-	/// <summary>
-	/// Construct a new empty dictionary builder.
-	/// </summary>
-	[Pure]
-	public ValueDictionaryBuilder()
-	{
-		this.items = ValueDictionary<TKey, TValue>.Empty;
-	}
-
-	/// <summary>
-	/// Construct a new <see cref="ValueDictionaryBuilder{TKey, TValue}"/> with the provided
-	/// <paramref name="items"/> as its initial content.
-	/// </summary>
-	/// <remarks>
-	/// Use <see cref="ValueDictionary.Builder{TKey, TValue}(ReadOnlySpan{KeyValuePair{TKey, TValue}})"/>
-	/// to construct a ValueDictionaryBuilder from a span.
-	/// </remarks>
-	/// <exception cref="ArgumentException">
-	/// <paramref name="items"/> contains duplicate keys.
-	/// </exception>
-	public ValueDictionaryBuilder(IEnumerable<KeyValuePair<TKey, TValue>> items)
-	{
-		if (items is ValueDictionary<TKey, TValue> valueDictionary)
-		{
-			this.items = valueDictionary;
-		}
-		else
-		{
-			this.items = ValueDictionary<TKey, TValue>.EnumerableToDictionary(items);
-		}
-	}
-
 	private ValueDictionaryBuilder(ValueDictionary<TKey, TValue> items)
 	{
 		this.items = items;
@@ -259,29 +227,6 @@ public sealed partial class ValueDictionaryBuilder<TKey, TValue> : IDictionary<T
 	}
 
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
-	/// <summary>
-	/// Construct a new empty dictionary builder with at least the specified
-	/// initial capacity.
-	/// </summary>
-	/// <remarks>
-	/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
-	/// </remarks>
-	/// <exception cref="ArgumentOutOfRangeException">
-	///   <paramref name="minimumCapacity"/> is less than 0.
-	/// </exception>
-	[Pure]
-	public ValueDictionaryBuilder(int minimumCapacity)
-	{
-		if (minimumCapacity == 0)
-		{
-			this.items = ValueDictionary<TKey, TValue>.Empty;
-		}
-		else
-		{
-			this.items = new Dictionary<TKey, TValue>(minimumCapacity);
-		}
-	}
-
 	/// <summary>
 	/// The total number of elements the internal data structure can hold without resizing.
 	/// </summary>
@@ -353,7 +298,7 @@ public sealed partial class ValueDictionaryBuilder<TKey, TValue> : IDictionary<T
 	{
 		if (items.Length == 0)
 		{
-			return new();
+			return new(ValueDictionary<TKey, TValue>.Empty);
 		}
 
 		return new(ValueDictionary<TKey, TValue>.SpanToDictionary(items));

@@ -21,6 +21,8 @@ public static class Configuration
 
 	private static readonly JsonConverter ValueDictionaryConverterFactory = new JsonObjectConverterFactory(typeof(ValueDictionary<,>), typeof(ValueDictionaryConverter<,>));
 
+	private static readonly JsonConverter ValueDictionaryBuilderConverterFactory = new JsonObjectConverterFactory(typeof(ValueDictionaryBuilder<,>), typeof(ValueDictionaryBuilderConverter<,>));
+
 	/// <summary>
 	/// Configure <c>Newtonsoft.Json</c> to serialize and deserialize <c>Badeend.ValueCollections</c> data types.
 	/// </summary>
@@ -61,5 +63,6 @@ public static class Configuration
 		converters.Add(ValueSetConverterFactory);
 		converters.Add(ValueSetBuilderConverterFactory);
 		converters.Add(ValueDictionaryConverterFactory);
+		converters.Add(ValueDictionaryBuilderConverterFactory);
 	}
 }
