@@ -114,11 +114,6 @@ public partial class ValueDictionary<TKey, TValue>
 				this.snapshot = snapshot;
 			}
 
-			/// <summary>
-			/// The builder these values belong to.
-			/// </summary>
-			public Builder Builder => this.snapshot.Read();
-
 			/// <inheritdoc/>
 			IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator()
 			{

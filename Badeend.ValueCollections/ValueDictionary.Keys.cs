@@ -97,11 +97,6 @@ public partial class ValueDictionary<TKey, TValue>
 			this.dictionary = dictionary;
 		}
 
-		/// <summary>
-		/// The dictionary these keys belong to.
-		/// </summary>
-		public ValueDictionary<TKey, TValue> ValueDictionary => this.dictionary;
-
 		/// <inheritdoc/>
 		IEnumerator<TKey> IEnumerable<TKey>.GetEnumerator()
 		{
