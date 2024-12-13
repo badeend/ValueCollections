@@ -318,36 +318,6 @@ public sealed partial class ValueSet<T>
 		public int Capacity => this.ReadOnce().Capacity;
 
 		/// <summary>
-		/// Ensures that the capacity of this set is at least the specified capacity.
-		/// If the current capacity is less than capacity, it is increased to at
-		/// least the specified capacity.
-		/// </summary>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// <paramref name="minimumCapacity"/> is less than 0.
-		/// </exception>
-		public Builder EnsureCapacity(int minimumCapacity)
-		{
-			this.MutateOnce().EnsureCapacity(minimumCapacity);
-			return this;
-		}
-
-		/// <summary>
-		/// Reduce the capacity of the set to roughly the specified value. If the
-		/// current capacity is already smaller than the requested capacity, this
-		/// method does nothing. The specified <paramref name="targetCapacity"/> is only
-		/// a hint. After this method returns, the <see cref="Capacity"/> may be
-		/// rounded up to a nearby, implementation-specific value.
-		/// </summary>
-		/// <exception cref="ArgumentOutOfRangeException">
-		/// <paramref name="targetCapacity"/> is less than <see cref="Count"/>.
-		/// </exception>
-		public Builder TrimExcess(int targetCapacity)
-		{
-			this.MutateOnce().TrimExcess(targetCapacity);
-			return this;
-		}
-
-		/// <summary>
 		/// Create a new uninitialized builder.
 		///
 		/// An uninitialized builder behaves the same as an already built set
@@ -470,6 +440,36 @@ public sealed partial class ValueSet<T>
 		public Builder TrimExcess()
 		{
 			this.MutateOnce().TrimExcess();
+			return this;
+		}
+
+		/// <summary>
+		/// Reduce the capacity of the set to roughly the specified value. If the
+		/// current capacity is already smaller than the requested capacity, this
+		/// method does nothing. The specified <paramref name="targetCapacity"/> is only
+		/// a hint. After this method returns, the <see cref="Capacity"/> may be
+		/// rounded up to a nearby, implementation-specific value.
+		/// </summary>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="targetCapacity"/> is less than <see cref="Count"/>.
+		/// </exception>
+		public Builder TrimExcess(int targetCapacity)
+		{
+			this.MutateOnce().TrimExcess(targetCapacity);
+			return this;
+		}
+
+		/// <summary>
+		/// Ensures that the capacity of this set is at least the specified capacity.
+		/// If the current capacity is less than capacity, it is increased to at
+		/// least the specified capacity.
+		/// </summary>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// <paramref name="minimumCapacity"/> is less than 0.
+		/// </exception>
+		public Builder EnsureCapacity(int minimumCapacity)
+		{
+			this.MutateOnce().EnsureCapacity(minimumCapacity);
 			return this;
 		}
 

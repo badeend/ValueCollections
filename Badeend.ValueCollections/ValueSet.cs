@@ -139,7 +139,6 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	/// set. How much larger exactly is undefined.
 	/// </remarks>
 	[Pure]
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public Builder ToBuilder()
 	{
 		if (Utilities.IsReuseWorthwhile(this.inner.Capacity, this.inner.Count))
