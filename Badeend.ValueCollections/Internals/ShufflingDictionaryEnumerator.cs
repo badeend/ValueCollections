@@ -16,20 +16,20 @@ internal struct ShufflingDictionaryEnumerator<TKey, TValue> : IEnumeratorLike<Ke
 	where TKey : notnull
 {
 	private readonly Dictionary<TKey, TValue> dictionary;
-	private readonly int initialSeed;
 	private Dictionary<TKey, TValue>.Enumerator inner;
 	private EnumeratorState state;
 	private KeyValuePair<TKey, TValue> current;
 	private int stashIndex;
 	private InlineArray8<KeyValuePair<TKey, TValue>> stash;
 
-	internal ShufflingDictionaryEnumerator(Dictionary<TKey, TValue> dictionary, int initialSeed)
+	internal ShufflingDictionaryEnumerator(Dictionary<TKey, TValue> dictionary)
 	{
 		this.dictionary = dictionary;
-		this.initialSeed = initialSeed;
 		this.inner = dictionary.GetEnumerator();
 		this.state = EnumeratorState.Uninitialized;
 	}
+
+	public ShufflingDictionaryEnumerator<TKey, TValue> GetEnumerator() => this;
 
 	/// <inheritdoc/>
 	public readonly KeyValuePair<TKey, TValue> Current
@@ -54,7 +54,7 @@ internal struct ShufflingDictionaryEnumerator<TKey, TValue> : IEnumeratorLike<Ke
 				// The hashcode doesn't change over the lifetime of the Dictionary,
 				// so enumerating the exact same instance multiple times yields
 				// the same results.
-				var seed = unchecked(this.initialSeed + RuntimeHelpers.GetHashCode(this.dictionary));
+				var seed = unchecked(RuntimeHelpers.GetHashCode(this.dictionary));
 
 				var maxStashSize = Math.Min(dictionarySize, InlineArray8<KeyValuePair<TKey, TValue>>.Length);
 				var stashSize = unchecked((int)((uint)seed % (uint)maxStashSize));

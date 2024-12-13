@@ -30,7 +30,7 @@ public partial class ValueDictionary<TKey, TValue>
 		public ValuesEnumerator Values
 		{
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			get => new(this.TakeSnapshot());
+			get => new(this.Read());
 		}
 
 		/// <inheritdoc/>
@@ -56,11 +56,13 @@ public partial class ValueDictionary<TKey, TValue>
 		[StructLayout(LayoutKind.Auto)]
 		public struct ValuesEnumerator : IEnumeratorLike<TValue>
 		{
-			private Enumerator inner;
+			private readonly Snapshot snapshot;
+			private ShufflingDictionaryEnumerator<TKey, TValue> inner;
 
 			internal ValuesEnumerator(Snapshot snapshot)
 			{
-				this.inner = new(snapshot);
+				this.snapshot = snapshot;
+				this.inner = new(snapshot.AssertAlive());
 			}
 
 			/// <summary>
@@ -74,7 +76,7 @@ public partial class ValueDictionary<TKey, TValue>
 			/// obtained before that moment.
 			/// </remarks>
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			public ValuesCollection AsCollection() => new(this.inner.Snapshot);
+			public ValuesCollection AsCollection() => new(this.snapshot);
 
 			/// <summary>
 			/// Returns a new ValuesEnumerator.
@@ -83,7 +85,7 @@ public partial class ValueDictionary<TKey, TValue>
 			/// the built-in <c>foreach</c> syntax.
 			/// </summary>
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			public ValuesEnumerator GetEnumerator() => new(this.inner.Snapshot);
+			public ValuesEnumerator GetEnumerator() => new(this.snapshot);
 
 			/// <inheritdoc/>
 			public readonly TValue Current
@@ -94,7 +96,12 @@ public partial class ValueDictionary<TKey, TValue>
 
 			/// <inheritdoc/>
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			public bool MoveNext() => this.inner.MoveNext();
+			public bool MoveNext()
+			{
+				this.snapshot.AssertAlive();
+
+				return this.inner.MoveNext();
+			}
 		}
 
 		/// <summary>
@@ -117,14 +124,14 @@ public partial class ValueDictionary<TKey, TValue>
 			/// <inheritdoc/>
 			IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator()
 			{
-				var builder = this.snapshot.Read();
+				var builder = this.snapshot.AssertAlive();
 				if (builder.Count == 0)
 				{
 					return EnumeratorLike.Empty<TValue>();
 				}
 				else
 				{
-					return EnumeratorLike.AsIEnumerator<TValue, ValuesEnumerator>(builder.Values);
+					return EnumeratorLike.AsIEnumerator<TValue, ValuesEnumerator>(new(this.snapshot));
 				}
 			}
 
@@ -132,19 +139,19 @@ public partial class ValueDictionary<TKey, TValue>
 			IEnumerator IEnumerable.GetEnumerator() => (this as IEnumerable<TValue>).GetEnumerator();
 
 			/// <inheritdoc/>
-			int ICollection<TValue>.Count => this.snapshot.Read().Count;
+			int ICollection<TValue>.Count => this.snapshot.AssertAlive().Count;
 
 			/// <inheritdoc/>
-			int IReadOnlyCollection<TValue>.Count => this.snapshot.Read().Count;
+			int IReadOnlyCollection<TValue>.Count => this.snapshot.AssertAlive().Count;
 
 			/// <inheritdoc/>
 			bool ICollection<TValue>.IsReadOnly => true;
 
 			/// <inheritdoc/>
-			bool ICollection<TValue>.Contains(TValue item) => this.snapshot.Read().ContainsValue(item);
+			bool ICollection<TValue>.Contains(TValue item) => this.snapshot.AssertAlive().ContainsValue(item);
 
 			/// <inheritdoc/>
-			void ICollection<TValue>.CopyTo(TValue[] array, int index) => this.snapshot.Read().Values_CopyTo(array, index);
+			void ICollection<TValue>.CopyTo(TValue[] array, int index) => this.snapshot.AssertAlive().Values_CopyTo(array, index);
 
 			/// <inheritdoc/>
 			void ICollection<TValue>.Add(TValue item) => throw ImmutableException();

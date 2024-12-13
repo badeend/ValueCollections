@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
@@ -38,35 +39,24 @@ public partial class ValueDictionary<TKey, TValue>
 	[SuppressMessage("Naming", "CA1710:Identifiers should have correct suffix", Justification = "Not applicable for Builder type.")]
 	public sealed partial class Builder : IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>
 	{
-		private const int VersionBuilt = -1;
-
 		/// <summary>
-		/// Can be one of:
-		/// - ValueDictionary{TKey, TValue}: when copy-on-write hasn't kicked in yet.
-		/// - Dictionary{T}: we're actively building a dictionary.
+		/// Only access this field through .Read() or .Mutate().
 		/// </summary>
-		private IReadOnlyDictionary<TKey, TValue> items;
-
-		/// <summary>
-		/// Mutation counter.
-		/// `-1` means: Collection has been built and the builder is now read-only.
-		/// </summary>
-		private int version;
+		private readonly ValueDictionary<TKey, TValue>? dictionary;
 
 		/// <summary>
 		/// Returns <see langword="true"/> when this instance has been built and is
 		/// now read-only.
 		/// </summary>
 		[Pure]
-		public bool IsReadOnly => this.version == VersionBuilt;
+		public bool IsReadOnly => this.dictionary is null || BuilderState.IsImmutable(this.dictionary.state);
 
 		/// <summary>
 		/// Finalize the builder and export its contents as a <see cref="ValueDictionary{TKey, TValue}"/>.
 		/// This makes the builder read-only. Any future attempt to mutate the
 		/// builder will throw.
 		///
-		/// This is an <c>O(1)</c> operation and performs only a small fixed-size
-		/// memory allocation. This does not perform a bulk copy of the contents.
+		/// This is an <c>O(1)</c> operation and performs no heap allocations.
 		/// </summary>
 		/// <remarks>
 		/// If you need an intermediate snapshot of the contents while keeping the
@@ -77,14 +67,15 @@ public partial class ValueDictionary<TKey, TValue>
 		/// </exception>
 		public ValueDictionary<TKey, TValue> Build()
 		{
-			if (this.version == VersionBuilt)
+			var dictionary = this.dictionary;
+			if (dictionary is null || BuilderState.BuildRequiresAttention(dictionary.state))
 			{
-				throw BuiltException();
+				MutateUncommon(dictionary);
 			}
 
-			this.version = VersionBuilt;
+			dictionary.state = BuilderState.InitialImmutable;
 
-			return this.ToValueDictionary();
+			return dictionary.IsEmpty ? Empty : dictionary;
 		}
 
 		/// <summary>
@@ -97,100 +88,210 @@ public partial class ValueDictionary<TKey, TValue>
 		[Pure]
 		public ValueDictionary<TKey, TValue> ToValueDictionary()
 		{
-			if (this.items is Dictionary<TKey, TValue> dictionary)
+			var dictionary = this.dictionary;
+			if (dictionary is null)
 			{
-				var newValueDictionary = ValueDictionary<TKey, TValue>.FromDictionaryUnsafe(dictionary);
-				this.items = newValueDictionary;
-				return newValueDictionary;
+				return Empty;
 			}
 
-			if (this.items is ValueDictionary<TKey, TValue> valueDictionary)
+			if (BuilderState.IsImmutable(dictionary.state))
 			{
-				return valueDictionary;
+				return dictionary.IsEmpty ? Empty : dictionary;
 			}
-
-			throw UnreachableException();
+			else if (dictionary.state == BuilderState.Cow)
+			{
+				return ValueDictionary<TKey, TValue>.CreateImmutableUnsafe(dictionary.inner);
+			}
+			else
+			{
+				return ValueDictionary<TKey, TValue>.CreateImmutableUnsafe(EnumerableToDictionary(dictionary.inner));
+			}
 		}
 
-		private Dictionary<TKey, TValue> Mutate()
+		/// <summary>
+		/// Copy the current contents of the builder into a new <see cref="ValueDictionary{TKey, TValue}.Builder"/>.
+		/// </summary>
+		[Pure]
+		public Builder ToValueDictionaryBuilder()
 		{
-			if (this.version == VersionBuilt)
-			{
-				throw BuiltException();
-			}
-
-			this.version++;
-
-			if (this.items is Dictionary<TKey, TValue> dictionary)
-			{
-				return dictionary;
-			}
-
-			if (this.items is ValueDictionary<TKey, TValue> valueDictionary)
-			{
-				var newDictionary = new Dictionary<TKey, TValue>(valueDictionary.Items);
-				this.items = newDictionary;
-				return newDictionary;
-			}
-
-			throw UnreachableException();
+			return ValueDictionary<TKey, TValue>.Builder.CreateUnsafe(EnumerableToDictionary(this.ReadOnce()));
 		}
-
-		private IReadOnlyDictionary<TKey, TValue> Read() => this.items;
-
-		private Dictionary<TKey, TValue> ReadUnsafe() => this.items switch
-		{
-			Dictionary<TKey, TValue> items => items,
-			ValueDictionary<TKey, TValue> items => items.Items,
-			_ => throw UnreachableException(),
-		};
 
 		[StructLayout(LayoutKind.Auto)]
 		internal readonly struct Snapshot
 		{
-			private readonly Builder builder;
-			internal readonly int Version;
+			private readonly ValueDictionary<TKey, TValue> dictionary;
+			private readonly int expectedState;
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			public Snapshot(Builder builder, int version)
+			internal Snapshot(ValueDictionary<TKey, TValue> dictionary, int expectedState)
 			{
-				this.builder = builder;
-				this.Version = version;
+				this.dictionary = dictionary;
+				this.expectedState = expectedState;
 			}
 
-			internal void Validate()
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			internal ref readonly Dictionary<TKey, TValue> AssertAlive()
 			{
-				if (this.Version != this.builder.version)
+				if (this.expectedState != this.dictionary.state)
 				{
-					ThrowModifiedException();
+					this.AssertAliveUncommon();
 				}
+
+				return ref this.dictionary.inner;
 			}
 
-			internal Builder Read()
+			private void AssertAliveUncommon()
 			{
-				this.Validate();
+				// The only valid reason for ending up here is when the snapshot
+				// was obtained in an already-built state and the hash code was
+				// materialized afterwards.
+				if (BuilderState.IsImmutable(this.expectedState))
+				{
+					Debug.Assert(BuilderState.IsImmutable(this.dictionary.state));
 
-				return this.builder;
-			}
+					return;
+				}
 
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			internal Builder ReadUnsafe() => this.builder;
-
-			[DoesNotReturn]
-			private static void ThrowModifiedException()
-			{
-				throw new InvalidOperationException("Collection invalidated because the builder was modified.");
+				if (this.dictionary.state == BuilderState.ExclusiveMode)
+				{
+					ThrowHelpers.ThrowInvalidOperationException_Locked();
+				}
+				else
+				{
+					ThrowHelpers.ThrowInvalidOperationException_CollectionModifiedDuringEnumeration();
+				}
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private Snapshot TakeSnapshot() => new(this, this.version);
+		[StructLayout(LayoutKind.Auto)]
+		private readonly ref struct MutationGuard
+		{
+			private readonly ValueDictionary<TKey, TValue> dictionary;
+			private readonly int restoreState;
+
+			internal readonly ref Dictionary<TKey, TValue> Inner
+			{
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
+				get
+				{
+					Debug.Assert(this.dictionary.state == BuilderState.ExclusiveMode);
+
+					return ref this.dictionary.inner;
+				}
+			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			internal MutationGuard(ValueDictionary<TKey, TValue> dictionary, int restoreState)
+			{
+				this.dictionary = dictionary;
+				this.restoreState = restoreState;
+			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			public void Dispose()
+			{
+				Debug.Assert(this.dictionary.state == BuilderState.ExclusiveMode);
+
+				this.dictionary.state = this.restoreState;
+			}
+		}
+
+		private Snapshot Read()
+		{
+			var dictionary = this.dictionary ?? Empty;
+
+			if (dictionary.state == BuilderState.ExclusiveMode)
+			{
+				ThrowHelpers.ThrowInvalidOperationException_Locked();
+			}
+
+			return new Snapshot(dictionary, dictionary.state);
+		}
+
+		private ref readonly Dictionary<TKey, TValue> ReadOnce()
+		{
+			var dictionary = this.dictionary ?? Empty;
+
+			if (dictionary.state == BuilderState.ExclusiveMode)
+			{
+				ThrowHelpers.ThrowInvalidOperationException_Locked();
+			}
+
+			return ref dictionary.inner;
+		}
+
+		private MutationGuard Mutate()
+		{
+			var dictionary = this.dictionary;
+			if (dictionary is null || BuilderState.MutateRequiresAttention(dictionary.state))
+			{
+				MutateUncommon(dictionary);
+			}
+
+			var stateToRestore = dictionary.state + 1;
+			dictionary.state = BuilderState.ExclusiveMode;
+
+			Debug.Assert(BuilderState.IsMutable(stateToRestore));
+
+			return new MutationGuard(dictionary, stateToRestore);
+		}
+
+		// Only to be used if the mutation can be done at once (i.e. "atomically"),
+		// and the outside world can not observe the builder in a temporary intermediate state.
+		private ref Dictionary<TKey, TValue> MutateOnce()
+		{
+			var dictionary = this.dictionary;
+			if (dictionary is null || BuilderState.MutateRequiresAttention(dictionary.state))
+			{
+				MutateUncommon(dictionary);
+			}
+
+			dictionary.state++;
+
+			Debug.Assert(BuilderState.IsMutable(dictionary.state));
+
+			return ref dictionary.inner;
+		}
+
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		private static void MutateUncommon([NotNull] ValueDictionary<TKey, TValue>? dictionary)
+		{
+			if (dictionary is null)
+			{
+				ThrowHelpers.ThrowInvalidOperationException_UninitializedBuilder();
+			}
+			else if (dictionary.state == BuilderState.Cow)
+			{
+				// Make copy with at least the same amount of capacity.
+				// var copy = new Dictionary<TKey, TValue>(dictionary.inner.Capacity); TODO
+				// copy.UnionWith(ref dictionary.inner);
+				var copy = EnumerableToDictionary(dictionary.inner);
+
+				dictionary.inner = copy;
+				dictionary.state = BuilderState.InitialMutable;
+			}
+			else if (dictionary.state == BuilderState.LastMutableVersion)
+			{
+				dictionary.state = BuilderState.InitialMutable;
+			}
+			else if (dictionary.state == BuilderState.ExclusiveMode)
+			{
+				ThrowHelpers.ThrowInvalidOperationException_Locked();
+			}
+			else
+			{
+				Debug.Assert(BuilderState.IsImmutable(dictionary.state));
+
+				ThrowHelpers.ThrowInvalidOperationException_AlreadyBuilt();
+			}
+		}
 
 		/// <summary>
 		/// Current size of the dictionary.
 		/// </summary>
 		[Pure]
-		public int Count => this.Read().Count;
+		public int Count => this.ReadOnce().Count;
 
 		/// <summary>
 		/// Shortcut for <c>.Count == 0</c>.
@@ -214,19 +315,26 @@ public partial class ValueDictionary<TKey, TValue>
 		public TValue this[TKey key]
 		{
 			[Pure]
-			get => this.Read()[key];
-			set => this.Mutate()[key] = value;
+			get => this.ReadOnce()[key];
+			set => this.MutateOnce()[key] = value;
 		}
 
-		private Builder(ValueDictionary<TKey, TValue> items)
+		// This takes ownership of the ValueDictionary
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private Builder(ValueDictionary<TKey, TValue> dictionary)
 		{
-			this.items = items;
+			Debug.Assert(BuilderState.IsMutable(dictionary.state));
+
+			this.dictionary = dictionary;
 		}
 
-		private Builder(Dictionary<TKey, TValue> items)
-		{
-			this.items = items;
-		}
+		// This takes ownership of the RawDictionary
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static Builder CreateUnsafe(Dictionary<TKey, TValue> inner) => new(ValueDictionary<TKey, TValue>.CreateMutableUnsafe(inner));
+
+		// The RawDictionary is expected to be immutable.
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal static Builder CreateCowUnsafe(Dictionary<TKey, TValue> inner) => new(ValueDictionary<TKey, TValue>.CreateCowUnsafe(inner));
 
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
 		/// <summary>
@@ -240,12 +348,7 @@ public partial class ValueDictionary<TKey, TValue>
 			[Pure]
 			get
 			{
-				var dictionary = this.items switch
-				{
-					Dictionary<TKey, TValue> items => items,
-					ValueDictionary<TKey, TValue> items => items.Items,
-					_ => throw UnreachableException(),
-				};
+				var dictionary = this.ReadOnce();
 
 #if NET9_0_OR_GREATER
 				return dictionary.Capacity;
@@ -268,7 +371,7 @@ public partial class ValueDictionary<TKey, TValue>
 		/// </exception>
 		public Builder EnsureCapacity(int minimumCapacity)
 		{
-			this.Mutate().EnsureCapacity(minimumCapacity);
+			this.MutateOnce().EnsureCapacity(minimumCapacity);
 			return this;
 		}
 
@@ -287,24 +390,10 @@ public partial class ValueDictionary<TKey, TValue>
 		/// </remarks>
 		public Builder TrimExcess(int targetCapacity)
 		{
-			this.Mutate().TrimExcess(targetCapacity);
+			this.MutateOnce().TrimExcess(targetCapacity);
 			return this;
 		}
 #endif
-
-		internal static Builder FromValueDictionary(ValueDictionary<TKey, TValue> items) => new(items);
-
-		internal static Builder FromDictionaryUnsafe(Dictionary<TKey, TValue> items) => new(items);
-
-		internal static Builder FromReadOnlySpan(scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
-		{
-			if (items.Length == 0)
-			{
-				return new(ValueDictionary<TKey, TValue>.Empty);
-			}
-
-			return new(ValueDictionary<TKey, TValue>.SpanToDictionary(items));
-		}
 
 		/// <summary>
 		/// Determines whether this dictionary contains an element with the specified value.
@@ -313,23 +402,23 @@ public partial class ValueDictionary<TKey, TValue>
 		/// This performs a linear scan through the dictionary.
 		/// </remarks>
 		[Pure]
-		public bool ContainsValue(TValue value) => this.ReadUnsafe().ContainsValue(value);
+		public bool ContainsValue(TValue value) => this.ReadOnce().ContainsValue(value);
 
 		/// <summary>
 		/// Determines whether this dictionary contains an element with the specified key.
 		/// </summary>
 		[Pure]
-		public bool ContainsKey(TKey key) => this.Read().ContainsKey(key);
+		public bool ContainsKey(TKey key) => this.ReadOnce().ContainsKey(key);
 
 		/// <inheritdoc/>
-		bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> item) => this.Read().Contains(item);
+		bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> item) => this.ReadOnce().Contains(item);
 
 		/// <summary>
 		/// Attempt to get the value associated with the specified <paramref name="key"/>.
 		/// Returns <see langword="false"/> when the key was not found.
 		/// </summary>
 #pragma warning disable CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
-		public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value) => this.Read().TryGetValue(key, out value);
+		public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value) => this.ReadOnce().TryGetValue(key, out value);
 #pragma warning restore CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
 
 		/// <summary>
@@ -356,16 +445,17 @@ public partial class ValueDictionary<TKey, TValue>
 		/// </summary>
 		public TValue GetOrAdd(TKey key, Func<TKey, TValue> valueFactory)
 		{
-			var dictionary = this.Mutate();
-
-			if (dictionary.TryGetValue(key, out var existingValue))
+			using (var guard = this.Mutate())
 			{
-				return existingValue;
-			}
+				if (guard.Inner.TryGetValue(key, out var existingValue))
+				{
+					return existingValue;
+				}
 
-			var newValue = valueFactory(key);
-			dictionary.Add(key, newValue);
-			return newValue;
+				var newValue = valueFactory(key);
+				guard.Inner.Add(key, newValue);
+				return newValue;
+			}
 		}
 
 		/// <inheritdoc/>
@@ -401,7 +491,7 @@ public partial class ValueDictionary<TKey, TValue>
 		/// </summary>
 		public bool TryAdd(TKey key, TValue value)
 		{
-			var dictionary = this.Mutate();
+			var dictionary = this.MutateOnce();
 
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_0_OR_GREATER
 			return dictionary.TryAdd(key, value);
@@ -430,7 +520,7 @@ public partial class ValueDictionary<TKey, TValue>
 		/// </exception>
 		public Builder Add(TKey key, TValue value)
 		{
-			this.Mutate().Add(key, value);
+			this.MutateOnce().Add(key, value);
 			return this;
 		}
 
@@ -458,18 +548,19 @@ public partial class ValueDictionary<TKey, TValue>
 				throw new ArgumentNullException(nameof(items));
 			}
 
-			var dictionary = this.Mutate();
-
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
-			if (items is ICollection<KeyValuePair<TKey, TValue>> collection)
+			using (var guard = this.Mutate())
 			{
-				dictionary.EnsureCapacity(dictionary.Count + collection.Count);
-			}
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
+				if (items is ICollection<KeyValuePair<TKey, TValue>> collection)
+				{
+					guard.Inner.EnsureCapacity(guard.Inner.Count + collection.Count);
+				}
 #endif
 
-			foreach (var item in items)
-			{
-				dictionary.Add(item.Key, item.Value);
+				foreach (var item in items)
+				{
+					guard.Inner.Add(item.Key, item.Value);
+				}
 			}
 
 			return this;
@@ -478,7 +569,7 @@ public partial class ValueDictionary<TKey, TValue>
 		// Accessible through an extension method.
 		internal Builder AddRangeSpan(scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
 		{
-			var dictionary = this.Mutate();
+			var dictionary = this.MutateOnce();
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
 			dictionary.EnsureCapacity(dictionary.Count + items.Length);
 #endif
@@ -502,7 +593,7 @@ public partial class ValueDictionary<TKey, TValue>
 		/// </remarks>
 		public Builder SetItem(TKey key, TValue value)
 		{
-			this.Mutate()[key] = value;
+			this.MutateOnce()[key] = value;
 			return this;
 		}
 
@@ -524,11 +615,12 @@ public partial class ValueDictionary<TKey, TValue>
 				throw new ArgumentNullException(nameof(items));
 			}
 
-			var dictionary = this.Mutate();
-
-			foreach (var item in items)
+			using (var guard = this.Mutate())
 			{
-				dictionary[item.Key] = item.Value;
+				foreach (var item in items)
+				{
+					guard.Inner[item.Key] = item.Value;
+				}
 			}
 
 			return this;
@@ -537,7 +629,7 @@ public partial class ValueDictionary<TKey, TValue>
 		// Accessible through an extension method.
 		internal Builder SetItemsSpan(scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
 		{
-			var dictionary = this.Mutate();
+			var dictionary = this.MutateOnce();
 
 			foreach (var item in items)
 			{
@@ -554,7 +646,7 @@ public partial class ValueDictionary<TKey, TValue>
 		/// <remarks>
 		/// This is the equivalent of <see cref="Dictionary{TKey, TValue}.Remove(TKey)">Dictionary.Remove</see>.
 		/// </remarks>
-		public bool TryRemove(TKey key) => this.Mutate().Remove(key);
+		public bool TryRemove(TKey key) => this.MutateOnce().Remove(key);
 
 		/// <summary>
 		/// Attempt to remove a specific <paramref name="key"/> from the dictionary.
@@ -563,7 +655,7 @@ public partial class ValueDictionary<TKey, TValue>
 		/// </summary>
 		public bool TryRemove(TKey key, [MaybeNullWhen(false)] out TValue value)
 		{
-			var dictionary = this.Mutate();
+			var dictionary = this.MutateOnce();
 
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
 			return dictionary.Remove(key, out value);
@@ -596,7 +688,7 @@ public partial class ValueDictionary<TKey, TValue>
 		bool IDictionary<TKey, TValue>.Remove(TKey key) => this.TryRemove(key);
 
 		/// <inheritdoc/>
-		bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item) => ((ICollection<KeyValuePair<TKey, TValue>>)this.Mutate()).Remove(item);
+		bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item) => ((ICollection<KeyValuePair<TKey, TValue>>)this.MutateOnce()).Remove(item);
 
 		/// <summary>
 		/// Remove the provided <paramref name="keys"/> from the dictionary.
@@ -612,11 +704,12 @@ public partial class ValueDictionary<TKey, TValue>
 				throw new ArgumentNullException(nameof(keys));
 			}
 
-			var dictionary = this.Mutate();
-
-			foreach (var key in keys)
+			using (var guard = this.Mutate())
 			{
-				dictionary.Remove(key);
+				foreach (var key in keys)
+				{
+					guard.Inner.Remove(key);
+				}
 			}
 
 			return this;
@@ -625,7 +718,7 @@ public partial class ValueDictionary<TKey, TValue>
 		// Accessible through an extension method.
 		internal Builder RemoveRangeSpan(scoped ReadOnlySpan<TKey> keys)
 		{
-			var dictionary = this.Mutate();
+			var dictionary = this.MutateOnce();
 
 			foreach (var key in keys)
 			{
@@ -643,7 +736,7 @@ public partial class ValueDictionary<TKey, TValue>
 		/// </remarks>
 		public Builder Clear()
 		{
-			this.Mutate().Clear();
+			this.MutateOnce().Clear();
 			return this;
 		}
 
@@ -667,7 +760,7 @@ public partial class ValueDictionary<TKey, TValue>
 		/// </remarks>
 		public Builder TrimExcess()
 		{
-			var dictionary = this.Mutate();
+			var dictionary = this.MutateOnce();
 
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
 			dictionary.TrimExcess();
@@ -679,7 +772,7 @@ public partial class ValueDictionary<TKey, TValue>
 				copy.Add(entry.Key, entry.Value);
 			}
 
-			this.items = copy;
+			this.dictionary!.inner = copy;
 #endif
 			return this;
 		}
@@ -693,7 +786,7 @@ public partial class ValueDictionary<TKey, TValue>
 			}
 			else
 			{
-				return EnumeratorLike.AsIEnumerator<KeyValuePair<TKey, TValue>, Enumerator>(new Enumerator(this.TakeSnapshot()));
+				return EnumeratorLike.AsIEnumerator<KeyValuePair<TKey, TValue>, Enumerator>(new Enumerator(this.Read()));
 			}
 		}
 
@@ -708,7 +801,7 @@ public partial class ValueDictionary<TKey, TValue>
 		/// </summary>
 		[Pure]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public Enumerator GetEnumerator() => new Enumerator(this.TakeSnapshot());
+		public Enumerator GetEnumerator() => new Enumerator(this.Read());
 
 		/// <summary>
 		/// Enumerator for <see cref="ValueDictionary{TKey, TValue}.Builder"/>.
@@ -718,36 +811,30 @@ public partial class ValueDictionary<TKey, TValue>
 		[StructLayout(LayoutKind.Auto)]
 		public struct Enumerator : IEnumeratorLike<KeyValuePair<TKey, TValue>>
 		{
-			internal readonly Snapshot Snapshot;
-			private ShufflingDictionaryEnumerator<TKey, TValue> enumerator;
+			private readonly Snapshot snapshot;
+			private ShufflingDictionaryEnumerator<TKey, TValue> inner;
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			internal Enumerator(Snapshot snapshot)
 			{
-				var innerDictionary = snapshot.ReadUnsafe().items switch
-				{
-					Dictionary<TKey, TValue> items => items,
-					ValueDictionary<TKey, TValue> items => items.Items,
-					_ => throw UnreachableException(),
-				};
-
-				this.Snapshot = snapshot;
-				this.enumerator = new(innerDictionary, initialSeed: snapshot.Version);
+				this.snapshot = snapshot;
+				this.inner = new(snapshot.AssertAlive());
 			}
 
 			/// <inheritdoc/>
 			public readonly KeyValuePair<TKey, TValue> Current
 			{
 				[MethodImpl(MethodImplOptions.AggressiveInlining)]
-				get => this.enumerator.Current;
+				get => this.inner.Current;
 			}
 
 			/// <inheritdoc/>
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public bool MoveNext()
 			{
-				this.Snapshot.Validate();
+				this.snapshot.AssertAlive();
 
-				return this.enumerator.MoveNext();
+				return this.inner.MoveNext();
 			}
 		}
 
@@ -786,10 +873,6 @@ public partial class ValueDictionary<TKey, TValue>
 			builder.Append(']');
 			return builder.ToString();
 		}
-
-		private static InvalidOperationException UnreachableException() => new("Unreachable");
-
-		private static InvalidOperationException BuiltException() => new("Builder has already been built");
 
 		private static NotSupportedException ImmutableException() => new("Collection is immutable");
 	}

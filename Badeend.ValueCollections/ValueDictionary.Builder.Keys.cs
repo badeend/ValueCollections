@@ -30,7 +30,7 @@ public partial class ValueDictionary<TKey, TValue>
 		public KeysEnumerator Keys
 		{
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			get => new(this.TakeSnapshot());
+			get => new(this.Read());
 		}
 
 		/// <inheritdoc/>
@@ -56,11 +56,13 @@ public partial class ValueDictionary<TKey, TValue>
 		[StructLayout(LayoutKind.Auto)]
 		public struct KeysEnumerator : IEnumeratorLike<TKey>
 		{
-			private Enumerator inner;
+			private readonly Snapshot snapshot;
+			private ShufflingDictionaryEnumerator<TKey, TValue> inner;
 
 			internal KeysEnumerator(Snapshot snapshot)
 			{
-				this.inner = new(snapshot);
+				this.snapshot = snapshot;
+				this.inner = new(snapshot.AssertAlive());
 			}
 
 			/// <summary>
@@ -74,7 +76,7 @@ public partial class ValueDictionary<TKey, TValue>
 			/// obtained before that moment.
 			/// </remarks>
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			public KeysCollection AsCollection() => new(this.inner.Snapshot);
+			public KeysCollection AsCollection() => new(this.snapshot);
 
 			/// <summary>
 			/// Returns a new KeysEnumerator.
@@ -83,7 +85,7 @@ public partial class ValueDictionary<TKey, TValue>
 			/// the built-in <c>foreach</c> syntax.
 			/// </summary>
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			public KeysEnumerator GetEnumerator() => new(this.inner.Snapshot);
+			public KeysEnumerator GetEnumerator() => new(this.snapshot);
 
 			/// <inheritdoc/>
 			public readonly TKey Current
@@ -94,7 +96,12 @@ public partial class ValueDictionary<TKey, TValue>
 
 			/// <inheritdoc/>
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			public bool MoveNext() => this.inner.MoveNext();
+			public bool MoveNext()
+			{
+				this.snapshot.AssertAlive();
+
+				return this.inner.MoveNext();
+			}
 		}
 
 		/// <summary>
@@ -117,14 +124,14 @@ public partial class ValueDictionary<TKey, TValue>
 			/// <inheritdoc/>
 			IEnumerator<TKey> IEnumerable<TKey>.GetEnumerator()
 			{
-				var builder = this.snapshot.Read();
+				var builder = this.snapshot.AssertAlive();
 				if (builder.Count == 0)
 				{
 					return EnumeratorLike.Empty<TKey>();
 				}
 				else
 				{
-					return EnumeratorLike.AsIEnumerator<TKey, KeysEnumerator>(builder.Keys);
+					return EnumeratorLike.AsIEnumerator<TKey, KeysEnumerator>(new(this.snapshot));
 				}
 			}
 
@@ -132,58 +139,58 @@ public partial class ValueDictionary<TKey, TValue>
 			IEnumerator IEnumerable.GetEnumerator() => (this as IEnumerable<TKey>).GetEnumerator();
 
 			/// <inheritdoc/>
-			int ICollection<TKey>.Count => this.snapshot.Read().Count;
+			int ICollection<TKey>.Count => this.snapshot.AssertAlive().Count;
 
 			/// <inheritdoc/>
-			int IReadOnlyCollection<TKey>.Count => this.snapshot.Read().Count;
+			int IReadOnlyCollection<TKey>.Count => this.snapshot.AssertAlive().Count;
 
 			/// <inheritdoc/>
 			bool ICollection<TKey>.IsReadOnly => true;
 
 			/// <inheritdoc/>
-			bool ICollection<TKey>.Contains(TKey item) => this.snapshot.Read().ContainsKey(item);
+			bool ICollection<TKey>.Contains(TKey item) => this.snapshot.AssertAlive().ContainsKey(item);
 
 			/// <inheritdoc/>
-			void ICollection<TKey>.CopyTo(TKey[] array, int index) => this.snapshot.Read().Keys_CopyTo(array, index);
+			void ICollection<TKey>.CopyTo(TKey[] array, int index) => this.snapshot.AssertAlive().Keys_CopyTo(array, index);
 
 			/// <inheritdoc/>
-			bool ISet<TKey>.IsProperSubsetOf(IEnumerable<TKey> other) => this.snapshot.Read().Keys_IsProperSubsetOf(other);
+			bool ISet<TKey>.IsProperSubsetOf(IEnumerable<TKey> other) => this.snapshot.AssertAlive().Keys_IsProperSubsetOf(other);
 
 			/// <inheritdoc/>
-			bool ISet<TKey>.IsProperSupersetOf(IEnumerable<TKey> other) => this.snapshot.Read().Keys_IsProperSupersetOf(other);
+			bool ISet<TKey>.IsProperSupersetOf(IEnumerable<TKey> other) => this.snapshot.AssertAlive().Keys_IsProperSupersetOf(other);
 
 			/// <inheritdoc/>
-			bool ISet<TKey>.IsSubsetOf(IEnumerable<TKey> other) => this.snapshot.Read().Keys_IsSubsetOf(other);
+			bool ISet<TKey>.IsSubsetOf(IEnumerable<TKey> other) => this.snapshot.AssertAlive().Keys_IsSubsetOf(other);
 
 			/// <inheritdoc/>
-			bool ISet<TKey>.IsSupersetOf(IEnumerable<TKey> other) => this.snapshot.Read().Keys_IsSupersetOf(other);
+			bool ISet<TKey>.IsSupersetOf(IEnumerable<TKey> other) => this.snapshot.AssertAlive().Keys_IsSupersetOf(other);
 
 			/// <inheritdoc/>
-			bool ISet<TKey>.Overlaps(IEnumerable<TKey> other) => this.snapshot.Read().Keys_Overlaps(other);
+			bool ISet<TKey>.Overlaps(IEnumerable<TKey> other) => this.snapshot.AssertAlive().Keys_Overlaps(other);
 
 			/// <inheritdoc/>
-			bool ISet<TKey>.SetEquals(IEnumerable<TKey> other) => this.snapshot.Read().Keys_SetEquals(other);
+			bool ISet<TKey>.SetEquals(IEnumerable<TKey> other) => this.snapshot.AssertAlive().Keys_SetEquals(other);
 
 			/// <inheritdoc/>
-			bool IReadOnlySet<TKey>.Contains(TKey item) => this.snapshot.Read().ContainsKey(item);
+			bool IReadOnlySet<TKey>.Contains(TKey item) => this.snapshot.AssertAlive().ContainsKey(item);
 
 			/// <inheritdoc/>
-			bool IReadOnlySet<TKey>.IsProperSubsetOf(IEnumerable<TKey> other) => this.snapshot.Read().Keys_IsProperSubsetOf(other);
+			bool IReadOnlySet<TKey>.IsProperSubsetOf(IEnumerable<TKey> other) => this.snapshot.AssertAlive().Keys_IsProperSubsetOf(other);
 
 			/// <inheritdoc/>
-			bool IReadOnlySet<TKey>.IsProperSupersetOf(IEnumerable<TKey> other) => this.snapshot.Read().Keys_IsProperSupersetOf(other);
+			bool IReadOnlySet<TKey>.IsProperSupersetOf(IEnumerable<TKey> other) => this.snapshot.AssertAlive().Keys_IsProperSupersetOf(other);
 
 			/// <inheritdoc/>
-			bool IReadOnlySet<TKey>.IsSubsetOf(IEnumerable<TKey> other) => this.snapshot.Read().Keys_IsSubsetOf(other);
+			bool IReadOnlySet<TKey>.IsSubsetOf(IEnumerable<TKey> other) => this.snapshot.AssertAlive().Keys_IsSubsetOf(other);
 
 			/// <inheritdoc/>
-			bool IReadOnlySet<TKey>.IsSupersetOf(IEnumerable<TKey> other) => this.snapshot.Read().Keys_IsSupersetOf(other);
+			bool IReadOnlySet<TKey>.IsSupersetOf(IEnumerable<TKey> other) => this.snapshot.AssertAlive().Keys_IsSupersetOf(other);
 
 			/// <inheritdoc/>
-			bool IReadOnlySet<TKey>.Overlaps(IEnumerable<TKey> other) => this.snapshot.Read().Keys_Overlaps(other);
+			bool IReadOnlySet<TKey>.Overlaps(IEnumerable<TKey> other) => this.snapshot.AssertAlive().Keys_Overlaps(other);
 
 			/// <inheritdoc/>
-			bool IReadOnlySet<TKey>.SetEquals(IEnumerable<TKey> other) => this.snapshot.Read().Keys_SetEquals(other);
+			bool IReadOnlySet<TKey>.SetEquals(IEnumerable<TKey> other) => this.snapshot.AssertAlive().Keys_SetEquals(other);
 
 			/// <inheritdoc/>
 			void ICollection<TKey>.Add(TKey item) => throw ImmutableException();

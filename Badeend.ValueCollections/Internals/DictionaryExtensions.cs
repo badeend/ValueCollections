@@ -2,7 +2,8 @@ namespace Badeend.ValueCollections.Internals;
 
 internal static class DictionaryExtensions
 {
-	internal static void Values_CopyTo<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, TValue[] array, int index)
+	internal static void Values_CopyTo<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, TValue[] array, int index)
+		where TKey : notnull
 	{
 		if (array == null)
 		{
@@ -19,13 +20,14 @@ internal static class DictionaryExtensions
 			throw new ArgumentException("Destination too small", nameof(array));
 		}
 
-		foreach (var entry in dictionary)
+		foreach (var entry in new ShufflingDictionaryEnumerator<TKey, TValue>(dictionary))
 		{
 			array[index++] = entry.Value;
 		}
 	}
 
-	internal static void Keys_CopyTo<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, TKey[] array, int index)
+	internal static void Keys_CopyTo<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, TKey[] array, int index)
+		where TKey : notnull
 	{
 		if (array == null)
 		{
@@ -42,13 +44,14 @@ internal static class DictionaryExtensions
 			throw new ArgumentException("Destination too small", nameof(array));
 		}
 
-		foreach (var entry in dictionary)
+		foreach (var entry in new ShufflingDictionaryEnumerator<TKey, TValue>(dictionary))
 		{
 			array[index++] = entry.Key;
 		}
 	}
 
-	internal static bool Keys_IsProperSubsetOf<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, IEnumerable<TKey> other)
+	internal static bool Keys_IsProperSubsetOf<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, IEnumerable<TKey> other)
+		where TKey : notnull
 	{
 		if (other is null)
 		{
@@ -73,7 +76,8 @@ internal static class DictionaryExtensions
 		return true;
 	}
 
-	internal static bool Keys_IsProperSupersetOf<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, IEnumerable<TKey> other)
+	internal static bool Keys_IsProperSupersetOf<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, IEnumerable<TKey> other)
+		where TKey : notnull
 	{
 		if (other is null)
 		{
@@ -103,7 +107,8 @@ internal static class DictionaryExtensions
 		return dictionary.Count > matchCount;
 	}
 
-	internal static bool Keys_IsSubsetOf<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, IEnumerable<TKey> other)
+	internal static bool Keys_IsSubsetOf<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, IEnumerable<TKey> other)
+		where TKey : notnull
 	{
 		if (other is null)
 		{
@@ -128,7 +133,8 @@ internal static class DictionaryExtensions
 		return true;
 	}
 
-	internal static bool Keys_IsSupersetOf<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, IEnumerable<TKey> other)
+	internal static bool Keys_IsSupersetOf<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, IEnumerable<TKey> other)
+		where TKey : notnull
 	{
 		if (other is null)
 		{
@@ -146,7 +152,8 @@ internal static class DictionaryExtensions
 		return true;
 	}
 
-	internal static bool Keys_Overlaps<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, IEnumerable<TKey> other)
+	internal static bool Keys_Overlaps<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, IEnumerable<TKey> other)
+		where TKey : notnull
 	{
 		if (other is null)
 		{
@@ -169,7 +176,8 @@ internal static class DictionaryExtensions
 		return false;
 	}
 
-	internal static bool Keys_SetEquals<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, IEnumerable<TKey> other)
+	internal static bool Keys_SetEquals<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, IEnumerable<TKey> other)
+		where TKey : notnull
 	{
 		if (other is null)
 		{

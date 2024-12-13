@@ -331,19 +331,17 @@ public static class ValueCollectionExtensions
 	public static ValueDictionary<TKey, TValue> ToValueDictionary<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> items)
 		where TKey : notnull
 	{
+		if (items is null)
+		{
+			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.items);
+		}
+
 		if (items is ValueDictionary<TKey, TValue> dictionary)
 		{
 			return dictionary;
 		}
 
-		if (items is ValueDictionary<TKey, TValue>.Builder builder)
-		{
-			return builder.ToValueDictionary();
-		}
-
-		var inner = ValueDictionary<TKey, TValue>.EnumerableToDictionary(items);
-
-		return ValueDictionary<TKey, TValue>.FromDictionaryUnsafe(inner);
+		return ValueDictionary<TKey, TValue>.CreateImmutableUnsafe(ValueDictionary<TKey, TValue>.EnumerableToDictionary(items));
 	}
 
 	/// <summary>
@@ -372,7 +370,7 @@ public static class ValueCollectionExtensions
 	{
 		var inner = items.ToDictionary(keySelector);
 
-		return ValueDictionary<TKey, TValue>.FromDictionaryUnsafe(inner);
+		return ValueDictionary<TKey, TValue>.CreateImmutableUnsafe(inner);
 	}
 
 	/// <summary>
@@ -405,9 +403,22 @@ public static class ValueCollectionExtensions
 	public static ValueDictionary<TKey, TValue> ToValueDictionary<TSource, TKey, TValue>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector, Func<TSource, TValue> valueSelector)
 		where TKey : notnull
 	{
-		var inner = source.ToDictionary(keySelector, valueSelector);
+		if (source is null)
+		{
+			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.source);
+		}
 
-		return ValueDictionary<TKey, TValue>.FromDictionaryUnsafe(inner);
+		if (keySelector is null)
+		{
+			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.keySelector);
+		}
+
+		if (valueSelector is null)
+		{
+			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.valueSelector);
+		}
+
+		return ValueDictionary<TKey, TValue>.CreateImmutableUnsafe(source.ToDictionary(keySelector, valueSelector));
 	}
 
 	/// <summary>
@@ -482,7 +493,7 @@ public static class ValueCollectionExtensions
 
 		var inner = ValueDictionary<TKey, TValue>.EnumerableToDictionary(items);
 
-		return ValueDictionary<TKey, TValue>.Builder.FromDictionaryUnsafe(inner);
+		return ValueDictionary<TKey, TValue>.Builder.CreateUnsafe(inner);
 	}
 
 	/// <summary>

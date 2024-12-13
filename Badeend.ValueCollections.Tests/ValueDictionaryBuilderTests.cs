@@ -110,8 +110,8 @@ public class ValueDictionaryBuilderTests
             Entry("a", 1),
         ]);
 
-        var dictionary1 = builder.ToValueDictionary();
-        var dictionary2 = builder.Build();
+        var dictionary1 = builder.Build();
+        var dictionary2 = builder.ToValueDictionary();
 
         Assert.True(object.ReferenceEquals(dictionary1, dictionary2));
     }

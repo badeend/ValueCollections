@@ -126,46 +126,46 @@ public partial class ValueDictionary<TKey, TValue>
 		bool ICollection<TKey>.Contains(TKey item) => this.dictionary.ContainsKey(item);
 
 		/// <inheritdoc/>
-		void ICollection<TKey>.CopyTo(TKey[] array, int index) => this.dictionary.Keys_CopyTo(array, index);
+		void ICollection<TKey>.CopyTo(TKey[] array, int index) => this.dictionary.inner.Keys_CopyTo(array, index);
 
 		/// <inheritdoc/>
-		bool ISet<TKey>.IsProperSubsetOf(IEnumerable<TKey> other) => this.dictionary.Keys_IsProperSubsetOf(other);
+		bool ISet<TKey>.IsProperSubsetOf(IEnumerable<TKey> other) => this.dictionary.inner.Keys_IsProperSubsetOf(other);
 
 		/// <inheritdoc/>
-		bool ISet<TKey>.IsProperSupersetOf(IEnumerable<TKey> other) => this.dictionary.Keys_IsProperSupersetOf(other);
+		bool ISet<TKey>.IsProperSupersetOf(IEnumerable<TKey> other) => this.dictionary.inner.Keys_IsProperSupersetOf(other);
 
 		/// <inheritdoc/>
-		bool ISet<TKey>.IsSubsetOf(IEnumerable<TKey> other) => this.dictionary.Keys_IsSubsetOf(other);
+		bool ISet<TKey>.IsSubsetOf(IEnumerable<TKey> other) => this.dictionary.inner.Keys_IsSubsetOf(other);
 
 		/// <inheritdoc/>
-		bool ISet<TKey>.IsSupersetOf(IEnumerable<TKey> other) => this.dictionary.Keys_IsSupersetOf(other);
+		bool ISet<TKey>.IsSupersetOf(IEnumerable<TKey> other) => this.dictionary.inner.Keys_IsSupersetOf(other);
 
 		/// <inheritdoc/>
-		bool ISet<TKey>.Overlaps(IEnumerable<TKey> other) => this.dictionary.Keys_Overlaps(other);
+		bool ISet<TKey>.Overlaps(IEnumerable<TKey> other) => this.dictionary.inner.Keys_Overlaps(other);
 
 		/// <inheritdoc/>
-		bool ISet<TKey>.SetEquals(IEnumerable<TKey> other) => this.dictionary.Keys_SetEquals(other);
+		bool ISet<TKey>.SetEquals(IEnumerable<TKey> other) => this.dictionary.inner.Keys_SetEquals(other);
 
 		/// <inheritdoc/>
 		bool IReadOnlySet<TKey>.Contains(TKey item) => this.dictionary.ContainsKey(item);
 
 		/// <inheritdoc/>
-		bool IReadOnlySet<TKey>.IsProperSubsetOf(IEnumerable<TKey> other) => this.dictionary.Keys_IsProperSubsetOf(other);
+		bool IReadOnlySet<TKey>.IsProperSubsetOf(IEnumerable<TKey> other) => this.dictionary.inner.Keys_IsProperSubsetOf(other);
 
 		/// <inheritdoc/>
-		bool IReadOnlySet<TKey>.IsProperSupersetOf(IEnumerable<TKey> other) => this.dictionary.Keys_IsProperSupersetOf(other);
+		bool IReadOnlySet<TKey>.IsProperSupersetOf(IEnumerable<TKey> other) => this.dictionary.inner.Keys_IsProperSupersetOf(other);
 
 		/// <inheritdoc/>
-		bool IReadOnlySet<TKey>.IsSubsetOf(IEnumerable<TKey> other) => this.dictionary.Keys_IsSubsetOf(other);
+		bool IReadOnlySet<TKey>.IsSubsetOf(IEnumerable<TKey> other) => this.dictionary.inner.Keys_IsSubsetOf(other);
 
 		/// <inheritdoc/>
-		bool IReadOnlySet<TKey>.IsSupersetOf(IEnumerable<TKey> other) => this.dictionary.Keys_IsSupersetOf(other);
+		bool IReadOnlySet<TKey>.IsSupersetOf(IEnumerable<TKey> other) => this.dictionary.inner.Keys_IsSupersetOf(other);
 
 		/// <inheritdoc/>
-		bool IReadOnlySet<TKey>.Overlaps(IEnumerable<TKey> other) => this.dictionary.Keys_Overlaps(other);
+		bool IReadOnlySet<TKey>.Overlaps(IEnumerable<TKey> other) => this.dictionary.inner.Keys_Overlaps(other);
 
 		/// <inheritdoc/>
-		bool IReadOnlySet<TKey>.SetEquals(IEnumerable<TKey> other) => this.dictionary.Keys_SetEquals(other);
+		bool IReadOnlySet<TKey>.SetEquals(IEnumerable<TKey> other) => this.dictionary.inner.Keys_SetEquals(other);
 
 		/// <inheritdoc/>
 		void ICollection<TKey>.Add(TKey item) => throw ImmutableException();

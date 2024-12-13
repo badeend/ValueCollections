@@ -126,7 +126,7 @@ public partial class ValueDictionary<TKey, TValue>
 		bool ICollection<TValue>.Contains(TValue item) => this.dictionary.ContainsValue(item);
 
 		/// <inheritdoc/>
-		void ICollection<TValue>.CopyTo(TValue[] array, int index) => this.dictionary.Values_CopyTo(array, index);
+		void ICollection<TValue>.CopyTo(TValue[] array, int index) => this.dictionary.inner.Values_CopyTo(array, index);
 
 		/// <inheritdoc/>
 		void ICollection<TValue>.Add(TValue item) => throw ImmutableException();
