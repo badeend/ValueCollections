@@ -17,7 +17,7 @@ public partial class ValueDictionary<TKey, TValue>
 	/// <content>
 	/// Values collections.
 	/// </content>
-	public partial class Builder
+	public partial struct Builder
 	{
 		/// <summary>
 		/// All values in the dictionary in no particular order.
@@ -32,12 +32,6 @@ public partial class ValueDictionary<TKey, TValue>
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get => new(this.Read());
 		}
-
-		/// <inheritdoc/>
-		ICollection<TValue> IDictionary<TKey, TValue>.Values => this.Values.AsCollection();
-
-		/// <inheritdoc/>
-		IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => this.Values.AsCollection();
 
 		/// <summary>
 		/// This type facilitates reading only the values of a dictionary.

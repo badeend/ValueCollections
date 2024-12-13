@@ -13,12 +13,12 @@ internal sealed class ValueDictionaryBuilderConverter<TKey, TValue>(JsonConverte
 	public override ValueDictionary<TKey, TValue>.Builder Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 	{
 		var builder = ValueDictionary.CreateBuilder<TKey, TValue>();
-		this.inner.ReadInto(ref reader, builder, options);
+		this.inner.ReadInto(ref reader, builder.AsCollection(), options);
 		return builder;
 	}
 
 	public override void Write(Utf8JsonWriter writer, ValueDictionary<TKey, TValue>.Builder dictionary, JsonSerializerOptions options)
 	{
-		this.inner.Write(writer, dictionary, options);
+		this.inner.Write(writer, dictionary.AsCollection(), options);
 	}
 }

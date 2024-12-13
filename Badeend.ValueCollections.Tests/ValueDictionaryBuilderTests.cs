@@ -17,8 +17,27 @@ public class ValueDictionaryBuilderTests
     {
         var a = ValueDictionary.CreateBuilder<string, int>([Entry("a", 1)]);
         var b = ValueDictionary.CreateBuilder<string, int>([Entry("a", 1)]);
+        ValueDictionary<string, int>.Builder c = b;
 
         Assert.True(a != b);
+        Assert.True(b == c);
+    }
+
+    [Fact]
+    public void Default()
+    {
+        ValueDictionary<string, int>.Builder a = default;
+#pragma warning disable CS0618 // Type or member is obsolete
+        ValueDictionary<string, int>.Builder b = new();
+#pragma warning restore CS0618 // Type or member is obsolete
+
+        Assert.True(a == b);
+
+        Assert.Equal(0, a.Count);
+        Assert.Equal([], a.ToValueDictionary());
+
+        Assert.Throws<InvalidOperationException>(() => a.Add("1", 1));
+        Assert.Throws<InvalidOperationException>(() => a.Build());
     }
 
     [Fact]
@@ -51,7 +70,7 @@ public class ValueDictionaryBuilderTests
 
         Assert.True(a.IsEmpty == true);
         Assert.True(a.Count == 0);
-        Assert.True(a.ToArray().Length == 0);
+        Assert.True(a.AsCollection().ToArray().Length == 0);
     }
 
     [Fact]
@@ -336,10 +355,10 @@ public class ValueDictionaryBuilderTests
         var input = Enumerable.Range(1, length).Select(i => new KeyValuePair<int, int>(i, i)).ToArray();
 
         // ToArray
-        AssertEnumerationOrder(input, s => s.ToArray());
+        AssertEnumerationOrder(input, s => s.AsCollection().ToArray());
 
         // IEnumerable.GetEnumerator
-        AssertEnumerationOrder(input, s => s.Select(x => x).ToArray());
+        AssertEnumerationOrder(input, s => s.AsCollection().Select(x => x).ToArray());
 
         // GetEnumerator
         AssertEnumerationOrder(input, s =>
@@ -356,14 +375,14 @@ public class ValueDictionaryBuilderTests
         AssertEnumerationOrder(input, s =>
         {
             var a = new KeyValuePair<int, int>[s.Count];
-            (s as ICollection<KeyValuePair<int, int>>).CopyTo(a, 0);
+            (s.AsCollection() as ICollection<KeyValuePair<int, int>>).CopyTo(a, 0);
             return a;
         });
 
         static void AssertEnumerationOrder(KeyValuePair<int, int>[] input, Func<ValueDictionary<int, int>.Builder, KeyValuePair<int, int>[]> transform)
         {
             var referenceDictionary = input.ToValueDictionaryBuilder();
-            var referenceOrder = referenceDictionary.ToArray();
+            var referenceOrder = referenceDictionary.AsCollection().ToArray();
             var changeCounter = 0;
 
             // Because we're dealing with randomness, run the tests a few times to reduce false positives.

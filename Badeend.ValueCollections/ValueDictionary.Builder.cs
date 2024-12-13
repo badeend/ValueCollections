@@ -1,4 +1,5 @@
 using System.Collections;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
@@ -26,7 +27,7 @@ public partial class ValueDictionary<TKey, TValue>
 	/// resulting dictionary.
 	///
 	/// For constructing <see cref="ValueDictionary{TKey, TValue}"/>s it is
-	/// recommended to use this class over e.g. <see cref="Dictionary{TKey, TValue}"/>.
+	/// recommended to use this type over e.g. <see cref="Dictionary{TKey, TValue}"/>.
 	/// This type can avoiding unnecessary copying by taking advantage of the
 	/// immutability of its results. Whereas calling <c>.ToValueDictionary()</c> on
 	/// a regular <see cref="Dictionary{TKey, TValue}"/> <em>always</em> performs a
@@ -34,10 +35,16 @@ public partial class ValueDictionary<TKey, TValue>
 	///
 	/// The order in which the entries are enumerated is undefined.
 	///
-	/// Unlike ValueDictionary, its Builder is <em>not</em> thread-safe.
+	/// To prevent accidental boxing, this type does not implement commonly used
+	/// interfaces such as <see cref="IEnumerable{T}"/> and
+	/// <see cref="IDictionary{TKey, TValue}"/>. You can still use these interfaces by
+	/// manually calling <see cref="AsCollection"/> instead.
+	///
+	/// Unlike the resulting ValueDictionary, its Builder is <em>not</em> thread-safe.
+	///
+	/// The <c>default</c> value is an empty read-only builder.
 	/// </remarks>
-	[SuppressMessage("Naming", "CA1710:Identifiers should have correct suffix", Justification = "Not applicable for Builder type.")]
-	public sealed partial class Builder : IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>
+	public readonly partial struct Builder : IEquatable<Builder>
 	{
 		/// <summary>
 		/// Only access this field through .Read() or .Mutate().
@@ -319,6 +326,22 @@ public partial class ValueDictionary<TKey, TValue>
 			set => this.MutateOnce()[key] = value;
 		}
 
+		/// <summary>
+		/// Create a new uninitialized builder.
+		///
+		/// An uninitialized builder behaves the same as an already built dictionary
+		/// with 0 items and 0 capacity. Reading from it will succeed, but
+		/// mutating it will throw.
+		///
+		/// This is the same as the <c>default</c> value.
+		/// </summary>
+		[Pure]
+		[Obsolete("This creates an uninitialized builder. Use ValueDictionary.CreateBuilder<TKey, TValue>() instead.")]
+		[EditorBrowsable(EditorBrowsableState.Never)]
+		public Builder()
+		{
+		}
+
 		// This takes ownership of the ValueDictionary
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private Builder(ValueDictionary<TKey, TValue> dictionary)
@@ -410,9 +433,6 @@ public partial class ValueDictionary<TKey, TValue>
 		[Pure]
 		public bool ContainsKey(TKey key) => this.ReadOnce().ContainsKey(key);
 
-		/// <inheritdoc/>
-		bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> item) => this.ReadOnce().Contains(item);
-
 		/// <summary>
 		/// Attempt to get the value associated with the specified <paramref name="key"/>.
 		/// Returns <see langword="false"/> when the key was not found.
@@ -458,32 +478,6 @@ public partial class ValueDictionary<TKey, TValue>
 			}
 		}
 
-		/// <inheritdoc/>
-		void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
-		{
-			if (array is null)
-			{
-				throw new ArgumentNullException(nameof(array));
-			}
-
-			if (arrayIndex < 0 || arrayIndex > array.Length)
-			{
-				throw new ArgumentOutOfRangeException(nameof(arrayIndex));
-			}
-
-			if (array.Length - arrayIndex < this.Count)
-			{
-				throw new ArgumentException("Destination too short", nameof(arrayIndex));
-			}
-
-			var index = arrayIndex;
-			foreach (var item in this)
-			{
-				array[index] = item;
-				index++;
-			}
-		}
-
 		/// <summary>
 		/// Attempt to add the <paramref name="key"/> and <paramref name="value"/>
 		/// to the dictionary. Returns <see langword="false"/> when the key was
@@ -523,12 +517,6 @@ public partial class ValueDictionary<TKey, TValue>
 			this.MutateOnce().Add(key, value);
 			return this;
 		}
-
-		/// <inheritdoc/>
-		void IDictionary<TKey, TValue>.Add(TKey key, TValue value) => this.Add(key, value);
-
-		/// <inheritdoc/>
-		void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item) => this.Add(item.Key, item.Value);
 
 		/// <summary>
 		/// Add multiple entries to the dictionary.
@@ -684,12 +672,6 @@ public partial class ValueDictionary<TKey, TValue>
 			return this;
 		}
 
-		/// <inheritdoc/>
-		bool IDictionary<TKey, TValue>.Remove(TKey key) => this.TryRemove(key);
-
-		/// <inheritdoc/>
-		bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item) => ((ICollection<KeyValuePair<TKey, TValue>>)this.MutateOnce()).Remove(item);
-
 		/// <summary>
 		/// Remove the provided <paramref name="keys"/> from the dictionary.
 		/// </summary>
@@ -740,9 +722,6 @@ public partial class ValueDictionary<TKey, TValue>
 			return this;
 		}
 
-		/// <inheritdoc/>
-		void ICollection<KeyValuePair<TKey, TValue>>.Clear() => this.Clear();
-
 		/// <summary>
 		/// Reduce the capacity of this dictionary as much as possible. After calling this
 		/// method, the <c>Capacity</c> of the dictionary may still be higher than
@@ -777,21 +756,143 @@ public partial class ValueDictionary<TKey, TValue>
 			return this;
 		}
 
-		/// <inheritdoc/>
-		IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator()
-		{
-			if (this.Count == 0)
-			{
-				return EnumeratorLike.Empty<KeyValuePair<TKey, TValue>>();
-			}
-			else
-			{
-				return EnumeratorLike.AsIEnumerator<KeyValuePair<TKey, TValue>, Enumerator>(new Enumerator(this.Read()));
-			}
-		}
+		/// <summary>
+		/// Create a new heap-allocated live view of the builder.
+		/// </summary>
+		/// <remarks>
+		/// This method is an <c>O(1)</c> operation and allocates a new fixed-size
+		/// collection instance. The items are not copied. Changes made to the
+		/// builder are visible in the collection and vice versa.
+		/// </remarks>
+		public Collection AsCollection() => new Collection(this);
 
-		/// <inheritdoc/>
-		IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<KeyValuePair<TKey, TValue>>)this).GetEnumerator();
+#pragma warning disable CA1034 // Nested types should not be visible
+		/// <summary>
+		/// A heap-allocated live view of a builder. Changes made to the
+		/// collection are visible in the builder and vice versa.
+		/// </summary>
+		public sealed class Collection : IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>
+		{
+			private readonly Builder builder;
+
+			/// <summary>
+			/// The underlying builder.
+			/// </summary>
+			public Builder Builder => this.builder;
+
+			internal Collection(Builder builder)
+			{
+				this.builder = builder;
+			}
+
+			/// <inheritdoc/>
+			bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => this.builder.IsReadOnly;
+
+			/// <inheritdoc/>
+			int ICollection<KeyValuePair<TKey, TValue>>.Count => this.builder.Count;
+
+			/// <inheritdoc/>
+			int IReadOnlyCollection<KeyValuePair<TKey, TValue>>.Count => this.builder.Count;
+
+			/// <inheritdoc/>
+			ICollection<TKey> IDictionary<TKey, TValue>.Keys => this.builder.Keys.AsCollection();
+
+			/// <inheritdoc/>
+			IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => this.builder.Keys.AsCollection();
+
+			/// <inheritdoc/>
+			ICollection<TValue> IDictionary<TKey, TValue>.Values => this.builder.Values.AsCollection();
+
+			/// <inheritdoc/>
+			IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => this.builder.Values.AsCollection();
+
+			/// <inheritdoc/>
+			TValue IReadOnlyDictionary<TKey, TValue>.this[TKey key] => this.builder[key];
+
+			/// <inheritdoc/>
+			TValue IDictionary<TKey, TValue>.this[TKey key]
+			{
+				get => this.builder[key];
+				set => this.builder[key] = value;
+			}
+
+			/// <inheritdoc/>
+			bool IReadOnlyDictionary<TKey, TValue>.ContainsKey(TKey key) => this.builder.ContainsKey(key);
+
+			/// <inheritdoc/>
+#pragma warning disable CS8601 // Possible null reference assignment.
+			bool IReadOnlyDictionary<TKey, TValue>.TryGetValue(TKey key, out TValue value) => this.builder.TryGetValue(key, out value);
+#pragma warning restore CS8601 // Possible null reference assignment.
+
+			/// <inheritdoc/>
+			void IDictionary<TKey, TValue>.Add(TKey key, TValue value) => this.builder.Add(key, value);
+
+			/// <inheritdoc/>
+			bool IDictionary<TKey, TValue>.ContainsKey(TKey key) => this.builder.ContainsKey(key);
+
+			/// <inheritdoc/>
+			bool IDictionary<TKey, TValue>.Remove(TKey key) => this.builder.TryRemove(key);
+
+			/// <inheritdoc/>
+#pragma warning disable CS8601 // Possible null reference assignment.
+			bool IDictionary<TKey, TValue>.TryGetValue(TKey key, out TValue value) => this.builder.TryGetValue(key, out value);
+#pragma warning restore CS8601 // Possible null reference assignment.
+
+			/// <inheritdoc/>
+			void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item) => this.builder.Add(item.Key, item.Value);
+
+			/// <inheritdoc/>
+			void ICollection<KeyValuePair<TKey, TValue>>.Clear() => this.builder.Clear();
+
+			/// <inheritdoc/>
+			bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> item) => this.builder.ReadOnce().Contains(item);
+
+			/// <inheritdoc/>
+			void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
+			{
+				if (array is null)
+				{
+					throw new ArgumentNullException(nameof(array));
+				}
+
+				if (arrayIndex < 0 || arrayIndex > array.Length)
+				{
+					throw new ArgumentOutOfRangeException(nameof(arrayIndex));
+				}
+
+				if (array.Length - arrayIndex < this.Builder.Count)
+				{
+					throw new ArgumentException("Destination too short", nameof(arrayIndex));
+				}
+
+				var index = arrayIndex;
+				foreach (var item in this)
+				{
+					array[index] = item;
+					index++;
+				}
+			}
+
+			/// <inheritdoc/>
+			bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item) => ((ICollection<KeyValuePair<TKey, TValue>>)this.Builder.MutateOnce()).Remove(item);
+
+			/// <inheritdoc/>
+			IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator()
+			{
+				if (this.builder.Count == 0)
+				{
+					return EnumeratorLike.Empty<KeyValuePair<TKey, TValue>>();
+				}
+				else
+				{
+					return EnumeratorLike.AsIEnumerator<KeyValuePair<TKey, TValue>, Enumerator>(this.builder.GetEnumerator());
+				}
+			}
+
+			/// <inheritdoc/>
+			IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<KeyValuePair<TKey, TValue>>)this).GetEnumerator();
+		}
+#pragma warning restore CA1034 // Nested types should not be visible
 
 		/// <summary>
 		/// Returns an enumerator for this <see cref="ValueDictionary{TKey, TValue}.Builder"/>.
@@ -873,6 +974,36 @@ public partial class ValueDictionary<TKey, TValue>
 			builder.Append(']');
 			return builder.ToString();
 		}
+
+		/// <inheritdoc/>
+		[Pure]
+		public override int GetHashCode() => RuntimeHelpers.GetHashCode(this.dictionary);
+
+		/// <summary>
+		/// Returns <see langword="true"/> when the two builders refer to the same allocation.
+		/// </summary>
+		[Pure]
+		public bool Equals(Builder other) => object.ReferenceEquals(this.dictionary, other.dictionary);
+
+#pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
+		/// <inheritdoc/>
+		[Pure]
+		[Obsolete("Avoid boxing. Use == instead.")]
+		[EditorBrowsable(EditorBrowsableState.Never)]
+		public override bool Equals(object? obj) => obj is Builder builder && obj.Equals(builder);
+#pragma warning restore CS0809 // Obsolete member overrides non-obsolete member
+
+		/// <summary>
+		/// Check for equality.
+		/// </summary>
+		[Pure]
+		public static bool operator ==(Builder left, Builder right) => left.Equals(right);
+
+		/// <summary>
+		/// Check for inequality.
+		/// </summary>
+		[Pure]
+		public static bool operator !=(Builder left, Builder right) => !left.Equals(right);
 
 		private static NotSupportedException ImmutableException() => new("Collection is immutable");
 	}

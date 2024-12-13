@@ -57,7 +57,7 @@ public abstract class JsonTests
 		Assert.Empty(Deserialize<ValueSet<string?>.Builder>("[]").AsCollection());
 		Assert.Empty(Deserialize<Dictionary<string, string?>?>("{}")!);
 		Assert.Empty(Deserialize<ValueDictionary<string, string?>?>("{}")!);
-		Assert.Empty(Deserialize<ValueDictionary<string, string?>.Builder?>("{}")!);
+		Assert.Empty(Deserialize<ValueDictionary<string, string?>.Builder>("{}")!.AsCollection());
 	}
 
 	[Fact]
@@ -161,8 +161,8 @@ public abstract class JsonTests
 		Assert.True(dictionary["b"] == null);
 		Assert.True(dictionary["c"] == "3");
 
-		var dictionaryBuilder = Deserialize<ValueDictionary<string, string?>.Builder?>(objectJson)!;
-		Assert.True(dictionaryBuilder!.Count == 3);
+		var dictionaryBuilder = Deserialize<ValueDictionary<string, string?>.Builder>(objectJson)!;
+		Assert.True(dictionaryBuilder.Count == 3);
 		Assert.True(dictionaryBuilder["a"] == "1");
 		Assert.True(dictionaryBuilder["b"] == null);
 		Assert.True(dictionaryBuilder["c"] == "3");

@@ -34,7 +34,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         protected override IDictionary<TKey, TValue> GenericIDictionaryFactory(int count)
         {
             var collection = ValueDictionary.CreateBuilder<TKey, TValue>();
-            AddToCollection(collection, count);
+            AddToCollection(collection.AsCollection(), count);
             return collection.Build();
         }
 
@@ -74,7 +74,7 @@ namespace Badeend.ValueCollections.Tests.Reference
             var dictionary = ((ValueDictionary<TKey, TValue>)GenericIDictionaryFactory(count)).ToBuilder();
             int seed = 4315;
             KeyValuePair<TKey, TValue> notPresent = CreateT(seed++);
-            while (dictionary.Contains(notPresent))
+            while (dictionary.AsCollection().Contains(notPresent))
                 notPresent = CreateT(seed++);
             dictionary.Add(notPresent.Key, notPresent.Value);
             Assert.True(dictionary.Build().ContainsValue(notPresent.Value));

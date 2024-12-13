@@ -509,11 +509,6 @@ public static class ValueCollectionExtensions
 	public static ValueDictionary<TKey, TValue>.Builder AddRange<TKey, TValue>(this ValueDictionary<TKey, TValue>.Builder builder, scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
 		where TKey : notnull
 	{
-		if (builder is null)
-		{
-			throw new ArgumentNullException(nameof(builder));
-		}
-
 		return builder.AddRangeSpan(items);
 	}
 
@@ -530,11 +525,6 @@ public static class ValueCollectionExtensions
 	public static ValueDictionary<TKey, TValue>.Builder SetItems<TKey, TValue>(this ValueDictionary<TKey, TValue>.Builder builder, scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
 		where TKey : notnull
 	{
-		if (builder is null)
-		{
-			throw new ArgumentNullException(nameof(builder));
-		}
-
 		return builder.SetItemsSpan(items);
 	}
 
@@ -547,11 +537,6 @@ public static class ValueCollectionExtensions
 	public static ValueDictionary<TKey, TValue>.Builder RemoveRange<TKey, TValue>(this ValueDictionary<TKey, TValue>.Builder builder, scoped ReadOnlySpan<TKey> keys)
 		where TKey : notnull
 	{
-		if (builder is null)
-		{
-			throw new ArgumentNullException(nameof(builder));
-		}
-
 		return builder.RemoveRangeSpan(keys);
 	}
 }

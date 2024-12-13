@@ -13,13 +13,13 @@ internal sealed class ValueDictionaryBuilderConverter<TKey, TValue> : JsonConver
 	internal override ValueDictionary<TKey, TValue>.Builder ReadJson(JsonReader reader, JsonSerializer serializer)
 	{
 		var builder = ValueDictionary.CreateBuilder<TKey, TValue>();
-		serializer.Populate(reader, builder);
+		serializer.Populate(reader, builder.AsCollection());
 		return builder;
 	}
 
 	internal override void WriteJson(JsonWriter writer, ValueDictionary<TKey, TValue>.Builder dictionary, JsonSerializer serializer)
 	{
-		var wrapper = dictionary.IsEmpty ? EmptyReadOnlyDictionary : new(dictionary);
+		var wrapper = dictionary.IsEmpty ? EmptyReadOnlyDictionary : new(dictionary.AsCollection());
 
 		serializer.Serialize(writer, wrapper);
 	}
