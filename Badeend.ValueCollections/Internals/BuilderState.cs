@@ -63,7 +63,7 @@ internal static class BuilderState
 	{
 		hashCode = Volatile.Read(ref state);
 
-		Debug.Assert(IsImmutable(hashCode));
+		Polyfills.DebugAssert(IsImmutable(hashCode));
 
 		return hashCode != InitialImmutable;
 	}
@@ -85,8 +85,8 @@ internal static class BuilderState
 			hashCode = -42; // Obviously :)
 		}
 
-		Debug.Assert(IsImmutable(hashCode));
-		Debug.Assert(hashCode != InitialImmutable);
+		Polyfills.DebugAssert(IsImmutable(hashCode));
+		Polyfills.DebugAssert(hashCode != InitialImmutable);
 
 		Volatile.Write(ref state, hashCode);
 

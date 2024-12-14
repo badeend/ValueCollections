@@ -109,7 +109,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			}
 		}
 
-		Debug.Assert(this.Count == source.Count);
+		Polyfills.DebugAssert(this.Count == source.Count);
 	}
 
 	internal RawSet(scoped ReadOnlySpan<T> source)
@@ -187,13 +187,13 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			return;
 		}
 
-		Debug.Assert(this.buckets != null, "_buckets should be non-null");
-		Debug.Assert(this.entries != null, "_entries should be non-null");
+		Polyfills.DebugAssert(this.buckets != null, "_buckets should be non-null");
+		Polyfills.DebugAssert(this.entries != null, "_entries should be non-null");
 
 #if NET6_0_OR_GREATER
 		Array.Clear(this.buckets);
 #else
-		Array.Clear(this.buckets, 0, this.buckets!.Length);
+		Array.Clear(this.buckets, 0, this.buckets.Length);
 #endif
 		this.end = 0;
 		this.firstFreeIndex = -1;
@@ -212,7 +212,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		}
 
 		var entries = this.entries;
-		Debug.Assert(entries != null, "Expected _entries to be initialized");
+		Polyfills.DebugAssert(entries != null, "Expected _entries to be initialized");
 
 		uint collisionCount = 0;
 		var comparer = new DefaultEqualityComparer<T>();
@@ -221,9 +221,9 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		var i = this.GetBucketRef(hashCode) - 1; // Value in _buckets is 1-based
 		while (i >= 0)
 		{
-			Debug.Assert(i < this.end);
+			Polyfills.DebugAssert(i < this.end);
 
-			ref Entry entry = ref entries![i];
+			ref Entry entry = ref entries[i];
 			if (entry.HashCode == hashCode && comparer.Equals(entry.Value, item))
 			{
 				return i;
@@ -232,7 +232,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			i = entry.Next;
 
 			collisionCount++;
-			if (collisionCount > (uint)entries!.Length)
+			if (collisionCount > (uint)entries.Length)
 			{
 				// The chain of entries forms a loop, which means a concurrent update has happened.
 				ThrowHelpers.ThrowInvalidOperationException_ConcurrentOperationsNotSupported();
@@ -259,7 +259,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		}
 
 		var entries = this.entries;
-		Debug.Assert(entries != null, "entries should be non-null");
+		Polyfills.DebugAssert(entries != null, "entries should be non-null");
 
 		uint collisionCount = 0;
 		var last = -1;
@@ -272,22 +272,22 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 
 		while (i >= 0)
 		{
-			Debug.Assert(i < this.end);
-			ref Entry entry = ref entries![i];
+			Polyfills.DebugAssert(i < this.end);
+			ref Entry entry = ref entries[i];
 
 			if (entry.HashCode == hashCode && comparer.Equals(entry.Value, item))
 			{
 				if (last < 0)
 				{
-					Debug.Assert(entry.Next < this.end);
+					Polyfills.DebugAssert(entry.Next < this.end);
 					bucket = entry.Next + 1; // Value in buckets is 1-based
 				}
 				else
 				{
-					entries![last].Next = entry.Next;
+					entries[last].Next = entry.Next;
 				}
 
-				Debug.Assert((StartOfFreeList - this.firstFreeIndex) < 0, "shouldn't underflow because max hashtable length is MaxPrimeArrayLength = 0x7FEFFFFD(2146435069) _freelist underflow threshold 2147483646");
+				Polyfills.DebugAssert((StartOfFreeList - this.firstFreeIndex) < 0, "shouldn't underflow because max hashtable length is MaxPrimeArrayLength = 0x7FEFFFFD(2146435069) _freelist underflow threshold 2147483646");
 				entry.Next = StartOfFreeList - this.firstFreeIndex;
 
 				if (Polyfills.IsReferenceOrContainsReferences<T>())
@@ -304,7 +304,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			i = entry.Next;
 
 			collisionCount++;
-			if (collisionCount > (uint)entries!.Length)
+			if (collisionCount > (uint)entries.Length)
 			{
 				// The chain of entries forms a loop; which means a concurrent update has happened.
 				// Break out of the loop and throw, rather than looping forever.
@@ -334,7 +334,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			var index = this.FindItemIndex(equalValue);
 			if (index >= 0)
 			{
-				Debug.Assert(index < this.end);
+				Polyfills.DebugAssert(index < this.end);
 
 				actualValue = this.entries![index].Value;
 				return true;
@@ -1333,13 +1333,13 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 
 	private void Resize(int newCapacity)
 	{
-		Debug.Assert(this.entries != null, "_entries should be non-null");
-		Debug.Assert(newCapacity >= this.entries!.Length);
+		Polyfills.DebugAssert(this.entries != null, "_entries should be non-null");
+		Polyfills.DebugAssert(newCapacity >= this.entries.Length);
 
 		var entries = new Entry[newCapacity];
 
 		int end = this.end;
-		Array.Copy(this.entries!, entries, end);
+		Array.Copy(this.entries, entries, end);
 
 		// Assign member variables after both arrays allocated to guard against corruption from OOM if second fails
 		this.buckets = new int[newCapacity];
@@ -1424,10 +1424,10 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			this.Initialize(0);
 		}
 
-		Debug.Assert(this.buckets != null);
+		Polyfills.DebugAssert(this.buckets != null);
 
 		Entry[]? entries = this.entries;
-		Debug.Assert(entries != null, "expected entries to be non-null");
+		Polyfills.DebugAssert(entries != null, "expected entries to be non-null");
 
 		var comparer = new DefaultEqualityComparer<T>();
 
@@ -1438,9 +1438,9 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		int i = bucket - 1; // Value in _buckets is 1-based
 		while (i >= 0)
 		{
-			Debug.Assert(i < this.end);
+			Polyfills.DebugAssert(i < this.end);
 
-			ref Entry entry = ref entries![i];
+			ref Entry entry = ref entries[i];
 			if (entry.HashCode == hashCode && comparer.Equals(entry.Value, value))
 			{
 				return false;
@@ -1449,7 +1449,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			i = entry.Next;
 
 			collisionCount++;
-			if (collisionCount > (uint)entries!.Length)
+			if (collisionCount > (uint)entries.Length)
 			{
 				// The chain of entries forms a loop, which means a concurrent update has happened.
 				ThrowHelpers.ThrowInvalidOperationException_ConcurrentOperationsNotSupported();
@@ -1461,13 +1461,13 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		{
 			index = this.firstFreeIndex;
 			this.freeCount--;
-			Debug.Assert((StartOfFreeList - entries![this.firstFreeIndex].Next) >= -1, "shouldn't overflow because `next` cannot underflow");
-			this.firstFreeIndex = StartOfFreeList - entries![this.firstFreeIndex].Next;
+			Polyfills.DebugAssert((StartOfFreeList - entries[this.firstFreeIndex].Next) >= -1, "shouldn't overflow because `next` cannot underflow");
+			this.firstFreeIndex = StartOfFreeList - entries[this.firstFreeIndex].Next;
 		}
 		else
 		{
 			int end = this.end;
-			if (end == entries!.Length)
+			if (end == entries.Length)
 			{
 				this.Resize(HashHelpers.ExpandPrime(end));
 				bucket = ref this.GetBucketRef(hashCode);
@@ -1476,12 +1476,14 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			index = end;
 			this.end = end + 1;
 			entries = this.entries;
+
+			Polyfills.DebugAssert(entries is not null);
 		}
 
 		{
-			Debug.Assert(index < this.end);
+			Polyfills.DebugAssert(index < this.end);
 
-			ref Entry entry = ref entries![index];
+			ref Entry entry = ref entries[index];
 			entry.HashCode = hashCode;
 			entry.Next = bucket - 1; // Value in _buckets is 1-based
 			entry.Value = value;
@@ -1504,7 +1506,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		{
 			get
 			{
-				Debug.Assert(this.unmarked >= 0);
+				Polyfills.DebugAssert(this.unmarked >= 0);
 
 				return this.unmarked;
 			}

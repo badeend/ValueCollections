@@ -79,7 +79,7 @@ internal static class Polyfills
 	// Adapted from: https://github.com/dotnet/runtime/blob/6be24fd37e7d9f04c7fa903b8b6912c3eafe7198/src/libraries/System.Security.Cryptography/src/System/Security/Cryptography/RandomNumberGenerator.cs#L103
 	private static int GetRandomInt32(int fromInclusive, int toExclusive)
 	{
-		Debug.Assert(fromInclusive < toExclusive);
+		Polyfills.DebugAssert(fromInclusive < toExclusive);
 
 		// The total possible range is [0, 4,294,967,295).
 		// Subtract one to account for zero being an actual possibility.

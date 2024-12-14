@@ -93,7 +93,7 @@ internal static class HashHelpers
 		// Note that this check works even when _items.Length overflowed thanks to the (uint) cast
 		if ((uint)newSize > MaxPrimeArrayLength && oldSize < MaxPrimeArrayLength)
 		{
-			Debug.Assert(GetPrime(MaxPrimeArrayLength) == MaxPrimeArrayLength, "Invalid MaxPrimeArrayLength");
+			Polyfills.DebugAssert(GetPrime(MaxPrimeArrayLength) == MaxPrimeArrayLength, "Invalid MaxPrimeArrayLength");
 			return MaxPrimeArrayLength;
 		}
 

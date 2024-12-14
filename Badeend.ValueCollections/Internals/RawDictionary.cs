@@ -298,7 +298,7 @@ internal struct RawDictionary<TKey, TValue>
 #if NET6_0_OR_GREATER
 			Array.Clear(this.buckets);
 #else
-			Array.Clear(this.buckets, 0, this.buckets!.Length);
+			Array.Clear(this.buckets, 0, this.buckets.Length);
 #endif
 
 			this.end = 0;

@@ -151,7 +151,7 @@ public sealed partial class ValueList<T>
 				// materialized afterwards.
 				if (BuilderState.IsImmutable(this.expectedState))
 				{
-					Debug.Assert(BuilderState.IsImmutable(this.list.state));
+					Polyfills.DebugAssert(BuilderState.IsImmutable(this.list.state));
 
 					return;
 				}
@@ -178,7 +178,7 @@ public sealed partial class ValueList<T>
 				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get
 				{
-					Debug.Assert(this.list.state == BuilderState.ExclusiveMode);
+					Polyfills.DebugAssert(this.list.state == BuilderState.ExclusiveMode);
 
 					return ref this.list.inner;
 				}
@@ -194,7 +194,7 @@ public sealed partial class ValueList<T>
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public void Dispose()
 			{
-				Debug.Assert(this.list.state == BuilderState.ExclusiveMode);
+				Polyfills.DebugAssert(this.list.state == BuilderState.ExclusiveMode);
 
 				this.list.state = this.restoreState;
 			}
@@ -235,7 +235,7 @@ public sealed partial class ValueList<T>
 			var stateToRestore = list.state + 1;
 			list.state = BuilderState.ExclusiveMode;
 
-			Debug.Assert(BuilderState.IsMutable(stateToRestore));
+			Polyfills.DebugAssert(BuilderState.IsMutable(stateToRestore));
 
 			return new MutationGuard(list, stateToRestore);
 		}
@@ -252,7 +252,7 @@ public sealed partial class ValueList<T>
 
 			list.state++;
 
-			Debug.Assert(BuilderState.IsMutable(list.state));
+			Polyfills.DebugAssert(BuilderState.IsMutable(list.state));
 
 			return ref list.inner;
 		}
@@ -283,7 +283,7 @@ public sealed partial class ValueList<T>
 			}
 			else
 			{
-				Debug.Assert(BuilderState.IsImmutable(list.state));
+				Polyfills.DebugAssert(BuilderState.IsImmutable(list.state));
 
 				ThrowHelpers.ThrowInvalidOperationException_AlreadyBuilt();
 			}
@@ -341,7 +341,7 @@ public sealed partial class ValueList<T>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private Builder(ValueList<T> list)
 		{
-			Debug.Assert(BuilderState.IsMutable(list.state));
+			Polyfills.DebugAssert(BuilderState.IsMutable(list.state));
 
 			this.list = list;
 		}

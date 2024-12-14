@@ -154,7 +154,7 @@ public partial class ValueDictionary<TKey, TValue>
 				// materialized afterwards.
 				if (BuilderState.IsImmutable(this.expectedState))
 				{
-					Debug.Assert(BuilderState.IsImmutable(this.dictionary.state));
+					Polyfills.DebugAssert(BuilderState.IsImmutable(this.dictionary.state));
 
 					return;
 				}
@@ -181,7 +181,7 @@ public partial class ValueDictionary<TKey, TValue>
 				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get
 				{
-					Debug.Assert(this.dictionary.state == BuilderState.ExclusiveMode);
+					Polyfills.DebugAssert(this.dictionary.state == BuilderState.ExclusiveMode);
 
 					return ref this.dictionary.inner;
 				}
@@ -197,7 +197,7 @@ public partial class ValueDictionary<TKey, TValue>
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public void Dispose()
 			{
-				Debug.Assert(this.dictionary.state == BuilderState.ExclusiveMode);
+				Polyfills.DebugAssert(this.dictionary.state == BuilderState.ExclusiveMode);
 
 				this.dictionary.state = this.restoreState;
 			}
@@ -238,7 +238,7 @@ public partial class ValueDictionary<TKey, TValue>
 			var stateToRestore = dictionary.state + 1;
 			dictionary.state = BuilderState.ExclusiveMode;
 
-			Debug.Assert(BuilderState.IsMutable(stateToRestore));
+			Polyfills.DebugAssert(BuilderState.IsMutable(stateToRestore));
 
 			return new MutationGuard(dictionary, stateToRestore);
 		}
@@ -255,7 +255,7 @@ public partial class ValueDictionary<TKey, TValue>
 
 			dictionary.state++;
 
-			Debug.Assert(BuilderState.IsMutable(dictionary.state));
+			Polyfills.DebugAssert(BuilderState.IsMutable(dictionary.state));
 
 			return ref dictionary.inner;
 		}
@@ -286,7 +286,7 @@ public partial class ValueDictionary<TKey, TValue>
 			}
 			else
 			{
-				Debug.Assert(BuilderState.IsImmutable(dictionary.state));
+				Polyfills.DebugAssert(BuilderState.IsImmutable(dictionary.state));
 
 				ThrowHelpers.ThrowInvalidOperationException_AlreadyBuilt();
 			}
@@ -344,7 +344,7 @@ public partial class ValueDictionary<TKey, TValue>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private Builder(ValueDictionary<TKey, TValue> dictionary)
 		{
-			Debug.Assert(BuilderState.IsMutable(dictionary.state));
+			Polyfills.DebugAssert(BuilderState.IsMutable(dictionary.state));
 
 			this.dictionary = dictionary;
 		}

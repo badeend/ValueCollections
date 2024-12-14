@@ -56,9 +56,9 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal RawList(T[] items, int size)
 	{
-		Debug.Assert(items is not null);
-		Debug.Assert(size >= 0);
-		Debug.Assert(size <= items!.Length);
+		Polyfills.DebugAssert(items is not null);
+		Polyfills.DebugAssert(size >= 0);
+		Polyfills.DebugAssert(size <= items.Length);
 
 		this.items = items;
 		this.size = size;
@@ -180,7 +180,7 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	private void AddWithResize(T item)
 	{
-		Debug.Assert(this.size == this.items.Length);
+		Polyfills.DebugAssert(this.size == this.items.Length);
 
 		int size = this.size;
 		this.Grow(size + 1);
@@ -192,7 +192,7 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 
 	internal void AddRange(scoped ReadOnlySpan<T> items)
 	{
-		Debug.Assert(this.items.AsSpan().Overlaps(items) == false);
+		Polyfills.DebugAssert(this.items.AsSpan().Overlaps(items) == false);
 
 		if (items.IsEmpty)
 		{
@@ -277,7 +277,7 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 
 	internal void InsertRange(int index, scoped ReadOnlySpan<T> items)
 	{
-		Debug.Assert(this.items.AsSpan().Overlaps(items) == false);
+		Polyfills.DebugAssert(this.items.AsSpan().Overlaps(items) == false);
 
 		if ((uint)index > (uint)this.size)
 		{
@@ -390,7 +390,7 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 	// This assumes Mutate has already been called and that `index` is valid.
 	private void RemoveAtUnsafe(int index)
 	{
-		Debug.Assert((uint)index < (uint)this.size);
+		Polyfills.DebugAssert((uint)index < (uint)this.size);
 
 		this.size--;
 		if (index < this.size)
@@ -580,7 +580,7 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 	/// </summary>
 	private void GrowForInsertion(int indexToInsert, int insertionCount = 1)
 	{
-		Debug.Assert(insertionCount > 0);
+		Polyfills.DebugAssert(insertionCount > 0);
 
 		int requiredCapacity = checked(this.size + insertionCount);
 		int newCapacity = this.GetNewCapacity(requiredCapacity);
@@ -629,7 +629,7 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private readonly int GetNewCapacity(int capacity)
 	{
-		Debug.Assert(this.items.Length < capacity);
+		Polyfills.DebugAssert(this.items.Length < capacity);
 
 		int newCapacity = this.items.Length == 0 ? DefaultCapacity : 2 * this.items.Length;
 

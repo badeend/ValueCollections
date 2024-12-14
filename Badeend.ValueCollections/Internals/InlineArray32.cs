@@ -54,14 +54,14 @@ internal struct InlineArray32<T>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		get
 		{
-			Debug.Assert(index >= 0 && index < Length);
+			Polyfills.DebugAssert(index >= 0 && index < Length);
 			return Unsafe.Add(ref this._0, index);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		set
 		{
-			Debug.Assert(index >= 0 && index < Length);
+			Polyfills.DebugAssert(index >= 0 && index < Length);
 			Unsafe.Add(ref this._0, index) = value;
 		}
 	}

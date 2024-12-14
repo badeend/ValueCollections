@@ -157,7 +157,7 @@ public sealed partial class ValueSet<T>
 				// materialized afterwards.
 				if (BuilderState.IsImmutable(this.expectedState))
 				{
-					Debug.Assert(BuilderState.IsImmutable(this.set.state));
+					Polyfills.DebugAssert(BuilderState.IsImmutable(this.set.state));
 
 					return;
 				}
@@ -184,7 +184,7 @@ public sealed partial class ValueSet<T>
 				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get
 				{
-					Debug.Assert(this.set.state == BuilderState.ExclusiveMode);
+					Polyfills.DebugAssert(this.set.state == BuilderState.ExclusiveMode);
 
 					return ref this.set.inner;
 				}
@@ -200,7 +200,7 @@ public sealed partial class ValueSet<T>
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public void Dispose()
 			{
-				Debug.Assert(this.set.state == BuilderState.ExclusiveMode);
+				Polyfills.DebugAssert(this.set.state == BuilderState.ExclusiveMode);
 
 				this.set.state = this.restoreState;
 			}
@@ -241,7 +241,7 @@ public sealed partial class ValueSet<T>
 			var stateToRestore = set.state + 1;
 			set.state = BuilderState.ExclusiveMode;
 
-			Debug.Assert(BuilderState.IsMutable(stateToRestore));
+			Polyfills.DebugAssert(BuilderState.IsMutable(stateToRestore));
 
 			return new MutationGuard(set, stateToRestore);
 		}
@@ -258,7 +258,7 @@ public sealed partial class ValueSet<T>
 
 			set.state++;
 
-			Debug.Assert(BuilderState.IsMutable(set.state));
+			Polyfills.DebugAssert(BuilderState.IsMutable(set.state));
 
 			return ref set.inner;
 		}
@@ -289,7 +289,7 @@ public sealed partial class ValueSet<T>
 			}
 			else
 			{
-				Debug.Assert(BuilderState.IsImmutable(set.state));
+				Polyfills.DebugAssert(BuilderState.IsImmutable(set.state));
 
 				ThrowHelpers.ThrowInvalidOperationException_AlreadyBuilt();
 			}
@@ -337,7 +337,7 @@ public sealed partial class ValueSet<T>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private Builder(ValueSet<T> set)
 		{
-			Debug.Assert(BuilderState.IsMutable(set.state));
+			Polyfills.DebugAssert(BuilderState.IsMutable(set.state));
 
 			this.set = set;
 		}
