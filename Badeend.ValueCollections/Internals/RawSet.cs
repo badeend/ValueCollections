@@ -190,11 +190,8 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		Polyfills.DebugAssert(this.buckets != null, "_buckets should be non-null");
 		Polyfills.DebugAssert(this.entries != null, "_entries should be non-null");
 
-#if NET6_0_OR_GREATER
-		Array.Clear(this.buckets);
-#else
-		Array.Clear(this.buckets, 0, this.buckets.Length);
-#endif
+		Polyfills.ArrayClear(this.buckets);
+
 		this.end = 0;
 		this.firstFreeIndex = -1;
 		this.freeCount = 0;

@@ -203,4 +203,14 @@ internal static class Polyfills
 
 	[Conditional("DEBUG")]
 	internal static void DebugAssert([DoesNotReturnIf(false)] bool condition, string message) => Debug.Assert(condition, message);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static void ArrayClear(Array array)
+	{
+#if NET6_0_OR_GREATER
+		Array.Clear(array);
+#else
+		Array.Clear(array, 0, array.Length);
+#endif
+	}
 }
