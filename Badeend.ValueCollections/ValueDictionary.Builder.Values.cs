@@ -51,12 +51,12 @@ public partial class ValueDictionary<TKey, TValue>
 		public struct ValuesEnumerator : IEnumeratorLike<TValue>
 		{
 			private readonly Snapshot snapshot;
-			private ShufflingDictionaryEnumerator<TKey, TValue> inner;
+			private RawDictionary<TKey, TValue>.Enumerator inner;
 
 			internal ValuesEnumerator(Snapshot snapshot)
 			{
 				this.snapshot = snapshot;
-				this.inner = new(snapshot.AssertAlive());
+				this.inner = snapshot.AssertAlive().GetEnumerator();
 			}
 
 			/// <summary>
@@ -70,7 +70,7 @@ public partial class ValueDictionary<TKey, TValue>
 			/// obtained before that moment.
 			/// </remarks>
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			public ValuesCollection AsCollection() => new(this.snapshot);
+			public readonly ValuesCollection AsCollection() => new(this.snapshot);
 
 			/// <summary>
 			/// Returns a new ValuesEnumerator.
@@ -79,13 +79,13 @@ public partial class ValueDictionary<TKey, TValue>
 			/// the built-in <c>foreach</c> syntax.
 			/// </summary>
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			public ValuesEnumerator GetEnumerator() => new(this.snapshot);
+			public readonly ValuesEnumerator GetEnumerator() => new(this.snapshot);
 
 			/// <inheritdoc/>
 			public readonly TValue Current
 			{
 				[MethodImpl(MethodImplOptions.AggressiveInlining)]
-				get => this.inner.Current.Value;
+				get => this.inner.CurrentValue;
 			}
 
 			/// <inheritdoc/>
@@ -118,7 +118,7 @@ public partial class ValueDictionary<TKey, TValue>
 			/// <inheritdoc/>
 			IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator()
 			{
-				var builder = this.snapshot.AssertAlive();
+				ref readonly var builder = ref this.snapshot.AssertAlive();
 				if (builder.Count == 0)
 				{
 					return EnumeratorLike.Empty<TValue>();

@@ -9,6 +9,8 @@ internal static class ThrowHelpers
 	{
 		minimumCapacity,
 		targetCapacity,
+		key,
+		keys,
 		value,
 		index,
 		offset,
@@ -39,6 +41,9 @@ internal static class ThrowHelpers
 	internal static void ThrowArgumentException_InvalidOffsetOrLength() => throw new ArgumentException("Invalid offset + length.");
 
 	[DoesNotReturn]
+	internal static void ThrowArgumentException_DuplicateKey<T>(T key) => throw new ArgumentException($"An item with the same key has already been added. Key: {key}");
+
+	[DoesNotReturn]
 	internal static void ThrowInvalidOperationException_AlreadyBuilt() => throw new InvalidOperationException("Builder has already been built");
 
 	[DoesNotReturn]
@@ -61,4 +66,7 @@ internal static class ThrowHelpers
 
 	[DoesNotReturn]
 	internal static void ThrowNotSupportedException_CapacityOverflow() => throw new NotSupportedException("Capacity overflowed.");
+
+	[DoesNotReturn]
+	internal static void ThrowKeyNotFoundException<T>(T key) => throw new KeyNotFoundException($"The given key '{key}' was not present in the dictionary.");
 }

@@ -42,15 +42,15 @@ public partial class ValueDictionary<TKey, TValue>
 	/// it by calling <see cref="AsCollection"/>.
 	/// </remarks>
 	[StructLayout(LayoutKind.Auto)]
-	public struct KeysEnumerator : IEnumeratorLike<TKey>
+	public struct KeysEnumerator : IRefEnumeratorLike<TKey>
 	{
 		private readonly ValueDictionary<TKey, TValue> dictionary;
-		private ValueDictionary<TKey, TValue>.Enumerator inner;
+		private RawDictionary<TKey, TValue>.Enumerator inner;
 
 		internal KeysEnumerator(ValueDictionary<TKey, TValue> dictionary)
 		{
 			this.dictionary = dictionary;
-			this.inner = dictionary.GetEnumerator();
+			this.inner = dictionary.inner.GetEnumerator();
 		}
 
 		/// <summary>
@@ -60,7 +60,7 @@ public partial class ValueDictionary<TKey, TValue>
 		/// This method is an <c>O(1)</c> operation and allocates a new fixed-size
 		/// collection instance. The items are not copied.
 		/// </remarks>
-		public KeysCollection AsCollection() => this.dictionary.Count == 0 ? KeysCollection.Empty : new KeysCollection(this.dictionary);
+		public readonly KeysCollection AsCollection() => this.dictionary.Count == 0 ? KeysCollection.Empty : new KeysCollection(this.dictionary);
 
 		/// <summary>
 		/// Returns a new KeysEnumerator.
@@ -69,14 +69,17 @@ public partial class ValueDictionary<TKey, TValue>
 		/// the built-in <c>foreach</c> syntax.
 		/// </summary>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public KeysEnumerator GetEnumerator() => new(this.dictionary);
+		public readonly KeysEnumerator GetEnumerator() => new(this.dictionary);
 
 		/// <inheritdoc/>
-		public readonly TKey Current
+		public readonly ref readonly TKey Current
 		{
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			get => this.inner.Current.Key;
+			get => ref this.inner.CurrentKey;
 		}
+
+		/// <inheritdoc/>
+		readonly TKey IEnumeratorLike<TKey>.Current => this.Current;
 
 		/// <inheritdoc/>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

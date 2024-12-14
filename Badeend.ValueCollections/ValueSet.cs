@@ -106,6 +106,7 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	/// <inheritdoc/>
 	bool ICollection<T>.IsReadOnly => true;
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private ValueSet(RawSet<T> inner, int state)
 	{
 		this.inner = inner;
@@ -168,7 +169,7 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	{
 		if (array is null)
 		{
-			throw new ArgumentNullException(nameof(array));
+			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.array);
 		}
 
 		this.CopyTo(array.AsSpan(arrayIndex));

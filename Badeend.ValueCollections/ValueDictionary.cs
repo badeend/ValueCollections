@@ -4,7 +4,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
 using Badeend.ValueCollections.Internals;
 
 namespace Badeend.ValueCollections;
@@ -24,7 +23,7 @@ public static class ValueDictionary
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueDictionary<TKey, TValue> Create<TKey, TValue>(scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
-		where TKey : notnull => ValueDictionary<TKey, TValue>.CreateImmutableUnsafe(ValueDictionary<TKey, TValue>.SpanToDictionary(items));
+		where TKey : notnull => ValueDictionary<TKey, TValue>.CreateImmutableUnsafe(new(items));
 
 	/// <summary>
 	/// Create a new empty <see cref="ValueDictionary{TKey, TValue}.Builder"/>. This builder can
@@ -35,14 +34,10 @@ public static class ValueDictionary
 	public static ValueDictionary<TKey, TValue>.Builder CreateBuilder<TKey, TValue>()
 		where TKey : notnull => ValueDictionary<TKey, TValue>.Builder.CreateUnsafe(new());
 
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
 	/// <summary>
 	/// Construct a new empty dictionary builder with at least the specified
 	/// initial capacity.
 	/// </summary>
-	/// <remarks>
-	/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
-	/// </remarks>
 	/// <exception cref="ArgumentOutOfRangeException">
 	///   <paramref name="minimumCapacity"/> is less than 0.
 	/// </exception>
@@ -50,7 +45,6 @@ public static class ValueDictionary
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueDictionary<TKey, TValue>.Builder CreateBuilderWithCapacity<TKey, TValue>(int minimumCapacity)
 		where TKey : notnull => ValueDictionary<TKey, TValue>.Builder.CreateUnsafe(new(minimumCapacity));
-#endif
 
 	/// <summary>
 	/// Create a new <see cref="ValueDictionary{TKey, TValue}.Builder"/> with the provided
@@ -62,7 +56,7 @@ public static class ValueDictionary
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static ValueDictionary<TKey, TValue>.Builder CreateBuilder<TKey, TValue>(scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
-		where TKey : notnull => ValueDictionary<TKey, TValue>.Builder.CreateUnsafe(ValueDictionary<TKey, TValue>.SpanToDictionary(items));
+		where TKey : notnull => ValueDictionary<TKey, TValue>.Builder.CreateUnsafe(new(items));
 }
 
 /// <summary>
@@ -97,7 +91,7 @@ public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TV
 	[Pure]
 	public static ValueDictionary<TKey, TValue> Empty { get; } = new(new(), BuilderState.InitialImmutable);
 
-	private Dictionary<TKey, TValue> inner;
+	private RawDictionary<TKey, TValue> inner;
 
 	// See the BuilderState utility class for more info.
 	private int state;
@@ -131,12 +125,15 @@ public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TV
 	/// <exception cref="KeyNotFoundException">
 	/// The <paramref name="key"/> does not exist.
 	/// </exception>
-	public TValue this[TKey key]
+	public ref readonly TValue this[TKey key]
 	{
 		[Pure]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		get => this.inner[key];
+		get => ref this.inner.GetItem(key);
 	}
+
+	/// <inheritdoc/>
+	TValue IReadOnlyDictionary<TKey, TValue>.this[TKey key] => this[key];
 
 	/// <inheritdoc/>
 	TValue IDictionary<TKey, TValue>.this[TKey key]
@@ -148,13 +145,14 @@ public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TV
 	/// <inheritdoc/>
 	bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => true;
 
-	private ValueDictionary(Dictionary<TKey, TValue> inner, int state)
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private ValueDictionary(RawDictionary<TKey, TValue> inner, int state)
 	{
 		this.inner = inner;
 		this.state = state;
 	}
 
-	internal static ValueDictionary<TKey, TValue> CreateImmutableUnsafe(Dictionary<TKey, TValue> inner)
+	internal static ValueDictionary<TKey, TValue> CreateImmutableUnsafe(RawDictionary<TKey, TValue> inner)
 	{
 		if (inner.Count == 0)
 		{
@@ -165,48 +163,11 @@ public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TV
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal static ValueDictionary<TKey, TValue> CreateMutableUnsafe(Dictionary<TKey, TValue> inner) => new(inner, BuilderState.InitialMutable);
+	internal static ValueDictionary<TKey, TValue> CreateMutableUnsafe(RawDictionary<TKey, TValue> inner) => new(inner, BuilderState.InitialMutable);
 
 	// The RawDictionary is expected to be immutable.
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal static ValueDictionary<TKey, TValue> CreateCowUnsafe(Dictionary<TKey, TValue> inner) => new(inner, BuilderState.Cow);
-
-	internal static Dictionary<TKey, TValue> SpanToDictionary(scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
-	{
-		var dictionary = new Dictionary<TKey, TValue>(items.Length);
-
-		foreach (var entry in items)
-		{
-			dictionary.Add(entry.Key, entry.Value);
-		}
-
-		return dictionary;
-	}
-
-	internal static Dictionary<TKey, TValue> EnumerableToDictionary(IEnumerable<KeyValuePair<TKey, TValue>> items)
-	{
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_0_OR_GREATER
-		return new Dictionary<TKey, TValue>(items);
-#else
-		Dictionary<TKey, TValue> dictionary;
-
-		if (items is ICollection<KeyValuePair<TKey, TValue>> collection)
-		{
-			dictionary = new Dictionary<TKey, TValue>(collection.Count);
-		}
-		else
-		{
-			dictionary = new Dictionary<TKey, TValue>();
-		}
-
-		foreach (var entry in items)
-		{
-			dictionary.Add(entry.Key, entry.Value);
-		}
-
-		return dictionary;
-#endif
-	}
+	internal static ValueDictionary<TKey, TValue> CreateCowUnsafe(RawDictionary<TKey, TValue> inner) => new(inner, BuilderState.Cow);
 
 	/// <summary>
 	/// Create a new <see cref="ValueDictionary{TKey, TValue}.Builder"/> with this
@@ -220,15 +181,14 @@ public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TV
 	[Pure]
 	public Builder ToBuilder()
 	{
-		// if (Utilities.IsReuseWorthwhile(this.inner.Capacity, this.inner.Count))
-		// {
-		// return Builder.CreateCowUnsafe(this.inner);
-		// }
-		// else
-		// {
-		// return Builder.CreateUnsafe(new(ref this.inner));
-		// }
-		return Builder.CreateUnsafe(new(this.inner));
+		if (Utilities.IsReuseWorthwhile(this.inner.Capacity, this.inner.Count))
+		{
+			return Builder.CreateCowUnsafe(this.inner);
+		}
+		else
+		{
+			return Builder.CreateUnsafe(new(ref this.inner));
+		}
 	}
 
 	/// <summary>
@@ -238,22 +198,25 @@ public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TV
 	/// This performs a linear scan through the dictionary.
 	/// </remarks>
 	[Pure]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool ContainsValue(TValue value) => this.inner.ContainsValue(value);
 
 	/// <summary>
 	/// Determines whether this dictionary contains an element with the specified key.
 	/// </summary>
 	[Pure]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool ContainsKey(TKey key) => this.inner.ContainsKey(key);
 
 	/// <inheritdoc/>
-	bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> item) => ((ICollection<KeyValuePair<TKey, TValue>>)this.inner).Contains(item);
+	bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> item) => this.inner.Contains(item);
 
 	/// <summary>
 	/// Attempt to get the value associated with the specified <paramref name="key"/>.
 	/// Returns <see langword="false"/> when the key was not found.
 	/// </summary>
 #pragma warning disable CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value) => this.inner.TryGetValue(key, out value);
 #pragma warning restore CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
 
@@ -262,6 +225,7 @@ public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TV
 	/// Returns <see langword="default"/> when the key was not found.
 	/// </summary>
 	[Pure]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public TValue? GetValueOrDefault(TKey key) => this.GetValueOrDefault(key, default!);
 
 	/// <summary>
@@ -275,30 +239,7 @@ public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TV
 	}
 
 	/// <inheritdoc/>
-	void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
-	{
-		if (array is null)
-		{
-			throw new ArgumentNullException(nameof(array));
-		}
-
-		if (arrayIndex < 0 || arrayIndex > array.Length)
-		{
-			throw new ArgumentOutOfRangeException(nameof(arrayIndex));
-		}
-
-		if (array.Length - arrayIndex < this.Count)
-		{
-			throw new ArgumentException("Destination too short", nameof(arrayIndex));
-		}
-
-		var index = arrayIndex;
-		foreach (var item in this)
-		{
-			array[index] = item;
-			index++;
-		}
-	}
+	void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) => this.inner.CopyTo(array, arrayIndex);
 
 	/// <inheritdoc/>
 	[Pure]
@@ -309,24 +250,7 @@ public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TV
 			return hashCode;
 		}
 
-		return BuilderState.AdjustAndStoreHashCode(ref this.state, this.ComputeHashCode());
-	}
-
-	private int ComputeHashCode()
-	{
-		var contentHasher = new UnorderedHashCode();
-
-		foreach (var entry in this.inner)
-		{
-			contentHasher.Add(HashCode.Combine(entry.Key, entry.Value));
-		}
-
-		var hasher = new HashCode();
-		hasher.Add(typeof(ValueDictionary<TKey, TValue>));
-		hasher.Add(this.Count);
-		hasher.AddUnordered(ref contentHasher);
-
-		return hasher.ToHashCode();
+		return BuilderState.AdjustAndStoreHashCode(ref this.state, this.inner.GetStructuralHashCode());
 	}
 
 	/// <summary>
@@ -334,6 +258,7 @@ public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TV
 	/// length and content.
 	/// </summary>
 	[Pure]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool Equals(ValueDictionary<TKey, TValue>? other) => EqualsUtil(this, other);
 
 #pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
@@ -348,40 +273,29 @@ public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TV
 	/// Check for equality.
 	/// </summary>
 	[Pure]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool operator ==(ValueDictionary<TKey, TValue>? left, ValueDictionary<TKey, TValue>? right) => EqualsUtil(left, right);
 
 	/// <summary>
 	/// Check for inequality.
 	/// </summary>
 	[Pure]
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool operator !=(ValueDictionary<TKey, TValue>? left, ValueDictionary<TKey, TValue>? right) => !EqualsUtil(left, right);
 
 	private static bool EqualsUtil(ValueDictionary<TKey, TValue>? left, ValueDictionary<TKey, TValue>? right)
 	{
-		if (object.ReferenceEquals(left, right))
+		if (left is null)
 		{
-			return true;
+			return right is null;
 		}
 
-		if (left is null || right is null)
-		{
-			return false;
-		}
-
-		if (left.Count != right.Count)
+		if (right is null)
 		{
 			return false;
 		}
 
-		foreach (var item in left)
-		{
-			if (!right.Contains(item))
-			{
-				return false;
-			}
-		}
-
-		return true;
+		return left.inner.StructuralEquals(ref right.inner);
 	}
 
 	/// <summary>
@@ -418,12 +332,12 @@ public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TV
 	[StructLayout(LayoutKind.Auto)]
 	public struct Enumerator : IEnumeratorLike<KeyValuePair<TKey, TValue>>
 	{
-		private ShufflingDictionaryEnumerator<TKey, TValue> inner;
+		private RawDictionary<TKey, TValue>.Enumerator inner;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		internal Enumerator(ValueDictionary<TKey, TValue> dictionary)
 		{
-			this.inner = new(dictionary.inner);
+			this.inner = dictionary.inner.GetEnumerator();
 		}
 
 		/// <inheritdoc/>
@@ -445,36 +359,7 @@ public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TV
 	/// The format is not stable and may change without prior notice.
 	/// </summary>
 	[Pure]
-	public override string ToString()
-	{
-		if (this.Count == 0)
-		{
-			return "[]";
-		}
-
-		var builder = new StringBuilder();
-		builder.Append('[');
-
-		var index = 0;
-		foreach (var entry in this)
-		{
-			if (index > 0)
-			{
-				builder.Append(", ");
-			}
-
-			var keyString = entry.Key?.ToString() ?? "null";
-			var valueString = entry.Value?.ToString() ?? "null";
-			builder.Append(keyString);
-			builder.Append(": ");
-			builder.Append(valueString);
-
-			index++;
-		}
-
-		builder.Append(']');
-		return builder.ToString();
-	}
+	public override string ToString() => this.inner.ToString();
 
 	/// <inheritdoc/>
 	void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item) => throw ImmutableException();

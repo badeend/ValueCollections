@@ -341,7 +341,7 @@ public static class ValueCollectionExtensions
 			return dictionary;
 		}
 
-		return ValueDictionary<TKey, TValue>.CreateImmutableUnsafe(ValueDictionary<TKey, TValue>.EnumerableToDictionary(items));
+		return ValueDictionary<TKey, TValue>.CreateImmutableUnsafe(new(items));
 	}
 
 	/// <summary>
@@ -368,7 +368,14 @@ public static class ValueCollectionExtensions
 	public static ValueDictionary<TKey, TValue> ToValueDictionary<TKey, TValue>(this IEnumerable<TValue> items, Func<TValue, TKey> keySelector)
 		where TKey : notnull
 	{
-		var inner = items.ToDictionary(keySelector);
+		Polyfills.TryGetNonEnumeratedCount(items, out var count);
+
+		var inner = new RawDictionary<TKey, TValue>(minimumCapacity: count);
+
+		foreach (var item in items)
+		{
+			inner.Add(keySelector(item), item);
+		}
 
 		return ValueDictionary<TKey, TValue>.CreateImmutableUnsafe(inner);
 	}
@@ -418,7 +425,16 @@ public static class ValueCollectionExtensions
 			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.valueSelector);
 		}
 
-		return ValueDictionary<TKey, TValue>.CreateImmutableUnsafe(source.ToDictionary(keySelector, valueSelector));
+		Polyfills.TryGetNonEnumeratedCount(source, out var count);
+
+		var inner = new RawDictionary<TKey, TValue>(minimumCapacity: count);
+
+		foreach (var item in source)
+		{
+			inner.Add(keySelector(item), valueSelector(item));
+		}
+
+		return ValueDictionary<TKey, TValue>.CreateImmutableUnsafe(inner);
 	}
 
 	/// <summary>
@@ -491,9 +507,7 @@ public static class ValueCollectionExtensions
 			return dictionary.ToBuilder();
 		}
 
-		var inner = ValueDictionary<TKey, TValue>.EnumerableToDictionary(items);
-
-		return ValueDictionary<TKey, TValue>.Builder.CreateUnsafe(inner);
+		return ValueDictionary<TKey, TValue>.Builder.CreateUnsafe(new(items));
 	}
 
 	/// <summary>

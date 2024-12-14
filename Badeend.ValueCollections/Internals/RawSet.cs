@@ -9,7 +9,7 @@ using System.Text;
 namespace Badeend.ValueCollections.Internals;
 
 // Various parts of this type have been adapted from:
-// https://github.com/dotnet/runtime/blob/4389f9c54d070ca5e0cf7c4931aff56fe36d667f/src/libraries/System.Private.CoreLib/src/System/Collections/Generic/RawSet.cs
+// https://github.com/dotnet/runtime/blob/4389f9c54d070ca5e0cf7c4931aff56fe36d667f/src/libraries/System.Private.CoreLib/src/System/Collections/Generic/HashSet.cs
 //
 // This implements an Hash Table with Separate Chaining (https://en.wikipedia.org/wiki/Hash_table#Separate_chaining)
 [StructLayout(LayoutKind.Auto)]
@@ -1331,8 +1331,6 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		return newSize;
 	}
 
-	private void Resize() => this.Resize(HashHelpers.ExpandPrime(this.end));
-
 	private void Resize(int newCapacity)
 	{
 		Debug.Assert(this.entries != null, "_entries should be non-null");
@@ -1471,7 +1469,7 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 			int end = this.end;
 			if (end == entries!.Length)
 			{
-				this.Resize();
+				this.Resize(HashHelpers.ExpandPrime(end));
 				bucket = ref this.GetBucketRef(hashCode);
 			}
 

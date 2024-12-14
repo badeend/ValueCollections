@@ -5,7 +5,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
 using Badeend.ValueCollections.Internals;
 
 namespace Badeend.ValueCollections;
@@ -111,7 +110,7 @@ public partial class ValueDictionary<TKey, TValue>
 			}
 			else
 			{
-				return ValueDictionary<TKey, TValue>.CreateImmutableUnsafe(EnumerableToDictionary(dictionary.inner));
+				return ValueDictionary<TKey, TValue>.CreateImmutableUnsafe(new(in dictionary.inner));
 			}
 		}
 
@@ -121,7 +120,7 @@ public partial class ValueDictionary<TKey, TValue>
 		[Pure]
 		public Builder ToValueDictionaryBuilder()
 		{
-			return ValueDictionary<TKey, TValue>.Builder.CreateUnsafe(EnumerableToDictionary(this.ReadOnce()));
+			return ValueDictionary<TKey, TValue>.Builder.CreateUnsafe(new(in this.ReadOnce()));
 		}
 
 		[StructLayout(LayoutKind.Auto)]
@@ -138,7 +137,7 @@ public partial class ValueDictionary<TKey, TValue>
 			}
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			internal ref readonly Dictionary<TKey, TValue> AssertAlive()
+			internal ref readonly RawDictionary<TKey, TValue> AssertAlive()
 			{
 				if (this.expectedState != this.dictionary.state)
 				{
@@ -177,7 +176,7 @@ public partial class ValueDictionary<TKey, TValue>
 			private readonly ValueDictionary<TKey, TValue> dictionary;
 			private readonly int restoreState;
 
-			internal readonly ref Dictionary<TKey, TValue> Inner
+			internal readonly ref RawDictionary<TKey, TValue> Inner
 			{
 				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get
@@ -216,7 +215,7 @@ public partial class ValueDictionary<TKey, TValue>
 			return new Snapshot(dictionary, dictionary.state);
 		}
 
-		private ref readonly Dictionary<TKey, TValue> ReadOnce()
+		private ref readonly RawDictionary<TKey, TValue> ReadOnce()
 		{
 			var dictionary = this.dictionary ?? Empty;
 
@@ -246,7 +245,7 @@ public partial class ValueDictionary<TKey, TValue>
 
 		// Only to be used if the mutation can be done at once (i.e. "atomically"),
 		// and the outside world can not observe the builder in a temporary intermediate state.
-		private ref Dictionary<TKey, TValue> MutateOnce()
+		private ref RawDictionary<TKey, TValue> MutateOnce()
 		{
 			var dictionary = this.dictionary;
 			if (dictionary is null || BuilderState.MutateRequiresAttention(dictionary.state))
@@ -271,9 +270,8 @@ public partial class ValueDictionary<TKey, TValue>
 			else if (dictionary.state == BuilderState.Cow)
 			{
 				// Make copy with at least the same amount of capacity.
-				// var copy = new Dictionary<TKey, TValue>(dictionary.inner.Capacity); TODO
-				// copy.UnionWith(ref dictionary.inner);
-				var copy = EnumerableToDictionary(dictionary.inner);
+				var copy = new RawDictionary<TKey, TValue>(dictionary.inner.Capacity);
+				copy.AddRange(ref dictionary.inner);
 
 				dictionary.inner = copy;
 				dictionary.state = BuilderState.InitialMutable;
@@ -322,8 +320,8 @@ public partial class ValueDictionary<TKey, TValue>
 		public TValue this[TKey key]
 		{
 			[Pure]
-			get => this.ReadOnce()[key];
-			set => this.MutateOnce()[key] = value;
+			get => this.ReadOnce().GetItem(key);
+			set => this.MutateOnce().SetItem(key, value);
 		}
 
 		/// <summary>
@@ -353,32 +351,19 @@ public partial class ValueDictionary<TKey, TValue>
 
 		// This takes ownership of the RawDictionary
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static Builder CreateUnsafe(Dictionary<TKey, TValue> inner) => new(ValueDictionary<TKey, TValue>.CreateMutableUnsafe(inner));
+		internal static Builder CreateUnsafe(RawDictionary<TKey, TValue> inner) => new(ValueDictionary<TKey, TValue>.CreateMutableUnsafe(inner));
 
 		// The RawDictionary is expected to be immutable.
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static Builder CreateCowUnsafe(Dictionary<TKey, TValue> inner) => new(ValueDictionary<TKey, TValue>.CreateCowUnsafe(inner));
+		internal static Builder CreateCowUnsafe(RawDictionary<TKey, TValue> inner) => new(ValueDictionary<TKey, TValue>.CreateCowUnsafe(inner));
 
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
 		/// <summary>
 		/// The total number of elements the internal data structure can hold without resizing.
 		/// </summary>
-		/// <remarks>
-		/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
-		/// </remarks>
 		public int Capacity
 		{
 			[Pure]
-			get
-			{
-				var dictionary = this.ReadOnce();
-
-#if NET9_0_OR_GREATER
-				return dictionary.Capacity;
-#else
-				return dictionary.EnsureCapacity(0);
-#endif
-			}
+			get => this.ReadOnce().Capacity;
 		}
 
 		/// <summary>
@@ -386,9 +371,6 @@ public partial class ValueDictionary<TKey, TValue>
 		/// If the current capacity is less than capacity, it is increased to at
 		/// least the specified capacity.
 		/// </summary>
-		/// <remarks>
-		/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
-		/// </remarks>
 		/// <exception cref="ArgumentOutOfRangeException">
 		/// <paramref name="minimumCapacity"/> is less than 0.
 		/// </exception>
@@ -408,15 +390,11 @@ public partial class ValueDictionary<TKey, TValue>
 		/// <exception cref="ArgumentOutOfRangeException">
 		/// <paramref name="targetCapacity"/> is less than <see cref="Count"/>.
 		/// </exception>
-		/// <remarks>
-		/// Available on .NET Standard 2.1 and .NET Core 2.1 and higher.
-		/// </remarks>
 		public Builder TrimExcess(int targetCapacity)
 		{
 			this.MutateOnce().TrimExcess(targetCapacity);
 			return this;
 		}
-#endif
 
 		/// <summary>
 		/// Determines whether this dictionary contains an element with the specified value.
@@ -467,14 +445,7 @@ public partial class ValueDictionary<TKey, TValue>
 		{
 			using (var guard = this.Mutate())
 			{
-				if (guard.Inner.TryGetValue(key, out var existingValue))
-				{
-					return existingValue;
-				}
-
-				var newValue = valueFactory(key);
-				guard.Inner.Add(key, newValue);
-				return newValue;
+				return guard.Inner.GetOrAdd(key, valueFactory);
 			}
 		}
 
@@ -483,22 +454,7 @@ public partial class ValueDictionary<TKey, TValue>
 		/// to the dictionary. Returns <see langword="false"/> when the key was
 		/// already present.
 		/// </summary>
-		public bool TryAdd(TKey key, TValue value)
-		{
-			var dictionary = this.MutateOnce();
-
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_0_OR_GREATER
-			return dictionary.TryAdd(key, value);
-#else
-			if (!dictionary.ContainsKey(key))
-			{
-				dictionary.Add(key, value);
-				return true;
-			}
-
-			return false;
-#endif
-		}
+		public bool TryAdd(TKey key, TValue value) => this.MutateOnce().TryAdd(key, value);
 
 		/// <summary>
 		/// Add the <paramref name="key"/> and <paramref name="value"/> to the
@@ -531,24 +487,9 @@ public partial class ValueDictionary<TKey, TValue>
 		/// </exception>
 		public Builder AddRange(IEnumerable<KeyValuePair<TKey, TValue>> items)
 		{
-			if (items is null)
-			{
-				throw new ArgumentNullException(nameof(items));
-			}
-
 			using (var guard = this.Mutate())
 			{
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
-				if (items is ICollection<KeyValuePair<TKey, TValue>> collection)
-				{
-					guard.Inner.EnsureCapacity(guard.Inner.Count + collection.Count);
-				}
-#endif
-
-				foreach (var item in items)
-				{
-					guard.Inner.Add(item.Key, item.Value);
-				}
+				guard.Inner.AddRange(items);
 			}
 
 			return this;
@@ -557,15 +498,7 @@ public partial class ValueDictionary<TKey, TValue>
 		// Accessible through an extension method.
 		internal Builder AddRangeSpan(scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
 		{
-			var dictionary = this.MutateOnce();
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
-			dictionary.EnsureCapacity(dictionary.Count + items.Length);
-#endif
-			foreach (var item in items)
-			{
-				dictionary.Add(item.Key, item.Value);
-			}
-
+			this.MutateOnce().AddRange(items);
 			return this;
 		}
 
@@ -581,7 +514,7 @@ public partial class ValueDictionary<TKey, TValue>
 		/// </remarks>
 		public Builder SetItem(TKey key, TValue value)
 		{
-			this.MutateOnce()[key] = value;
+			this.MutateOnce().SetItem(key, value);
 			return this;
 		}
 
@@ -598,17 +531,9 @@ public partial class ValueDictionary<TKey, TValue>
 		/// </remarks>
 		public Builder SetItems(IEnumerable<KeyValuePair<TKey, TValue>> items)
 		{
-			if (items is null)
-			{
-				throw new ArgumentNullException(nameof(items));
-			}
-
 			using (var guard = this.Mutate())
 			{
-				foreach (var item in items)
-				{
-					guard.Inner[item.Key] = item.Value;
-				}
+				guard.Inner.SetItems(items);
 			}
 
 			return this;
@@ -617,13 +542,7 @@ public partial class ValueDictionary<TKey, TValue>
 		// Accessible through an extension method.
 		internal Builder SetItemsSpan(scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
 		{
-			var dictionary = this.MutateOnce();
-
-			foreach (var item in items)
-			{
-				dictionary[item.Key] = item.Value;
-			}
-
+			this.MutateOnce().SetItems(items);
 			return this;
 		}
 
@@ -641,23 +560,7 @@ public partial class ValueDictionary<TKey, TValue>
 		/// Returns <see langword="false"/> when the key was not found. The removed
 		/// value (if any) is stored in <paramref name="value"/>.
 		/// </summary>
-		public bool TryRemove(TKey key, [MaybeNullWhen(false)] out TValue value)
-		{
-			var dictionary = this.MutateOnce();
-
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
-			return dictionary.Remove(key, out value);
-#else
-			if (dictionary.TryGetValue(key, out value))
-			{
-				dictionary.Remove(key);
-				return true;
-			}
-
-			value = default;
-			return false;
-#endif
-		}
+		public bool TryRemove(TKey key, [MaybeNullWhen(false)] out TValue value) => this.MutateOnce().Remove(key, out value);
 
 		/// <summary>
 		/// Remove a specific key from the dictionary if it exists.
@@ -666,6 +569,7 @@ public partial class ValueDictionary<TKey, TValue>
 		/// Use <c>TryRemove</c> if you want to know whether any element was
 		/// actually removed.
 		/// </remarks>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Builder Remove(TKey key)
 		{
 			this.TryRemove(key);
@@ -681,17 +585,9 @@ public partial class ValueDictionary<TKey, TValue>
 		/// </remarks>
 		public Builder RemoveRange(IEnumerable<TKey> keys)
 		{
-			if (keys is null)
-			{
-				throw new ArgumentNullException(nameof(keys));
-			}
-
 			using (var guard = this.Mutate())
 			{
-				foreach (var key in keys)
-				{
-					guard.Inner.Remove(key);
-				}
+				guard.Inner.RemoveRange(keys);
 			}
 
 			return this;
@@ -700,13 +596,7 @@ public partial class ValueDictionary<TKey, TValue>
 		// Accessible through an extension method.
 		internal Builder RemoveRangeSpan(scoped ReadOnlySpan<TKey> keys)
 		{
-			var dictionary = this.MutateOnce();
-
-			foreach (var key in keys)
-			{
-				dictionary.Remove(key);
-			}
-
+			this.MutateOnce().RemoveRange(keys);
 			return this;
 		}
 
@@ -739,20 +629,7 @@ public partial class ValueDictionary<TKey, TValue>
 		/// </remarks>
 		public Builder TrimExcess()
 		{
-			var dictionary = this.MutateOnce();
-
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
-			dictionary.TrimExcess();
-#else
-			var copy = new Dictionary<TKey, TValue>(dictionary.Count);
-
-			foreach (var entry in dictionary)
-			{
-				copy.Add(entry.Key, entry.Value);
-			}
-
-			this.dictionary!.inner = copy;
-#endif
+			this.MutateOnce().TrimExcess();
 			return this;
 		}
 
@@ -780,6 +657,7 @@ public partial class ValueDictionary<TKey, TValue>
 			/// </summary>
 			public Builder Builder => this.builder;
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			internal Collection(Builder builder)
 			{
 				this.builder = builder;
@@ -848,33 +726,10 @@ public partial class ValueDictionary<TKey, TValue>
 			bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> item) => this.builder.ReadOnce().Contains(item);
 
 			/// <inheritdoc/>
-			void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
-			{
-				if (array is null)
-				{
-					throw new ArgumentNullException(nameof(array));
-				}
-
-				if (arrayIndex < 0 || arrayIndex > array.Length)
-				{
-					throw new ArgumentOutOfRangeException(nameof(arrayIndex));
-				}
-
-				if (array.Length - arrayIndex < this.Builder.Count)
-				{
-					throw new ArgumentException("Destination too short", nameof(arrayIndex));
-				}
-
-				var index = arrayIndex;
-				foreach (var item in this)
-				{
-					array[index] = item;
-					index++;
-				}
-			}
+			void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) => this.builder.ReadOnce().CopyTo(array, arrayIndex);
 
 			/// <inheritdoc/>
-			bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item) => ((ICollection<KeyValuePair<TKey, TValue>>)this.Builder.MutateOnce()).Remove(item);
+			bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item) => this.Builder.MutateOnce().Remove(item);
 
 			/// <inheritdoc/>
 			IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator()
@@ -902,7 +757,7 @@ public partial class ValueDictionary<TKey, TValue>
 		/// </summary>
 		[Pure]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public Enumerator GetEnumerator() => new Enumerator(this.Read());
+		public Enumerator GetEnumerator() => new Enumerator(this);
 
 		/// <summary>
 		/// Enumerator for <see cref="ValueDictionary{TKey, TValue}.Builder"/>.
@@ -913,13 +768,14 @@ public partial class ValueDictionary<TKey, TValue>
 		public struct Enumerator : IEnumeratorLike<KeyValuePair<TKey, TValue>>
 		{
 			private readonly Snapshot snapshot;
-			private ShufflingDictionaryEnumerator<TKey, TValue> inner;
+			private RawDictionary<TKey, TValue>.Enumerator inner;
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			internal Enumerator(Snapshot snapshot)
+			internal Enumerator(Builder builder)
 			{
+				var snapshot = builder.Read();
 				this.snapshot = snapshot;
-				this.inner = new(snapshot.AssertAlive());
+				this.inner = snapshot.AssertAlive().GetEnumerator();
 			}
 
 			/// <inheritdoc/>
@@ -944,36 +800,7 @@ public partial class ValueDictionary<TKey, TValue>
 		/// The format is not stable and may change without prior notice.
 		/// </summary>
 		[Pure]
-		public override string ToString()
-		{
-			if (this.Count == 0)
-			{
-				return "[]";
-			}
-
-			var builder = new StringBuilder();
-			builder.Append('[');
-
-			var index = 0;
-			foreach (var entry in this)
-			{
-				if (index > 0)
-				{
-					builder.Append(", ");
-				}
-
-				var keyString = entry.Key?.ToString() ?? "null";
-				var valueString = entry.Value?.ToString() ?? "null";
-				builder.Append(keyString);
-				builder.Append(": ");
-				builder.Append(valueString);
-
-				index++;
-			}
-
-			builder.Append(']');
-			return builder.ToString();
-		}
+		public override string ToString() => this.ReadOnce().ToString();
 
 		/// <inheritdoc/>
 		[Pure]
@@ -983,6 +810,7 @@ public partial class ValueDictionary<TKey, TValue>
 		/// Returns <see langword="true"/> when the two builders refer to the same allocation.
 		/// </summary>
 		[Pure]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public bool Equals(Builder other) => object.ReferenceEquals(this.dictionary, other.dictionary);
 
 #pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
@@ -997,12 +825,14 @@ public partial class ValueDictionary<TKey, TValue>
 		/// Check for equality.
 		/// </summary>
 		[Pure]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static bool operator ==(Builder left, Builder right) => left.Equals(right);
 
 		/// <summary>
 		/// Check for inequality.
 		/// </summary>
 		[Pure]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static bool operator !=(Builder left, Builder right) => !left.Equals(right);
 
 		private static NotSupportedException ImmutableException() => new("Collection is immutable");

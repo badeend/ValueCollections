@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
@@ -12,6 +13,29 @@ internal static class Polyfills
 #else
 	internal static int ArrayMaxLength { get; } = 0X7FFFFFC7;
 #endif
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static unsafe ref T NullRef<T>() => ref Unsafe.AsRef<T>(null);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static unsafe bool IsNullRef<T>(ref readonly T value) => Unsafe.AsPointer(ref Unsafe.AsRef(in value)) == null;
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool TryGetNonEnumeratedCount<T>(IEnumerable<T> source, out int count)
+	{
+#if NET6_0_OR_GREATER
+		return System.Linq.Enumerable.TryGetNonEnumeratedCount(source, out count);
+#else
+		if (source is ICollection<T> collection)
+		{
+			count = collection.Count;
+			return true;
+		}
+
+		count = 0;
+		return false;
+#endif
+	}
 
 	public static string? GetEnumName<TEnum>(TEnum value)
 		where TEnum : struct, Enum
@@ -173,4 +197,10 @@ internal static class Polyfills
 	internal static bool IsReferenceOrContainsReferences<T>() => System.Runtime.CompilerServices.RuntimeHelpers.IsReferenceOrContainsReferences<T>();
 
 #endif
+
+	[Conditional("DEBUG")]
+	internal static void DebugAssert([DoesNotReturnIf(false)] bool condition) => Debug.Assert(condition);
+
+	[Conditional("DEBUG")]
+	internal static void DebugAssert([DoesNotReturnIf(false)] bool condition, string message) => Debug.Assert(condition, message);
 }

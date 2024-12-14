@@ -49,7 +49,6 @@ namespace Badeend.ValueCollections.Tests.Reference
             Assert.True(source.EqualsUnordered(copied));
         }
 
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
         [Theory]
         [MemberData(nameof(ValidCollectionSizes))]
         public void ValueDictionaryBuilder_Constructor_int(int count)
@@ -66,11 +65,9 @@ namespace Badeend.ValueCollections.Tests.Reference
             ValueDictionary<TKey, TValue>.Builder dict = ValueDictionary.CreateBuilderWithCapacity<TKey, TValue>(capacity);
             Assert.True(capacity <= dict.Capacity);
         }
-#endif
         #endregion
 
         #region Properties
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
         public void DictResized_CapacityChanged()
         {
             var dict = BuilderFactory(1);
@@ -86,7 +83,6 @@ namespace Badeend.ValueCollections.Tests.Reference
 
             Assert.True(afterCapacity > initialCapacity);
         }
-#endif
         #endregion
         #region ContainsValue
 
@@ -277,7 +273,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         }
 
         #endregion
-#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_1_OR_GREATER
+
         #region EnsureCapacity
 
         [Theory]
@@ -297,7 +293,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void EnsureCapacity_Generic_NegativeCapacityRequested_Throws()
         {
             var dictionary = ValueDictionary.CreateBuilder<TKey, TValue>();
-            AssertExtensions.Throws<ArgumentOutOfRangeException>("capacity", () => dictionary.EnsureCapacity(-1));
+            AssertExtensions.Throws<ArgumentOutOfRangeException>("minimumCapacity", () => dictionary.EnsureCapacity(-1));
         }
 
         [Fact]
@@ -400,7 +396,7 @@ namespace Badeend.ValueCollections.Tests.Reference
         public void TrimExcess_Generic_NegativeCapacity_Throw()
         {
             var dictionary = ValueDictionary.CreateBuilder<TKey, TValue>();
-            AssertExtensions.Throws<ArgumentOutOfRangeException>("capacity", () => dictionary.TrimExcess(-1));
+            AssertExtensions.Throws<ArgumentOutOfRangeException>("targetCapacity", () => dictionary.TrimExcess(-1));
         }
 
         [Theory]
@@ -410,11 +406,11 @@ namespace Badeend.ValueCollections.Tests.Reference
         {
             var dictionary = ValueDictionary.CreateBuilder<TKey, TValue>();
             dictionary.Add(GetNewKey(dictionary.AsCollection()), CreateTValue(0));
-            AssertExtensions.Throws<ArgumentOutOfRangeException>("capacity", () => dictionary.TrimExcess(0));
+            AssertExtensions.Throws<ArgumentOutOfRangeException>("targetCapacity", () => dictionary.TrimExcess(0));
 
             dictionary = ValueDictionary.CreateBuilderWithCapacity<TKey, TValue>(suggestedCapacity);
             dictionary.Add(GetNewKey(dictionary.AsCollection()), CreateTValue(0));
-            AssertExtensions.Throws<ArgumentOutOfRangeException>("capacity", () => dictionary.TrimExcess(0));
+            AssertExtensions.Throws<ArgumentOutOfRangeException>("targetCapacity", () => dictionary.TrimExcess(0));
         }
 
         [Fact]
@@ -600,6 +596,5 @@ namespace Badeend.ValueCollections.Tests.Reference
         }
 
         #endregion
-#endif
     }
 }
