@@ -307,7 +307,7 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 			return hashCode;
 		}
 
-		return BuilderState.AdjustAndStoreHashCode(ref this.state, this.inner.GetSequenceHashCode());
+		return BuilderState.AdjustAndStoreHashCode(ref this.state, this.inner.GetStructuralHashCode());
 	}
 
 	/// <summary>
@@ -315,7 +315,7 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	/// and content.
 	/// </summary>
 	[Pure]
-	public bool Equals(ValueList<T>? other) => other is not null && RawList.SequenceEqual(ref this.inner, ref other.inner);
+	public bool Equals(ValueList<T>? other) => other is not null && this.inner.StructuralEquals(ref other.inner);
 
 #pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
 	/// <inheritdoc/>
@@ -349,7 +349,7 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 			return false;
 		}
 
-		return RawList.SequenceEqual(ref left.inner, ref right.inner);
+		return left.inner.StructuralEquals(ref right.inner);
 	}
 
 #pragma warning disable CA2225 // Operator overloads have named alternates

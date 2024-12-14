@@ -444,7 +444,7 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 			return hashCode;
 		}
 
-		return BuilderState.AdjustAndStoreHashCode(ref this.state, RawSet.GetSequenceHashCode(ref this.inner));
+		return BuilderState.AdjustAndStoreHashCode(ref this.state, this.inner.GetStructuralHashCode());
 	}
 
 	/// <summary>

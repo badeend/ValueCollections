@@ -1,5 +1,3 @@
-using System.ComponentModel;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
@@ -13,7 +11,7 @@ namespace Badeend.ValueCollections.Internals;
 //
 // This implements an Hash Table with Separate Chaining (https://en.wikipedia.org/wiki/Hash_table#Separate_chaining)
 [StructLayout(LayoutKind.Auto)]
-internal struct RawSet<T> : IEquatable<RawSet<T>>
+internal struct RawSet<T>
 {
 	private const int StartOfFreeList = -3;
 
@@ -1615,25 +1613,23 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 		}
 	}
 
-	/// <inheritdoc/>
 	[Pure]
-	[EditorBrowsable(EditorBrowsableState.Never)]
-	public readonly override int GetHashCode() => this.entries?.GetHashCode() ?? 0;
+	internal readonly int GetStructuralHashCode()
+	{
+		var contentHasher = new UnorderedHashCode();
 
-	[Pure]
-	[EditorBrowsable(EditorBrowsableState.Never)]
-	public readonly bool Equals(ref readonly RawSet<T> other) => object.ReferenceEquals(this.entries, other.entries);
+		foreach (var item in this)
+		{
+			contentHasher.Add(item);
+		}
 
-	/// <inheritdoc/>
-	readonly bool IEquatable<RawSet<T>>.Equals(RawSet<T> other) => object.ReferenceEquals(this.entries, other.entries);
+		var hasher = new HashCode();
+		hasher.Add(typeof(ValueSet<T>));
+		hasher.Add(this.Count);
+		hasher.AddUnordered(ref contentHasher);
 
-#pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
-	/// <inheritdoc/>
-	[Pure]
-	[Obsolete("Use == instead.")]
-	[EditorBrowsable(EditorBrowsableState.Never)]
-	public readonly override bool Equals(object? obj) => obj is RawSet<T> other && this.Equals(in other);
-#pragma warning restore CS0809 // Obsolete member overrides non-obsolete member
+		return hasher.ToHashCode();
+	}
 
 	/// <summary>
 	/// Get a string representation of the collection for debugging purposes.
@@ -1666,26 +1662,5 @@ internal struct RawSet<T> : IEquatable<RawSet<T>>
 
 		builder.Append(']');
 		return builder.ToString();
-	}
-}
-
-internal static class RawSet
-{
-	[Pure]
-	internal static int GetSequenceHashCode<T>(this ref readonly RawSet<T> set)
-	{
-		var contentHasher = new UnorderedHashCode();
-
-		foreach (var item in set)
-		{
-			contentHasher.Add(item);
-		}
-
-		var hasher = new HashCode();
-		hasher.Add(typeof(ValueSet<T>));
-		hasher.Add(set.Count);
-		hasher.AddUnordered(ref contentHasher);
-
-		return hasher.ToHashCode();
 	}
 }

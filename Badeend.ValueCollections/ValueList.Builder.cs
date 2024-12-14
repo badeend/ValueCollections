@@ -408,7 +408,7 @@ public sealed partial class ValueList<T>
 			ref readonly var otherInner = ref items.ReadOnce();
 
 			// This check is also what makes the MutateOnce safe.
-			if (thisInner.Equals(in otherInner))
+			if (thisInner.ReferenceEquals(in otherInner))
 			{
 				ThrowHelpers.ThrowInvalidOperationException_CantAddOrInsertIntoSelf();
 			}
@@ -509,7 +509,7 @@ public sealed partial class ValueList<T>
 			ref readonly var otherInner = ref items.ReadOnce();
 
 			// This check is also what makes the MutateOnce safe.
-			if (thisInner.Equals(in otherInner))
+			if (thisInner.ReferenceEquals(in otherInner))
 			{
 				ThrowHelpers.ThrowInvalidOperationException_CantAddOrInsertIntoSelf();
 			}

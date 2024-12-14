@@ -1,6 +1,3 @@
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -11,7 +8,7 @@ namespace Badeend.ValueCollections.Internals;
 // Various parts of this class have been adapted from:
 // https://github.com/dotnet/runtime/blob/5aa9687e110faa19d1165ba680e52585a822464d/src/libraries/System.Private.CoreLib/src/System/Collections/Generic/List.cs
 [StructLayout(LayoutKind.Auto)]
-internal struct RawList<T> : IEquatable<RawList<T>>
+internal struct RawList<T>
 {
 	/// <summary>
 	/// Initial capacity for non-zero size lists.
@@ -771,25 +768,60 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 		return Array.BinarySearch(this.items, 0, this.size, item);
 	}
 
-	/// <inheritdoc/>
 	[Pure]
-	[EditorBrowsable(EditorBrowsableState.Never)]
-	public readonly override int GetHashCode() => this.items.GetHashCode();
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal readonly bool ReferenceEquals(ref readonly RawList<T> other) => object.ReferenceEquals(this.items, other.items);
+
+	/// <summary>
+	/// Returns <see langword="true"/> when the two lists have identical length
+	/// and content.
+	/// </summary>
+	[Pure]
+	internal readonly bool StructuralEquals(ref readonly RawList<T> other)
+	{
+		// Attempt to defer to .NET 6+ vectorized implementation:
+#if NET6_0_OR_GREATER
+		return System.MemoryExtensions.SequenceEqual(this.AsSpan(), other.AsSpan());
+#else
+		if (object.ReferenceEquals(this.items, other.items))
+		{
+			return true;
+		}
+
+		var size = this.size;
+		if (size != other.size)
+		{
+			return false;
+		}
+
+		var comparer = new DefaultEqualityComparer<T>();
+
+		for (int i = 0; i < size; i++)
+		{
+			if (!comparer.Equals(this.items[i], other.items[i]))
+			{
+				return false;
+			}
+		}
+
+		return true;
+#endif
+	}
 
 	[Pure]
-	[EditorBrowsable(EditorBrowsableState.Never)]
-	public readonly bool Equals(ref readonly RawList<T> other) => object.ReferenceEquals(this.items, other.items);
+	internal readonly int GetStructuralHashCode()
+	{
+		var hasher = new HashCode();
+		hasher.Add(typeof(RawList<T>));
+		hasher.Add(this.Count);
 
-	/// <inheritdoc/>
-	readonly bool IEquatable<RawList<T>>.Equals(RawList<T> other) => object.ReferenceEquals(this.items, other.items);
+		foreach (var item in this)
+		{
+			hasher.Add(item);
+		}
 
-#pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
-	/// <inheritdoc/>
-	[Pure]
-	[Obsolete("Use == instead.")]
-	[EditorBrowsable(EditorBrowsableState.Never)]
-	public readonly override bool Equals(object? obj) => obj is RawList<T> other && this.Equals(in other);
-#pragma warning restore CS0809 // Obsolete member overrides non-obsolete member
+		return hasher.ToHashCode();
+	}
 
 	/// <summary>
 	/// Returns an enumerator for this <see cref="RawList{T}"/>.
@@ -880,57 +912,6 @@ internal struct RawList<T> : IEquatable<RawList<T>>
 
 internal static class RawList
 {
-	/// <summary>
-	/// Returns <see langword="true"/> when the two lists have identical length
-	/// and content.
-	/// </summary>
-	[Pure]
-	internal static bool SequenceEqual<T>(this ref readonly RawList<T> left, ref readonly RawList<T> right)
-	{
-		// Attempt to defer to .NET 6+ vectorized implementation:
-#if NET6_0_OR_GREATER
-		return System.MemoryExtensions.SequenceEqual(left.AsSpan(), right.AsSpan());
-#else
-		if (object.ReferenceEquals(left.items, right.items))
-		{
-			return true;
-		}
-
-		var size = left.size;
-		if (size != right.size)
-		{
-			return false;
-		}
-
-		var comparer = new DefaultEqualityComparer<T>();
-
-		for (int i = 0; i < size; i++)
-		{
-			if (!comparer.Equals(left.items[i], right.items[i]))
-			{
-				return false;
-			}
-		}
-
-		return true;
-#endif
-	}
-
-	[Pure]
-	internal static int GetSequenceHashCode<T>(this ref readonly RawList<T> list)
-	{
-		var hasher = new HashCode();
-		hasher.Add(typeof(RawList<T>));
-		hasher.Add(list.Count);
-
-		foreach (var item in list)
-		{
-			hasher.Add(item);
-		}
-
-		return hasher.ToHashCode();
-	}
-
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static RawList<T> CreateFromArrayUnsafe<T>(T[] items, int count)
