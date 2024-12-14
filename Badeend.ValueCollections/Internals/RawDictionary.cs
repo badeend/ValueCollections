@@ -124,13 +124,7 @@ internal struct RawDictionary<TKey, TValue>
 			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.source);
 		}
 
-		var minimumCapacity = (source as ICollection<KeyValuePair<TKey, TValue>>)?.Count ?? 0;
-		if (minimumCapacity < 0)
-		{
-			ThrowHelpers.ThrowArgumentOutOfRangeException(ThrowHelpers.Argument.minimumCapacity);
-		}
-
-		if (minimumCapacity > 0)
+		if (Polyfills.TryGetNonEnumeratedCount(source, out var minimumCapacity) && minimumCapacity > 0)
 		{
 			this.Initialize(minimumCapacity);
 		}
@@ -207,9 +201,8 @@ internal struct RawDictionary<TKey, TValue>
 			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.items);
 		}
 
-		if (items is ICollection<KeyValuePair<TKey, TValue>> collection)
+		if (Polyfills.TryGetNonEnumeratedCount(items, out var count))
 		{
-			var count = collection.Count;
 			if (count == 0)
 			{
 				// Nothing to add.

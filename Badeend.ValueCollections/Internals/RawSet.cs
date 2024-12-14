@@ -144,9 +144,8 @@ internal struct RawSet<T>
 
 		// To avoid excess resizes, first set size based on collection's count. The collection may
 		// contain duplicates, so call TrimExcess if resulting RawSet is larger than the threshold.
-		if (source is ICollection<T> collection)
+		if (Polyfills.TryGetNonEnumeratedCount(source, out var count))
 		{
-			var count = collection.Count;
 			if (count > 0)
 			{
 				this.Initialize(count);
@@ -369,9 +368,9 @@ internal struct RawSet<T>
 			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
 		}
 
-		if (other is ICollection<T> otherCollection)
+		if (Polyfills.TryGetNonEnumeratedCount(other, out var otherCount))
 		{
-			if (otherCollection.Count == 0)
+			if (otherCount == 0)
 			{
 				// Nothing to add.
 				return true;
@@ -450,10 +449,10 @@ internal struct RawSet<T>
 		}
 
 		// If other is known to be empty, intersection is empty set; remove all elements, and we're done.
-		if (other is ICollection<T> otherAsCollection)
+		if (Polyfills.TryGetNonEnumeratedCount(other, out var otherCount))
 		{
 			// If other is known to be empty, intersection is empty set; remove all elements, and we're done.
-			if (otherAsCollection.Count == 0)
+			if (otherCount == 0)
 			{
 				this.Clear();
 				return true;
@@ -554,9 +553,9 @@ internal struct RawSet<T>
 			return true;
 		}
 
-		if (other is ICollection<T> otherCollection)
+		if (Polyfills.TryGetNonEnumeratedCount(other, out var otherCount))
 		{
-			if (otherCollection.Count == 0)
+			if (otherCount == 0)
 			{
 				// Nothing to remove.
 				return true;
@@ -647,9 +646,9 @@ internal struct RawSet<T>
 			return this.TryUnionWithNonEnumerated(other);
 		}
 
-		if (other is ICollection<T> otherCollection)
+		if (Polyfills.TryGetNonEnumeratedCount(other, out var otherCount))
 		{
-			if (otherCollection.Count == 0)
+			if (otherCount == 0)
 			{
 				// Other set is empty. The symmetric difference is the current set.
 				return true;
@@ -758,10 +757,10 @@ internal struct RawSet<T>
 			return true;
 		}
 
-		if (other is ICollection<T> otherAsCollection)
+		if (Polyfills.TryGetNonEnumeratedCount(other, out var otherCount))
 		{
 			// If this has more elements then it can't be a subset.
-			if (count > otherAsCollection.Count)
+			if (count > otherCount)
 			{
 				result = false;
 				return true;
@@ -835,10 +834,10 @@ internal struct RawSet<T>
 
 		var count = this.Count;
 
-		if (other is ICollection<T> otherAsCollection)
+		if (Polyfills.TryGetNonEnumeratedCount(other, out var otherCount))
 		{
 			// No set is a proper subset of a set with less or equal number of elements.
-			if (otherAsCollection.Count <= count)
+			if (otherCount <= count)
 			{
 				result = false;
 				return true;
@@ -944,10 +943,10 @@ internal struct RawSet<T>
 		}
 
 		// Try to fall out early based on counts.
-		if (other is ICollection<T> otherAsCollection)
+		if (Polyfills.TryGetNonEnumeratedCount(other, out var otherCount))
 		{
 			// If other is the empty set then this is a superset.
-			if (otherAsCollection.Count == 0)
+			if (otherCount == 0)
 			{
 				result = true;
 				return true;
@@ -1033,10 +1032,10 @@ internal struct RawSet<T>
 			return true;
 		}
 
-		if (other is ICollection<T> otherAsCollection)
+		if (Polyfills.TryGetNonEnumeratedCount(other, out var otherCount))
 		{
 			// If other is the empty set then this is a superset.
-			if (otherAsCollection.Count == 0)
+			if (otherCount == 0)
 			{
 				// Note that this has at least one element, based on above check.
 				result = true;
@@ -1193,12 +1192,12 @@ internal struct RawSet<T>
 
 		var count = this.Count;
 
-		if (other is ICollection<T> otherAsCollection)
+		if (Polyfills.TryGetNonEnumeratedCount(other, out var otherCount))
 		{
 			// If this is empty, they are equal iff other is empty.
 			if (count == 0)
 			{
-				result = otherAsCollection.Count == 0;
+				result = otherCount == 0;
 				return true;
 			}
 
@@ -1222,7 +1221,7 @@ internal struct RawSet<T>
 			}
 
 			// Can't be equal if other set contains fewer elements than this.
-			if (count > otherAsCollection.Count)
+			if (count > otherCount)
 			{
 				result = false;
 				return true;
