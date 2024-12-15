@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <em>Low overhead immutable collection types with structural equality.</em>
+  <em>Zero-overhead immutable collection types with structural equality.</em>
 </p>
 
 <p align="center">
@@ -12,7 +12,7 @@
 
 ---
 
-Low overhead collection types with:
+Zero-overhead collection types with:
 
 - **Immutability**: Once constructed, the collections cannot be changed anymore. Efficient construction can be done using so called Builders.
 - **Value equality**: Two collections are considered "equal" when they have the same type and the same content.

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <PackageId>Badeend.ValueCollections</PackageId>
-    <Description>Low overhead immutable collection types with structural equality</Description>
+    <Description>Zero-overhead immutable collection types with structural equality</Description>
     <TargetFrameworks>netstandard2.0;netstandard2.1;netcoreapp2.1;net5.0;net6.0;net8.0;net9.0</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
