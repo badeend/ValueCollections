@@ -494,9 +494,16 @@ public partial class ValueDictionary<TKey, TValue>
 		// Accessible through an extension method.
 		internal Builder AddRangeEnumerable(IEnumerable<KeyValuePair<TKey, TValue>> items)
 		{
-			using (var guard = this.Mutate())
+			if (items is ValueDictionary<TKey, TValue> valueDictionary)
 			{
-				guard.Inner.AddRange(items);
+				this.MutateOnce().AddRange(in valueDictionary.inner);
+			}
+			else
+			{
+				using (var guard = this.Mutate())
+				{
+					guard.Inner.AddRange(items);
+				}
 			}
 
 			return this;

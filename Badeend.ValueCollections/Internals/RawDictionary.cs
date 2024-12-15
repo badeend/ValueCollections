@@ -170,9 +170,15 @@ internal struct RawDictionary<TKey, TValue>
 
 		this.EnsureCapacity(checked(this.Count + count));
 
-		foreach (var entry in items)
+		var otherEntries = items.entries;
+		var otherEnd = items.end;
+		for (int i = 0; i < otherEnd; i++)
 		{
-			this.Add(entry.Key, entry.Value);
+			ref readonly Entry entry = ref otherEntries![i];
+			if (entry.Next >= -1)
+			{
+				this.Add(entry.Key, entry.Value);
+			}
 		}
 	}
 
