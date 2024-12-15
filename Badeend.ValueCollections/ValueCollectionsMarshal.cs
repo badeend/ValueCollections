@@ -44,11 +44,8 @@ public static class ValueCollectionsMarshal
 	/// <paramref name="builder"/>.
 	///
 	/// > [!WARNING]
-	/// > The builder should not be accessed while the span is in
-	/// use. Unlike the <see cref="List{T}"/> equivalent of this method
-	/// (<c>CollectionsMarshal.AsSpan</c>), even just <em>reading</em> from the
-	/// builder might trigger undefined behavior. Especially do not feed the
-	/// span back into the builder itself using e.g.
+	/// > The builder should not be built or mutated while the span is in
+	/// use. Especially do not feed the span back into the builder itself using e.g.
 	/// <see cref="ValueList{T}.Builder.AddRange(ReadOnlySpan{T})"/> or
 	/// <see cref="ValueList{T}.Builder.InsertRange(int, ReadOnlySpan{T})"/>.
 	/// </summary>
