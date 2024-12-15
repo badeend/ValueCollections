@@ -220,13 +220,23 @@ public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TV
 	public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value) => this.inner.TryGetValue(key, out value);
 #pragma warning restore CS8767 // Nullability of reference types in type of parameter doesn't match implicitly implemented member (possibly because of nullability attributes).
 
+	private static readonly TValue? DefaultValue = default!;
+
 	/// <summary>
 	/// Attempt to get the value associated with the specified <paramref name="key"/>.
 	/// Returns <see langword="default"/> when the key was not found.
 	/// </summary>
 	[Pure]
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public TValue? GetValueOrDefault(TKey key) => this.GetValueOrDefault(key, default!);
+	public ref readonly TValue? GetValueOrDefault(TKey key)
+	{
+		ref readonly var value = ref this.inner.GetValueRefOrNullRef(key);
+		if (Polyfills.IsNullRef(in value))
+		{
+			return ref DefaultValue;
+		}
+
+		return ref value;
+	}
 
 	/// <summary>
 	/// Attempt to get the value associated with the specified <paramref name="key"/>.
@@ -235,7 +245,13 @@ public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TV
 	[Pure]
 	public TValue GetValueOrDefault(TKey key, TValue defaultValue)
 	{
-		return this.TryGetValue(key, out var value) ? value : defaultValue;
+		ref readonly var value = ref this.inner.GetValueRefOrNullRef(key);
+		if (Polyfills.IsNullRef(in value))
+		{
+			return defaultValue;
+		}
+
+		return value;
 	}
 
 	/// <inheritdoc/>

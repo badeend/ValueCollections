@@ -129,6 +129,24 @@ public class ValueDictionaryTests
     }
 
     [Fact]
+    public void GetValueOrDefaultUsesRefs()
+    {
+        var builder = ValueDictionary.CreateBuilder<int, MutableStruct>();
+        builder.Add(1, new() { Value = 42 });
+
+        ref var builderRef = ref ValueCollectionsMarshal.GetValueRefOrNullRef(builder, 1);
+        Assert.False(IsNullRef(in builderRef));
+
+        var dict = builder.Build();
+
+        ref readonly var dictRef = ref dict.GetValueOrDefault(1);
+
+        Assert.True(dictRef.Value == 42);
+        builderRef.Value = 314; // Don't ever do this
+        Assert.True(dictRef.Value == 314);
+    }
+
+    [Fact]
     public void GetValueRefOrNullRef()
     {
         var dict = ValueDictionary.Create([
@@ -310,4 +328,9 @@ public class ValueDictionaryTests
     private static KeyValuePair<TKey, TValue> Entry<TKey, TValue>(TKey key, TValue value) => new KeyValuePair<TKey, TValue>(key, value);
 
     private static unsafe bool IsNullRef<T>(ref readonly T value) => Unsafe.AsPointer(ref Unsafe.AsRef(in value)) == null;
+
+    private struct MutableStruct
+    {
+        public int Value { get; set; }
+    }
 }
