@@ -8,6 +8,7 @@
     <AnalysisMode>Minimum</AnalysisMode>
     <WarningsAsErrors></WarningsAsErrors>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
     <!-- Apparently .netstandard means nothing anymore... : https://andrewlock.net/stop-lying-about-netstandard-2-support/  -->
     <SuppressTfmSupportBuildWarnings>true</SuppressTfmSupportBuildWarnings>

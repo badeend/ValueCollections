@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace Badeend.ValueCollections.Tests;
 
 public class ValueDictionaryBuilderTests
@@ -293,6 +295,41 @@ public class ValueDictionaryBuilderTests
     }
 
     [Fact]
+    public void GetValueRefOrNullRef()
+    {
+        var builder = ValueDictionary.CreateBuilder([
+            Entry("c", 3),
+            Entry("b", 2),
+            Entry("a", 1),
+        ]);
+
+        {
+            ref var a = ref ValueCollectionsMarshal.GetValueRefOrNullRef(builder, "a");
+            Assert.False(IsNullRef(ref a));
+            Assert.True(a == 1);
+            a = 42;
+            Assert.True(builder["a"] == 42);
+        }
+        {
+            ref var b = ref ValueCollectionsMarshal.GetValueRefOrNullRef(builder, "b");
+            Assert.False(IsNullRef(ref b));
+            Assert.True(b == 2);
+            b = 43;
+            Assert.True(builder["b"] == 43);
+        }
+        {
+            ref var c = ref ValueCollectionsMarshal.GetValueRefOrNullRef(builder, "c");
+            Assert.False(IsNullRef(ref c));
+            Assert.True(c == 3);
+            c = 43;
+            Assert.True(builder["c"] == 43);
+        }
+        {
+            Assert.True(IsNullRef(in ValueCollectionsMarshal.GetValueRefOrNullRef(builder, "d")));
+        }
+    }
+
+    [Fact]
     public void BuildIsFinal()
     {
         var builder = ValueDictionary.CreateBuilder<string, int>();
@@ -433,4 +470,6 @@ public class ValueDictionaryBuilderTests
     }
 
     private static KeyValuePair<TKey, TValue> Entry<TKey, TValue>(TKey key, TValue value) => new KeyValuePair<TKey, TValue>(key, value);
+
+    private static unsafe bool IsNullRef<T>(ref readonly T value) => Unsafe.AsPointer(ref Unsafe.AsRef(in value)) == null;
 }

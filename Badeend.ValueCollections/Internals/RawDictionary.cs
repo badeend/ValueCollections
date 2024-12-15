@@ -148,7 +148,7 @@ internal struct RawDictionary<TKey, TValue>
 	// Does not check/guard against concurrent mutation during enumeration!
 	public TValue GetOrAdd(TKey key, Func<TKey, TValue> valueFactory)
 	{
-		ref TValue valRef = ref this.FindValue(key);
+		ref TValue valRef = ref this.GetValueRefOrNullRef(key);
 		if (!Polyfills.IsNullRef(ref valRef))
 		{
 			return valRef;
@@ -218,17 +218,6 @@ internal struct RawDictionary<TKey, TValue>
 		}
 	}
 
-	public readonly ref TValue GetItem(TKey key)
-	{
-		ref TValue value = ref this.FindValue(key);
-		if (Polyfills.IsNullRef(ref value))
-		{
-			ThrowHelpers.ThrowKeyNotFoundException(key);
-		}
-
-		return ref value;
-	}
-
 	public void SetItem(TKey key, TValue value)
 	{
 		bool modified = this.TryInsert(key, value, InsertionBehavior.OverwriteExisting);
@@ -259,7 +248,7 @@ internal struct RawDictionary<TKey, TValue>
 
 	public readonly bool Contains(KeyValuePair<TKey, TValue> keyValuePair)
 	{
-		ref TValue value = ref this.FindValue(keyValuePair.Key);
+		ref TValue value = ref this.GetValueRefOrNullRef(keyValuePair.Key);
 		if (!Polyfills.IsNullRef(ref value) && EqualityComparer<TValue>.Default.Equals(value, keyValuePair.Value))
 		{
 			return true;
@@ -270,7 +259,7 @@ internal struct RawDictionary<TKey, TValue>
 
 	public bool Remove(KeyValuePair<TKey, TValue> keyValuePair)
 	{
-		ref TValue value = ref this.FindValue(keyValuePair.Key);
+		ref TValue value = ref this.GetValueRefOrNullRef(keyValuePair.Key);
 		if (!Polyfills.IsNullRef(ref value) && EqualityComparer<TValue>.Default.Equals(value, keyValuePair.Value))
 		{
 			this.Remove(keyValuePair.Key);
@@ -298,7 +287,7 @@ internal struct RawDictionary<TKey, TValue>
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public readonly bool ContainsKey(TKey key) => !Polyfills.IsNullRef(ref this.FindValue(key));
+	public readonly bool ContainsKey(TKey key) => !Polyfills.IsNullRef(ref this.GetValueRefOrNullRef(key));
 
 	public readonly bool ContainsValue(TValue value)
 	{
@@ -325,7 +314,18 @@ internal struct RawDictionary<TKey, TValue>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public readonly Enumerator GetEnumerator() => new Enumerator(this);
 
-	internal readonly ref TValue FindValue(TKey key)
+	internal readonly ref TValue GetValueRef(TKey key)
+	{
+		ref TValue value = ref this.GetValueRefOrNullRef(key);
+		if (Polyfills.IsNullRef(ref value))
+		{
+			ThrowHelpers.ThrowKeyNotFoundException(key);
+		}
+
+		return ref value;
+	}
+
+	internal readonly ref TValue GetValueRefOrNullRef(TKey key)
 	{
 		if (key == null)
 		{
@@ -674,7 +674,7 @@ internal struct RawDictionary<TKey, TValue>
 
 	public readonly bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value)
 	{
-		ref TValue valRef = ref this.FindValue(key);
+		ref TValue valRef = ref this.GetValueRefOrNullRef(key);
 		if (!Polyfills.IsNullRef(ref valRef))
 		{
 			value = valRef;

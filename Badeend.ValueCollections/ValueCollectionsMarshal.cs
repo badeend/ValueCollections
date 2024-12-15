@@ -51,4 +51,32 @@ public static class ValueCollectionsMarshal
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Span<T> AsSpan<T>(ValueList<T>.Builder builder) => builder.AsSpanUnsafe();
+
+	/// <summary>
+	/// Get a mutable reference to a value in the dictionary, or a null ref if
+	/// it does not exist.
+	///
+	/// > [!WARNING]
+	/// > The builder should not be built or mutated while the returned reference
+	/// is still in use.
+	/// </summary>
+	/// <remarks>
+	/// Note that a "null ref" is not the same as a reference to a
+	/// <c>null</c> value. A null ref can be detected by calling <c>Unsafe.IsNullRef</c>.
+	/// </remarks>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ref TValue GetValueRefOrNullRef<TKey, TValue>(ValueDictionary<TKey, TValue>.Builder builder, TKey key)
+		where TKey : notnull => ref builder.GetValueRefOrNullRefUnsafe(key);
+
+	/// <summary>
+	/// Get a reference to a value in the dictionary, or a null ref if it does
+	/// not exist.
+	/// </summary>
+	/// <remarks>
+	/// Note that a "null ref" is not the same as a reference to a
+	/// <c>null</c> value. A null ref can be detected by calling <c>Unsafe.IsNullRef</c>.
+	/// </remarks>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ref readonly TValue GetValueRefOrNullRef<TKey, TValue>(ValueDictionary<TKey, TValue> dictionary, TKey key)
+		where TKey : notnull => ref dictionary.GetValueRefOrNullRefUnsafe(key);
 }

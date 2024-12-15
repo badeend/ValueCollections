@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace Badeend.ValueCollections.Tests;
 
 public class ValueDictionaryTests
@@ -124,6 +126,35 @@ public class ValueDictionaryTests
 
         Assert.True(a.GetValueOrDefault("a", -1) == 1);
         Assert.True(a.GetValueOrDefault("d", -1) == -1);
+    }
+
+    [Fact]
+    public void GetValueRefOrNullRef()
+    {
+        var dict = ValueDictionary.Create([
+            Entry("c", 3),
+            Entry("b", 2),
+            Entry("a", 1),
+        ]);
+
+        {
+            ref readonly var a = ref ValueCollectionsMarshal.GetValueRefOrNullRef(dict, "a");
+            Assert.False(IsNullRef(in a));
+            Assert.True(a == 1);
+        }
+        {
+            ref readonly var b = ref ValueCollectionsMarshal.GetValueRefOrNullRef(dict, "b");
+            Assert.False(IsNullRef(in b));
+            Assert.True(b == 2);
+        }
+        {
+            ref readonly var c = ref ValueCollectionsMarshal.GetValueRefOrNullRef(dict, "c");
+            Assert.False(IsNullRef(in c));
+            Assert.True(c == 3);
+        }
+        {
+            Assert.True(IsNullRef(in ValueCollectionsMarshal.GetValueRefOrNullRef(dict, "d")));
+        }
     }
 
     [Fact]
@@ -277,4 +308,6 @@ public class ValueDictionaryTests
     }
 
     private static KeyValuePair<TKey, TValue> Entry<TKey, TValue>(TKey key, TValue value) => new KeyValuePair<TKey, TValue>(key, value);
+
+    private static unsafe bool IsNullRef<T>(ref readonly T value) => Unsafe.AsPointer(ref Unsafe.AsRef(in value)) == null;
 }

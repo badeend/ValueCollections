@@ -129,7 +129,7 @@ public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TV
 	{
 		[Pure]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		get => ref this.inner.GetItem(key);
+		get => ref this.inner.GetValueRef(key);
 	}
 
 	/// <inheritdoc/>
@@ -240,6 +240,9 @@ public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TV
 
 	/// <inheritdoc/>
 	void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) => this.inner.CopyTo(array, arrayIndex);
+
+	// Accessible through extension method.
+	internal ref readonly TValue GetValueRefOrNullRefUnsafe(TKey key) => ref this.inner.GetValueRefOrNullRef(key);
 
 	/// <inheritdoc/>
 	[Pure]

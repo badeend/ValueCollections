@@ -320,7 +320,7 @@ public partial class ValueDictionary<TKey, TValue>
 		public TValue this[TKey key]
 		{
 			[Pure]
-			get => this.ReadOnce().GetItem(key);
+			get => this.ReadOnce().GetValueRef(key);
 			set => this.MutateOnce().SetItem(key, value);
 		}
 
@@ -632,6 +632,9 @@ public partial class ValueDictionary<TKey, TValue>
 			this.MutateOnce().TrimExcess();
 			return this;
 		}
+
+		// Accessible through extension method.
+		internal ref TValue GetValueRefOrNullRefUnsafe(TKey key) => ref this.MutateOnce().GetValueRefOrNullRef(key); // Using MutateOnce to trigger COW.
 
 		/// <summary>
 		/// Create a new heap-allocated live view of the builder.
