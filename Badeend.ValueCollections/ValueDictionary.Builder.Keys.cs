@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -105,6 +106,8 @@ public partial class ValueDictionary<TKey, TValue>
 		/// the next mutation performed on the builder. As long as the KeysCollection
 		/// is usable, it effectively represents an immutable set of keys.
 		/// </remarks>
+		[DebuggerDisplay("Count = {Count}")]
+		[DebuggerTypeProxy(typeof(ValueDictionary<,>.Builder.KeysCollection.DebugView))]
 		public sealed class KeysCollection : ISet<TKey>, IReadOnlyCollection<TKey>, IReadOnlySet<TKey>
 		{
 			internal static readonly KeysCollection Empty = new(default(ValueDictionary<TKey, TValue>.Builder).Read());
@@ -133,11 +136,14 @@ public partial class ValueDictionary<TKey, TValue>
 			/// <inheritdoc/>
 			IEnumerator IEnumerable.GetEnumerator() => (this as IEnumerable<TKey>).GetEnumerator();
 
-			/// <inheritdoc/>
-			int ICollection<TKey>.Count => this.Snapshot.AssertAlive().Count;
+			// Used by DebuggerDisplay attribute
+			private int Count => this.Snapshot.AssertAlive().Count;
 
 			/// <inheritdoc/>
-			int IReadOnlyCollection<TKey>.Count => this.Snapshot.AssertAlive().Count;
+			int ICollection<TKey>.Count => this.Count;
+
+			/// <inheritdoc/>
+			int IReadOnlyCollection<TKey>.Count => this.Count;
 
 			/// <inheritdoc/>
 			bool ICollection<TKey>.IsReadOnly => true;
@@ -210,6 +216,12 @@ public partial class ValueDictionary<TKey, TValue>
 
 			/// <inheritdoc/>
 			void ISet<TKey>.UnionWith(IEnumerable<TKey> other) => throw ImmutableException();
+
+			internal sealed class DebugView(KeysCollection collection)
+			{
+				[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+				internal TKey[] Items => ValueDictionary<TKey, TValue>.DebugView.CreateKeys(in collection.Snapshot.AssertAlive());
+			}
 		}
 	}
 }

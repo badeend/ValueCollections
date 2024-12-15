@@ -1,5 +1,6 @@
 using System.Collections;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
@@ -80,6 +81,8 @@ public static class ValueDictionary
 /// </remarks>
 /// <typeparam name="TKey">The type of keys in the dictionary.</typeparam>
 /// <typeparam name="TValue">The type of values in the dictionary.</typeparam>
+[DebuggerDisplay("Count = {Count}")]
+[DebuggerTypeProxy(typeof(ValueDictionary<,>.DebugView))]
 public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>, IEquatable<ValueDictionary<TKey, TValue>>
 	where TKey : notnull
 {
@@ -411,4 +414,62 @@ public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TV
 	bool IDictionary<TKey, TValue>.Remove(TKey key) => throw ImmutableException();
 
 	private static NotSupportedException ImmutableException() => new NotSupportedException("Collection is immutable");
+
+	internal sealed class DebugView(ValueDictionary<TKey, TValue> dictionary)
+	{
+		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+		internal Entry[] Items => CreateEntries(in dictionary.inner);
+
+		[DebuggerDisplay("{Value}", Name = "[{Key}]")]
+		internal readonly struct Entry
+		{
+			[DebuggerBrowsable(DebuggerBrowsableState.Collapsed)]
+			internal required TKey Key { get; init; }
+
+			[DebuggerBrowsable(DebuggerBrowsableState.Collapsed)]
+			internal required TValue Value { get; init; }
+		}
+
+		internal static Entry[] CreateEntries(ref readonly RawDictionary<TKey, TValue> dictionary)
+		{
+			var items = new Entry[dictionary.Count];
+			var index = 0;
+			foreach (var entry in dictionary)
+			{
+				items[index++] = new Entry
+				{
+					Key = entry.Key,
+					Value = entry.Value,
+				};
+			}
+
+			return items;
+		}
+
+		internal static TKey[] CreateKeys(ref readonly RawDictionary<TKey, TValue> dictionary)
+		{
+			var items = new TKey[dictionary.Count];
+			var index = 0;
+
+			foreach (var entry in dictionary)
+			{
+				items[index++] = entry.Key;
+			}
+
+			return items;
+		}
+
+		internal static TValue[] CreateValues(ref readonly RawDictionary<TKey, TValue> dictionary)
+		{
+			var items = new TValue[dictionary.Count];
+			var index = 0;
+
+			foreach (var entry in dictionary)
+			{
+				items[index++] = entry.Value;
+			}
+
+			return items;
+		}
+	}
 }

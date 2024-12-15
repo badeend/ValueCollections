@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -105,6 +106,8 @@ public partial class ValueDictionary<TKey, TValue>
 		/// the next mutation performed on the builder. As long as the ValuesCollection
 		/// is usable, it effectively represents an immutable set of values.
 		/// </remarks>
+		[DebuggerDisplay("Count = {Count}")]
+		[DebuggerTypeProxy(typeof(ValueDictionary<,>.Builder.ValuesCollection.DebugView))]
 		public sealed class ValuesCollection : ICollection<TValue>, IReadOnlyCollection<TValue>
 		{
 			internal static readonly ValuesCollection Empty = new(default(ValueDictionary<TKey, TValue>.Builder).Read());
@@ -133,11 +136,14 @@ public partial class ValueDictionary<TKey, TValue>
 			/// <inheritdoc/>
 			IEnumerator IEnumerable.GetEnumerator() => (this as IEnumerable<TValue>).GetEnumerator();
 
-			/// <inheritdoc/>
-			int ICollection<TValue>.Count => this.Snapshot.AssertAlive().Count;
+			// Used by DebuggerDisplay attribute
+			private int Count => this.Snapshot.AssertAlive().Count;
 
 			/// <inheritdoc/>
-			int IReadOnlyCollection<TValue>.Count => this.Snapshot.AssertAlive().Count;
+			int ICollection<TValue>.Count => this.Count;
+
+			/// <inheritdoc/>
+			int IReadOnlyCollection<TValue>.Count => this.Count;
 
 			/// <inheritdoc/>
 			bool ICollection<TValue>.IsReadOnly => true;
@@ -156,6 +162,12 @@ public partial class ValueDictionary<TKey, TValue>
 
 			/// <inheritdoc/>
 			void ICollection<TValue>.Clear() => throw ImmutableException();
+
+			internal sealed class DebugView(ValuesCollection collection)
+			{
+				[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+				internal TValue[] Items => ValueDictionary<TKey, TValue>.DebugView.CreateValues(in collection.Snapshot.AssertAlive());
+			}
 		}
 	}
 }

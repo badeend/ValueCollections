@@ -1,5 +1,6 @@
 using System.Collections;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -47,6 +48,8 @@ public static class ValueSlice
 /// The <c>default</c> value of every ValueSlice is an empty slice.
 /// </remarks>
 /// <typeparam name="T">The type of items in the slice.</typeparam>
+[DebuggerDisplay("Length = {Length}")]
+[DebuggerTypeProxy(typeof(ValueSlice<>.DebugView))]
 [StructLayout(LayoutKind.Auto)]
 [CollectionBuilder(typeof(ValueSlice), nameof(ValueSlice.Create))]
 public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
@@ -511,6 +514,8 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	/// </remarks>
 #pragma warning disable CA1034 // Nested types should not be visible
 #pragma warning disable CA1815 // Override equals and operator equals on value types
+	[DebuggerDisplay("Count = {Count}")]
+	[DebuggerTypeProxy(typeof(ValueSlice<>.Collection.DebugView))]
 	public sealed class Collection : IEnumerable<T>, IReadOnlyList<T>, IList<T>
 	{
 		private readonly ValueSlice<T> slice;
@@ -535,11 +540,14 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 			set => ThrowHelpers.ThrowNotSupportedException_CollectionImmutable();
 		}
 
-		/// <inheritdoc/>
-		int IReadOnlyCollection<T>.Count => this.slice.Length;
+		// Used by DebuggerDisplay attribute
+		private int Count => this.slice.Length;
 
 		/// <inheritdoc/>
-		int ICollection<T>.Count => this.slice.Length;
+		int IReadOnlyCollection<T>.Count => this.Count;
+
+		/// <inheritdoc/>
+		int ICollection<T>.Count => this.Count;
 
 		/// <inheritdoc/>
 		bool ICollection<T>.IsReadOnly => true;
@@ -591,6 +599,12 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 
 		/// <inheritdoc/>
 		void IList<T>.RemoveAt(int index) => ThrowHelpers.ThrowNotSupportedException_CollectionImmutable();
+
+		internal sealed class DebugView(Collection collection)
+		{
+			[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+			internal T[] Items => collection.slice.ToArray();
+		}
 	}
 #pragma warning restore CA1034 // Nested types should not be visible
 #pragma warning restore CA1815 // Override equals and operator equals on value types
@@ -659,5 +673,11 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 
 		builder.Append(']');
 		return builder.ToString();
+	}
+
+	internal sealed class DebugView(ValueSlice<T> slice)
+	{
+		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+		internal T[] Items => slice.ToArray();
 	}
 }

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -67,6 +68,8 @@ public static class ValueSet
 /// The order in which the elements are enumerated is undefined.
 /// </remarks>
 /// <typeparam name="T">The type of items in the set.</typeparam>
+[DebuggerDisplay("Count = {Count}")]
+[DebuggerTypeProxy(typeof(ValueSet<>.DebugView))]
 [CollectionBuilder(typeof(ValueSet), nameof(ValueSet.Create))]
 public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEquatable<ValueSet<T>>, IReadOnlySet<T>
 {
@@ -586,4 +589,23 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	void ISet<T>.SymmetricExceptWith(IEnumerable<T> other) => throw CreateImmutableException();
 
 	private static NotSupportedException CreateImmutableException() => new NotSupportedException("Collection is immutable");
+
+	internal sealed class DebugView(ValueSet<T> set)
+	{
+		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+		internal T[] Items => CreateItems(in set.inner);
+
+		internal static T[] CreateItems(ref readonly RawSet<T> set)
+		{
+			var items = new T[set.Count];
+			var index = 0;
+
+			foreach (var item in set)
+			{
+				items[index++] = item;
+			}
+
+			return items;
+		}
+	}
 }

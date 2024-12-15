@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -98,6 +99,8 @@ public partial class ValueDictionary<TKey, TValue>
 	/// <summary>
 	/// A heap-allocated read-only view over all the keys in the dictionary.
 	/// </summary>
+	[DebuggerDisplay("Count = {Count}")]
+	[DebuggerTypeProxy(typeof(ValueDictionary<,>.KeysCollection.DebugView))]
 	public sealed class KeysCollection : ISet<TKey>, IReadOnlyCollection<TKey>, IReadOnlySet<TKey>
 	{
 		internal static readonly KeysCollection Empty = new KeysCollection(ValueDictionary<TKey, TValue>.Empty);
@@ -125,11 +128,14 @@ public partial class ValueDictionary<TKey, TValue>
 		/// <inheritdoc/>
 		IEnumerator IEnumerable.GetEnumerator() => (this as IEnumerable<TKey>).GetEnumerator();
 
-		/// <inheritdoc/>
-		int ICollection<TKey>.Count => this.dictionary.Count;
+		// Used by DebuggerDisplay attribute
+		private int Count => this.dictionary.Count;
 
 		/// <inheritdoc/>
-		int IReadOnlyCollection<TKey>.Count => this.dictionary.Count;
+		int ICollection<TKey>.Count => this.Count;
+
+		/// <inheritdoc/>
+		int IReadOnlyCollection<TKey>.Count => this.Count;
 
 		/// <inheritdoc/>
 		bool ICollection<TKey>.IsReadOnly => true;
@@ -202,5 +208,11 @@ public partial class ValueDictionary<TKey, TValue>
 
 		/// <inheritdoc/>
 		void ISet<TKey>.UnionWith(IEnumerable<TKey> other) => throw ImmutableException();
+
+		internal sealed class DebugView(KeysCollection collection)
+		{
+			[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+			internal TKey[] Items => ValueDictionary<TKey, TValue>.DebugView.CreateKeys(in collection.dictionary.inner);
+		}
 	}
 }

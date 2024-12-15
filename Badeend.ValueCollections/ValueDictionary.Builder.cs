@@ -1,5 +1,6 @@
 using System.Collections;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
@@ -42,6 +43,8 @@ public partial class ValueDictionary<TKey, TValue>
 	///
 	/// The <c>default</c> value is an empty read-only builder.
 	/// </remarks>
+	[DebuggerDisplay("Count = {Count}, Capacity = {Capacity}, IsReadOnly = {IsReadOnly}")]
+	[DebuggerTypeProxy(typeof(ValueDictionary<,>.Builder.DebugView))]
 	public readonly partial struct Builder : IEquatable<Builder>
 	{
 		/// <summary>
@@ -670,6 +673,8 @@ public partial class ValueDictionary<TKey, TValue>
 		/// A heap-allocated live view of a builder. Changes made to the
 		/// collection are visible in the builder and vice versa.
 		/// </summary>
+		[DebuggerDisplay("Count = {Count}, Capacity = {Capacity}, IsReadOnly = {IsReadOnly}")]
+		[DebuggerTypeProxy(typeof(ValueDictionary<,>.Builder.Collection.DebugView))]
 		public sealed class Collection : IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>
 		{
 			internal static readonly Collection Empty = new(default);
@@ -775,14 +780,23 @@ public partial class ValueDictionary<TKey, TValue>
 				this.builder = builder;
 			}
 
-			/// <inheritdoc/>
-			bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => this.builder.IsReadOnly;
+			// Used by DebuggerDisplay attribute
+			private int Count => this.builder.Count;
+
+			// Used by DebuggerDisplay attribute
+			private int Capacity => this.builder.Capacity;
+
+			// Used by DebuggerDisplay attribute
+			private bool IsReadOnly => this.builder.IsReadOnly;
 
 			/// <inheritdoc/>
-			int ICollection<KeyValuePair<TKey, TValue>>.Count => this.builder.Count;
+			bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => this.IsReadOnly;
 
 			/// <inheritdoc/>
-			int IReadOnlyCollection<KeyValuePair<TKey, TValue>>.Count => this.builder.Count;
+			int ICollection<KeyValuePair<TKey, TValue>>.Count => this.Count;
+
+			/// <inheritdoc/>
+			int IReadOnlyCollection<KeyValuePair<TKey, TValue>>.Count => this.Count;
 
 			/// <inheritdoc/>
 			ICollection<TKey> IDictionary<TKey, TValue>.Keys => this.builder.Keys.AsCollection();
@@ -858,6 +872,12 @@ public partial class ValueDictionary<TKey, TValue>
 
 			/// <inheritdoc/>
 			IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<KeyValuePair<TKey, TValue>>)this).GetEnumerator();
+
+			internal sealed class DebugView(Collection collection)
+			{
+				[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+				internal ValueDictionary<TKey, TValue>.DebugView.Entry[] Items => ValueDictionary<TKey, TValue>.DebugView.CreateEntries(in collection.builder.ReadOnce());
+			}
 		}
 #pragma warning restore CA1034 // Nested types should not be visible
 
@@ -948,5 +968,11 @@ public partial class ValueDictionary<TKey, TValue>
 		public static bool operator !=(Builder left, Builder right) => !left.Equals(right);
 
 		private static NotSupportedException ImmutableException() => new("Collection is immutable");
+
+		internal sealed class DebugView(Builder builder)
+		{
+			[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+			internal ValueDictionary<TKey, TValue>.DebugView.Entry[] Items => ValueDictionary<TKey, TValue>.DebugView.CreateEntries(in builder.ReadOnce());
+		}
 	}
 }

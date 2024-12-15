@@ -39,6 +39,8 @@ public sealed partial class ValueList<T>
 	///
 	/// The <c>default</c> value is an empty read-only builder.
 	/// </remarks>
+	[DebuggerDisplay("Count = {Count}, Capacity = {Capacity}, IsReadOnly = {IsReadOnly}")]
+	[DebuggerTypeProxy(typeof(ValueList<>.Builder.DebugView))]
 	[CollectionBuilder(typeof(ValueList), nameof(ValueList.CreateBuilder))]
 	public readonly struct Builder : IEquatable<Builder>
 	{
@@ -790,6 +792,8 @@ public sealed partial class ValueList<T>
 		/// A heap-allocated live view of a builder. Changes made to the
 		/// collection are visible in the builder and vice versa.
 		/// </summary>
+		[DebuggerDisplay("Count = {Count}, Capacity = {Capacity}, IsReadOnly = {IsReadOnly}")]
+		[DebuggerTypeProxy(typeof(ValueList<>.Builder.Collection.DebugView))]
 		public sealed class Collection : IList<T>, IReadOnlyList<T>
 		{
 			internal static readonly Collection Empty = new(default);
@@ -812,14 +816,23 @@ public sealed partial class ValueList<T>
 			/// <inheritdoc/>
 			T IReadOnlyList<T>.this[int index] => this.builder[index];
 
-			/// <inheritdoc/>
-			int ICollection<T>.Count => this.builder.Count;
+			// Used by DebuggerDisplay attribute
+			private int Count => this.builder.Count;
+
+			// Used by DebuggerDisplay attribute
+			private int Capacity => this.builder.Capacity;
+
+			// Used by DebuggerDisplay attribute
+			private bool IsReadOnly => this.builder.IsReadOnly;
 
 			/// <inheritdoc/>
-			int IReadOnlyCollection<T>.Count => this.builder.Count;
+			int ICollection<T>.Count => this.Count;
 
 			/// <inheritdoc/>
-			bool ICollection<T>.IsReadOnly => this.builder.IsReadOnly;
+			int IReadOnlyCollection<T>.Count => this.Count;
+
+			/// <inheritdoc/>
+			bool ICollection<T>.IsReadOnly => this.IsReadOnly;
 
 			/// <inheritdoc/>
 			void ICollection<T>.Add(T item) => this.builder.Add(item);
@@ -868,6 +881,12 @@ public sealed partial class ValueList<T>
 
 			/// <inheritdoc/>
 			void IList<T>.RemoveAt(int index) => this.builder.RemoveAt(index);
+
+			internal sealed class DebugView(Collection collection)
+			{
+				[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+				internal T[] Items => collection.builder.ToArray();
+			}
 		}
 #pragma warning restore CA1034 // Nested types should not be visible
 
@@ -955,5 +974,11 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		[Pure]
 		public static bool operator !=(Builder left, Builder right) => !left.Equals(right);
+
+		internal sealed class DebugView(Builder builder)
+		{
+			[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+			internal T[] Items => builder.ToArray();
+		}
 	}
 }

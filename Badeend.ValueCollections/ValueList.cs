@@ -1,5 +1,6 @@
 using System.Collections;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -66,6 +67,8 @@ public static class ValueList
 /// same allocation.
 /// </remarks>
 /// <typeparam name="T">The type of items in the list.</typeparam>
+[DebuggerDisplay("Count = {Count}")]
+[DebuggerTypeProxy(typeof(ValueList<>.DebugView))]
 [CollectionBuilder(typeof(ValueList), nameof(ValueList.Create))]
 public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueList<T>>
 {
@@ -462,4 +465,10 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 
 	/// <inheritdoc/>
 	void IList<T>.RemoveAt(int index) => ThrowHelpers.ThrowNotSupportedException_CollectionImmutable();
+
+	internal sealed class DebugView(ValueList<T> list)
+	{
+		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+		internal T[] Items => list.ToArray();
+	}
 }
