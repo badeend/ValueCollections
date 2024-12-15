@@ -96,6 +96,13 @@ public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TV
 	// See the BuilderState utility class for more info.
 	private int state;
 
+	// The `Builder.Collection` doubles as an "extended metadata" object,
+	// containing infrequently used fields. This keeps the ValueDictionary type
+	// itself as small as possible to serve the majority of use cases.
+	//
+	// Beware: this field may be accessed from multiple threads.
+	private Builder.Collection? cachedBuilderCollection;
+
 	/// <summary>
 	/// Number of items in the dictionary.
 	/// </summary>
@@ -258,7 +265,15 @@ public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TV
 	void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) => this.inner.CopyTo(array, arrayIndex);
 
 	// Accessible through extension method.
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal ref readonly TValue GetValueRefOrNullRefUnsafe(TKey key) => ref this.inner.GetValueRefOrNullRef(key);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	private Builder.Collection GetBuilderCollection()
+	{
+		// Beware: this cache field may be assigned to from multiple threads.
+		return this.cachedBuilderCollection ??= new Builder.Collection(new(this));
+	}
 
 	/// <inheritdoc/>
 	[Pure]

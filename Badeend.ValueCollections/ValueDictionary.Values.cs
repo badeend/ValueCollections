@@ -60,7 +60,16 @@ public partial class ValueDictionary<TKey, TValue>
 		/// This method is an <c>O(1)</c> operation and allocates a new fixed-size
 		/// collection instance. The items are not copied.
 		/// </remarks>
-		public readonly ValuesCollection AsCollection() => this.dictionary.Count == 0 ? ValuesCollection.Empty : new ValuesCollection(this.dictionary);
+		public readonly ValuesCollection AsCollection()
+		{
+			var dictionary = this.dictionary;
+			if (dictionary.Count == 0)
+			{
+				return ValuesCollection.Empty;
+			}
+
+			return dictionary.GetBuilderCollection().GetValuesCollection();
+		}
 
 		/// <summary>
 		/// Returns a new ValuesEnumerator.

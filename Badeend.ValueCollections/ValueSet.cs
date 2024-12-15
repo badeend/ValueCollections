@@ -83,6 +83,9 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	// See the BuilderState utility class for more info.
 	private int state;
 
+	// Beware: this field may be accessed from multiple threads.
+	private Builder.Collection? cachedBuilderCollection;
+
 	/// <summary>
 	/// Number of items in the set.
 	/// </summary>

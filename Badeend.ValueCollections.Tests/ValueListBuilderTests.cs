@@ -78,6 +78,23 @@ public class ValueListBuilderTests
     }
 
     [Fact]
+    public void CollectionsAreCached()
+    {
+        ValueList<int>.Builder builder = [1, 2, 3];
+
+        var builderA = builder.AsCollection();
+        var builderB = builder.AsCollection();
+
+        Assert.True(object.ReferenceEquals(builderA, builderB));
+
+        builder.Add(4);
+
+        var builderC = builder.AsCollection();
+
+        Assert.True(object.ReferenceEquals(builderA, builderC));
+    }
+
+    [Fact]
     public void AddInsertRemove()
     {
         ValueList<int>.Builder a = [];

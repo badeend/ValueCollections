@@ -1047,7 +1047,17 @@ public sealed partial class ValueSet<T>
 		/// collection instance. The items are not copied. Changes made to the
 		/// builder are visible in the collection and vice versa.
 		/// </remarks>
-		public Collection AsCollection() => new Collection(this);
+		public Collection AsCollection()
+		{
+			var set = this.set;
+			if (set is null)
+			{
+				return Collection.Empty;
+			}
+
+			// Beware: this cache field may be assigned to from multiple threads.
+			return set.cachedBuilderCollection ??= new Collection(this);
+		}
 
 #pragma warning disable CA1034 // Nested types should not be visible
 		/// <summary>
@@ -1056,6 +1066,8 @@ public sealed partial class ValueSet<T>
 		/// </summary>
 		public sealed class Collection : ISet<T>, IReadOnlyCollection<T>, IReadOnlySet<T>
 		{
+			internal static readonly Collection Empty = new(default);
+
 			private readonly Builder builder;
 
 			/// <summary>

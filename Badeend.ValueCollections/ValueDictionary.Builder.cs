@@ -1,6 +1,5 @@
 using System.Collections;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
@@ -168,6 +167,12 @@ public partial class ValueDictionary<TKey, TValue>
 					ThrowHelpers.ThrowInvalidOperationException_CollectionModifiedDuringEnumeration();
 				}
 			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			internal bool Equals(Snapshot other) => object.ReferenceEquals(this.dictionary, other.dictionary) && this.expectedState == other.expectedState;
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			internal ValueDictionary<TKey, TValue> GetDictionaryUnsafe() => this.dictionary;
 		}
 
 		[StructLayout(LayoutKind.Auto)]
@@ -342,10 +347,8 @@ public partial class ValueDictionary<TKey, TValue>
 
 		// This takes ownership of the ValueDictionary
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private Builder(ValueDictionary<TKey, TValue> dictionary)
+		internal Builder(ValueDictionary<TKey, TValue> dictionary)
 		{
-			Polyfills.DebugAssert(BuilderState.IsMutable(dictionary.state));
-
 			this.dictionary = dictionary;
 		}
 
@@ -651,7 +654,16 @@ public partial class ValueDictionary<TKey, TValue>
 		/// collection instance. The items are not copied. Changes made to the
 		/// builder are visible in the collection and vice versa.
 		/// </remarks>
-		public Collection AsCollection() => new Collection(this);
+		public Collection AsCollection()
+		{
+			var dictionary = this.dictionary;
+			if (dictionary is null)
+			{
+				return Collection.Empty;
+			}
+
+			return dictionary.GetBuilderCollection();
+		}
 
 #pragma warning disable CA1034 // Nested types should not be visible
 		/// <summary>
@@ -660,7 +672,97 @@ public partial class ValueDictionary<TKey, TValue>
 		/// </summary>
 		public sealed class Collection : IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>
 		{
+			internal static readonly Collection Empty = new(default);
+
 			private readonly Builder builder;
+
+			// Note that these fields may be accessed from multiple threads.
+			private object? cachedKeysCollection;
+			private object? cachedValuesCollection;
+
+			internal ValueDictionary<TKey, TValue>.KeysCollection GetKeysCollection()
+			{
+				var dictionary = this.builder.dictionary;
+				if (dictionary is null)
+				{
+					return ValueDictionary<TKey, TValue>.KeysCollection.Empty;
+				}
+
+				Polyfills.DebugAssert(BuilderState.IsImmutable(dictionary.state));
+
+				// Beware: this cache field may be assigned to from multiple threads.
+				if (this.cachedKeysCollection is ValueDictionary<TKey, TValue>.KeysCollection keysCollection)
+				{
+					return keysCollection;
+				}
+
+				keysCollection = new(dictionary);
+				this.cachedKeysCollection = keysCollection;
+				return keysCollection;
+			}
+
+			internal ValueDictionary<TKey, TValue>.ValuesCollection GetValuesCollection()
+			{
+				var dictionary = this.builder.dictionary;
+				if (dictionary is null)
+				{
+					return ValueDictionary<TKey, TValue>.ValuesCollection.Empty;
+				}
+
+				Polyfills.DebugAssert(BuilderState.IsImmutable(dictionary.state));
+
+				// Beware: this cache field may be assigned to from multiple threads.
+				if (this.cachedValuesCollection is ValueDictionary<TKey, TValue>.ValuesCollection valuesCollection)
+				{
+					return valuesCollection;
+				}
+
+				valuesCollection = new(dictionary);
+				this.cachedValuesCollection = valuesCollection;
+				return valuesCollection;
+			}
+
+			internal ValueDictionary<TKey, TValue>.Builder.KeysCollection GetBuilderKeysCollection(Snapshot snapshot)
+			{
+				var builder = this.builder;
+				if (builder.dictionary is null)
+				{
+					return ValueDictionary<TKey, TValue>.Builder.KeysCollection.Empty;
+				}
+
+				Polyfills.DebugAssert(snapshot.GetDictionaryUnsafe() == builder.dictionary);
+
+				// Beware: this cache field may be assigned to from multiple threads.
+				if (this.cachedKeysCollection is ValueDictionary<TKey, TValue>.Builder.KeysCollection keysCollection && keysCollection.Snapshot.Equals(snapshot))
+				{
+					return keysCollection;
+				}
+
+				keysCollection = new(snapshot);
+				this.cachedKeysCollection = keysCollection;
+				return keysCollection;
+			}
+
+			internal ValueDictionary<TKey, TValue>.Builder.ValuesCollection GetBuilderValuesCollection(Snapshot snapshot)
+			{
+				var builder = this.builder;
+				if (builder.dictionary is null)
+				{
+					return ValueDictionary<TKey, TValue>.Builder.ValuesCollection.Empty;
+				}
+
+				Polyfills.DebugAssert(snapshot.GetDictionaryUnsafe() == builder.dictionary);
+
+				// Beware: this cache field may be assigned to from multiple threads.
+				if (this.cachedValuesCollection is ValueDictionary<TKey, TValue>.Builder.ValuesCollection valuesCollection && valuesCollection.Snapshot.Equals(snapshot))
+				{
+					return valuesCollection;
+				}
+
+				valuesCollection = new(snapshot);
+				this.cachedValuesCollection = valuesCollection;
+				return valuesCollection;
+			}
 
 			/// <summary>
 			/// The underlying builder.

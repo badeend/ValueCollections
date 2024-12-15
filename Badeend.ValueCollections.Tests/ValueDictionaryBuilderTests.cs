@@ -107,6 +107,38 @@ public class ValueDictionaryBuilderTests
     }
 
     [Fact]
+    public void CollectionsAreCached()
+    {
+        var builder = ValueDictionary.CreateBuilder([
+            Entry("c", 3),
+            Entry("b", 2),
+            Entry("a", 1),
+        ]);
+
+        var builderA = builder.AsCollection();
+        var keysA = builder.Keys.AsCollection();
+        var valuesA = builder.Values.AsCollection();
+
+        var builderB = builder.AsCollection();
+        var keysB = builder.Keys.AsCollection();
+        var valuesB = builder.Values.AsCollection();
+
+        Assert.True(object.ReferenceEquals(builderA, builderB));
+        Assert.True(object.ReferenceEquals(keysA, keysB));
+        Assert.True(object.ReferenceEquals(valuesA, valuesB));
+
+        builder.Add("d", 4); // Invalidate keys & values
+
+        var builderC = builder.AsCollection();
+        var keysC = builder.Keys.AsCollection();
+        var valuesC = builder.Values.AsCollection();
+
+        Assert.True(object.ReferenceEquals(builderA, builderC));
+        Assert.False(object.ReferenceEquals(keysA, keysC));
+        Assert.False(object.ReferenceEquals(valuesA, valuesC));
+    }
+
+    [Fact]
     public void ToValueDictionaryPerformsCopy()
     {
         var builder = ValueDictionary.CreateBuilder([

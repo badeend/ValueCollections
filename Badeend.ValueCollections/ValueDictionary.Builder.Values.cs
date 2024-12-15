@@ -69,8 +69,7 @@ public partial class ValueDictionary<TKey, TValue>
 			/// Every modification to the builder invalidates any <see cref="ValuesCollection"/>
 			/// obtained before that moment.
 			/// </remarks>
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			public readonly ValuesCollection AsCollection() => new(this.snapshot);
+			public readonly ValuesCollection AsCollection() => this.snapshot.GetDictionaryUnsafe().GetBuilderCollection().GetBuilderValuesCollection(this.snapshot);
 
 			/// <summary>
 			/// Returns a new ValuesEnumerator.
@@ -108,24 +107,26 @@ public partial class ValueDictionary<TKey, TValue>
 		/// </remarks>
 		public sealed class ValuesCollection : ICollection<TValue>, IReadOnlyCollection<TValue>
 		{
-			private readonly Snapshot snapshot;
+			internal static readonly ValuesCollection Empty = new(default(ValueDictionary<TKey, TValue>.Builder).Read());
+
+			internal Snapshot Snapshot { get; }
 
 			internal ValuesCollection(Snapshot snapshot)
 			{
-				this.snapshot = snapshot;
+				this.Snapshot = snapshot;
 			}
 
 			/// <inheritdoc/>
 			IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator()
 			{
-				ref readonly var builder = ref this.snapshot.AssertAlive();
+				ref readonly var builder = ref this.Snapshot.AssertAlive();
 				if (builder.Count == 0)
 				{
 					return EnumeratorLike.Empty<TValue>();
 				}
 				else
 				{
-					return EnumeratorLike.AsIEnumerator<TValue, ValuesEnumerator>(new(this.snapshot));
+					return EnumeratorLike.AsIEnumerator<TValue, ValuesEnumerator>(new(this.Snapshot));
 				}
 			}
 
@@ -133,19 +134,19 @@ public partial class ValueDictionary<TKey, TValue>
 			IEnumerator IEnumerable.GetEnumerator() => (this as IEnumerable<TValue>).GetEnumerator();
 
 			/// <inheritdoc/>
-			int ICollection<TValue>.Count => this.snapshot.AssertAlive().Count;
+			int ICollection<TValue>.Count => this.Snapshot.AssertAlive().Count;
 
 			/// <inheritdoc/>
-			int IReadOnlyCollection<TValue>.Count => this.snapshot.AssertAlive().Count;
+			int IReadOnlyCollection<TValue>.Count => this.Snapshot.AssertAlive().Count;
 
 			/// <inheritdoc/>
 			bool ICollection<TValue>.IsReadOnly => true;
 
 			/// <inheritdoc/>
-			bool ICollection<TValue>.Contains(TValue item) => this.snapshot.AssertAlive().ContainsValue(item);
+			bool ICollection<TValue>.Contains(TValue item) => this.Snapshot.AssertAlive().ContainsValue(item);
 
 			/// <inheritdoc/>
-			void ICollection<TValue>.CopyTo(TValue[] array, int index) => this.snapshot.AssertAlive().Values_CopyTo(array, index);
+			void ICollection<TValue>.CopyTo(TValue[] array, int index) => this.Snapshot.AssertAlive().Values_CopyTo(array, index);
 
 			/// <inheritdoc/>
 			void ICollection<TValue>.Add(TValue item) => throw ImmutableException();

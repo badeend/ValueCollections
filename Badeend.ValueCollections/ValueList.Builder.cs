@@ -773,7 +773,17 @@ public sealed partial class ValueList<T>
 		/// collection instance. The items are not copied. Changes made to the
 		/// builder are visible in the collection and vice versa.
 		/// </remarks>
-		public Collection AsCollection() => new Collection(this);
+		public Collection AsCollection()
+		{
+			var list = this.list;
+			if (list is null)
+			{
+				return Collection.Empty;
+			}
+
+			// Beware: this cache field may be assigned to from multiple threads.
+			return list.cachedBuilderCollection ??= new Collection(this);
+		}
 
 #pragma warning disable CA1034 // Nested types should not be visible
 		/// <summary>
@@ -782,6 +792,8 @@ public sealed partial class ValueList<T>
 		/// </summary>
 		public sealed class Collection : IList<T>, IReadOnlyList<T>
 		{
+			internal static readonly Collection Empty = new(default);
+
 			private readonly Builder builder;
 
 			/// <summary>

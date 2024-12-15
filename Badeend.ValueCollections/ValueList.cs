@@ -82,6 +82,9 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	// See the BuilderState utility class for more info.
 	private int state;
 
+	// Beware: this field may be accessed from multiple threads.
+	private Builder.Collection? cachedBuilderCollection;
+
 	/// <summary>
 	/// Length of the list.
 	/// </summary>

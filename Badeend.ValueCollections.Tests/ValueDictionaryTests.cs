@@ -85,12 +85,31 @@ public class ValueDictionaryTests
         ]);
 
         Assert.True(object.ReferenceEquals(a.Keys.AsCollection(), a.Keys.AsCollection()));
-        Assert.True(!object.ReferenceEquals(b.Keys.AsCollection(), b.Keys.AsCollection()));
+        Assert.True(object.ReferenceEquals(b.Keys.AsCollection(), b.Keys.AsCollection()));
         Assert.True(object.ReferenceEquals(a.Values.AsCollection(), a.Values.AsCollection()));
-        Assert.True(!object.ReferenceEquals(b.Values.AsCollection(), b.Values.AsCollection()));
+        Assert.True(object.ReferenceEquals(b.Values.AsCollection(), b.Values.AsCollection()));
 
         Assert.True(b.Keys.AsCollection().OrderBy(x => x).ToValueList() == ["a", "b", "c"]);
         Assert.True(b.Values.AsCollection().OrderBy(x => x).ToValueList() == [1, 2, 3]);
+    }
+
+    [Fact]
+    public void CollectionsAreCached()
+    {
+        var dict = ValueDictionary.Create([
+            Entry("c", 3),
+            Entry("b", 2),
+            Entry("a", 1),
+        ]);
+
+        var keysA = dict.Keys.AsCollection();
+        var valuesA = dict.Values.AsCollection();
+
+        var keysB = dict.Keys.AsCollection();
+        var valuesB = dict.Values.AsCollection();
+
+        Assert.True(object.ReferenceEquals(keysA, keysB));
+        Assert.True(object.ReferenceEquals(valuesA, valuesB));
     }
 
     [Fact]
