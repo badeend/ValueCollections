@@ -478,27 +478,27 @@ public partial class ValueDictionary<TKey, TValue>
 		/// Add multiple entries to the dictionary.
 		/// </summary>
 		/// <remarks>
-		/// <see cref="ValueCollectionExtensions.AddRange{TKey, TValue}(ValueDictionary{TKey, TValue}.Builder, ReadOnlySpan{KeyValuePair{TKey, TValue}})">More overloads</see>
-		/// are available as extension methods.
+		/// An overload that takes any <c>IEnumerable</c> exists as an
+		/// <see cref="ValueCollectionExtensions.AddRange{TKey, TValue}(ValueDictionary{TKey, TValue}.Builder, IEnumerable{KeyValuePair{TKey, TValue}})">extension method</see>.
 		/// </remarks>
 		/// <exception cref="ArgumentException">
 		/// <paramref name="items"/> contains a duplicate key or a key that already
 		/// exists in the dictionary.
 		/// </exception>
-		public Builder AddRange(IEnumerable<KeyValuePair<TKey, TValue>> items)
+		public Builder AddRange(scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
+		{
+			this.MutateOnce().AddRange(items);
+			return this;
+		}
+
+		// Accessible through an extension method.
+		internal Builder AddRangeEnumerable(IEnumerable<KeyValuePair<TKey, TValue>> items)
 		{
 			using (var guard = this.Mutate())
 			{
 				guard.Inner.AddRange(items);
 			}
 
-			return this;
-		}
-
-		// Accessible through an extension method.
-		internal Builder AddRangeSpan(scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
-		{
-			this.MutateOnce().AddRange(items);
 			return this;
 		}
 
@@ -526,23 +526,23 @@ public partial class ValueDictionary<TKey, TValue>
 		/// When the same key appears multiple times in the <paramref name="items"/>,
 		/// the last value overwrites any earlier values.
 		///
-		/// <see cref="ValueCollectionExtensions.SetItems{TKey, TValue}(ValueDictionary{TKey, TValue}.Builder, ReadOnlySpan{KeyValuePair{TKey, TValue}})">More overloads</see>
-		/// are available as extension methods.
+		/// An overload that takes any <c>IEnumerable</c> exists as an
+		/// <see cref="ValueCollectionExtensions.SetItems{TKey, TValue}(ValueDictionary{TKey, TValue}.Builder, IEnumerable{KeyValuePair{TKey, TValue}})">extension method</see>.
 		/// </remarks>
-		public Builder SetItems(IEnumerable<KeyValuePair<TKey, TValue>> items)
+		public Builder SetItems(scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
+		{
+			this.MutateOnce().SetItems(items);
+			return this;
+		}
+
+		// Accessible through an extension method.
+		internal Builder SetItemsEnumerable(IEnumerable<KeyValuePair<TKey, TValue>> items)
 		{
 			using (var guard = this.Mutate())
 			{
 				guard.Inner.SetItems(items);
 			}
 
-			return this;
-		}
-
-		// Accessible through an extension method.
-		internal Builder SetItemsSpan(scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
-		{
-			this.MutateOnce().SetItems(items);
 			return this;
 		}
 
@@ -580,23 +580,23 @@ public partial class ValueDictionary<TKey, TValue>
 		/// Remove the provided <paramref name="keys"/> from the dictionary.
 		/// </summary>
 		/// <remarks>
-		/// <see cref="ValueCollectionExtensions.RemoveRange{TKey, TValue}(ValueDictionary{TKey, TValue}.Builder, ReadOnlySpan{TKey})">More overloads</see>
-		/// are available as extension methods.
+		/// An overload that takes any <c>IEnumerable</c> exists as an
+		/// <see cref="ValueCollectionExtensions.RemoveRange{TKey, TValue}(ValueDictionary{TKey, TValue}.Builder, IEnumerable{TKey})">extension method</see>.
 		/// </remarks>
-		public Builder RemoveRange(IEnumerable<TKey> keys)
+		public Builder RemoveRange(scoped ReadOnlySpan<TKey> keys)
+		{
+			this.MutateOnce().RemoveRange(keys);
+			return this;
+		}
+
+		// Accessible through an extension method.
+		internal Builder RemoveRangeEnumerable(IEnumerable<TKey> keys)
 		{
 			using (var guard = this.Mutate())
 			{
 				guard.Inner.RemoveRange(keys);
 			}
 
-			return this;
-		}
-
-		// Accessible through an extension method.
-		internal Builder RemoveRangeSpan(scoped ReadOnlySpan<TKey> keys)
-		{
-			this.MutateOnce().RemoveRange(keys);
 			return this;
 		}
 

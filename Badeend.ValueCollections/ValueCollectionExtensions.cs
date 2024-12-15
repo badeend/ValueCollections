@@ -520,10 +520,11 @@ public static class ValueCollectionExtensions
 	/// <paramref name="items"/> contains a duplicate key or a key that already
 	/// exists in the dictionary.
 	/// </exception>
-	public static ValueDictionary<TKey, TValue>.Builder AddRange<TKey, TValue>(this ValueDictionary<TKey, TValue>.Builder builder, scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ValueDictionary<TKey, TValue>.Builder AddRange<TKey, TValue>(this ValueDictionary<TKey, TValue>.Builder builder, IEnumerable<KeyValuePair<TKey, TValue>> items)
 		where TKey : notnull
 	{
-		return builder.AddRangeSpan(items);
+		return builder.AddRangeEnumerable(items);
 	}
 
 	/// <summary>
@@ -536,10 +537,11 @@ public static class ValueCollectionExtensions
 	///
 	/// This overload is an extension method to avoid call site ambiguity.
 	/// </remarks>
-	public static ValueDictionary<TKey, TValue>.Builder SetItems<TKey, TValue>(this ValueDictionary<TKey, TValue>.Builder builder, scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> items)
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ValueDictionary<TKey, TValue>.Builder SetItems<TKey, TValue>(this ValueDictionary<TKey, TValue>.Builder builder, IEnumerable<KeyValuePair<TKey, TValue>> items)
 		where TKey : notnull
 	{
-		return builder.SetItemsSpan(items);
+		return builder.SetItemsEnumerable(items);
 	}
 
 	/// <summary>
@@ -548,9 +550,10 @@ public static class ValueCollectionExtensions
 	/// <remarks>
 	/// This overload is an extension method to avoid call site ambiguity.
 	/// </remarks>
-	public static ValueDictionary<TKey, TValue>.Builder RemoveRange<TKey, TValue>(this ValueDictionary<TKey, TValue>.Builder builder, scoped ReadOnlySpan<TKey> keys)
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ValueDictionary<TKey, TValue>.Builder RemoveRange<TKey, TValue>(this ValueDictionary<TKey, TValue>.Builder builder, IEnumerable<TKey> keys)
 		where TKey : notnull
 	{
-		return builder.RemoveRangeSpan(keys);
+		return builder.RemoveRangeEnumerable(keys);
 	}
 }
