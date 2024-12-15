@@ -78,7 +78,7 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	/// This does not allocate any memory.
 	/// </summary>
 	[Pure]
-	public static ValueList<T> Empty { get; } = new(new(), BuilderState.InitialImmutable);
+	public static ValueList<T> Empty { get; } = new();
 
 	private RawList<T> inner;
 
@@ -129,6 +129,17 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	{
 		get => this[index];
 		set => ThrowHelpers.ThrowNotSupportedException_CollectionImmutable();
+	}
+
+	// Creates the one and only Empty instance.
+	private ValueList()
+	{
+		this.inner = new();
+		this.state = BuilderState.InitialImmutable;
+
+		// Pre-emptively compute the hashcode to prevent ending up on the
+		// slow path in various places.
+		BuilderState.AdjustAndStoreHashCode(ref this.state, this.inner.GetStructuralHashCode());
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]

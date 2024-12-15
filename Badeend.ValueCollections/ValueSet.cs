@@ -79,7 +79,7 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 	/// This does not allocate any memory.
 	/// </summary>
 	[Pure]
-	public static ValueSet<T> Empty { get; } = new(new(), BuilderState.InitialImmutable);
+	public static ValueSet<T> Empty { get; } = new();
 
 	private RawSet<T> inner;
 
@@ -111,6 +111,17 @@ public sealed partial class ValueSet<T> : IReadOnlyCollection<T>, ISet<T>, IEqua
 
 	/// <inheritdoc/>
 	bool ICollection<T>.IsReadOnly => true;
+
+	// Creates the one and only Empty instance.
+	private ValueSet()
+	{
+		this.inner = new();
+		this.state = BuilderState.InitialImmutable;
+
+		// Pre-emptively compute the hashcode to prevent ending up on the
+		// slow path in various places.
+		BuilderState.AdjustAndStoreHashCode(ref this.state, this.inner.GetStructuralHashCode());
+	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private ValueSet(RawSet<T> inner, int state)

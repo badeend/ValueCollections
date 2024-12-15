@@ -92,7 +92,7 @@ public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TV
 	/// This does not allocate any memory.
 	/// </summary>
 	[Pure]
-	public static ValueDictionary<TKey, TValue> Empty { get; } = new(new(), BuilderState.InitialImmutable);
+	public static ValueDictionary<TKey, TValue> Empty { get; } = new();
 
 	private RawDictionary<TKey, TValue> inner;
 
@@ -154,6 +154,17 @@ public sealed partial class ValueDictionary<TKey, TValue> : IDictionary<TKey, TV
 
 	/// <inheritdoc/>
 	bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => true;
+
+	// Creates the one and only Empty instance.
+	private ValueDictionary()
+	{
+		this.inner = new();
+		this.state = BuilderState.InitialImmutable;
+
+		// Pre-emptively compute the hashcode to prevent ending up on the
+		// slow path in various places.
+		BuilderState.AdjustAndStoreHashCode(ref this.state, this.inner.GetStructuralHashCode());
+	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private ValueDictionary(RawDictionary<TKey, TValue> inner, int state)
