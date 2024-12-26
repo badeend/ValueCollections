@@ -387,6 +387,52 @@ internal struct RawDictionary<TKey, TValue>
 		goto Return;
 	}
 
+	private readonly int GetKeyIndex(TKey key)
+	{
+		if (key == null)
+		{
+			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.key);
+		}
+
+		ref Entry entry = ref Polyfills.NullRef<Entry>();
+		if (this.buckets != null)
+		{
+			Polyfills.DebugAssert(this.entries != null, "expected entries to be != null");
+
+			var comparer = new DefaultEqualityComparer<TKey>();
+			uint hashCode = (uint)comparer.GetHashCode(key);
+			int i = this.GetBucketRef(hashCode);
+			var entries = this.entries;
+			uint collisionCount = 0;
+			i--; // Value in _buckets is 1-based; subtract 1 from i. We do it here so it fuses with the following conditional.
+			do
+			{
+				// Test in if to drop range check for following array access
+				if ((uint)i >= (uint)entries.Length)
+				{
+					return -1;
+				}
+
+				entry = ref entries[i];
+				if (entry.HashCode == hashCode && comparer.Equals(entry.Key, key))
+				{
+					return i;
+				}
+
+				i = entry.Next;
+
+				collisionCount++;
+			}
+			while (collisionCount <= (uint)entries.Length);
+
+			// The chain of entries forms a loop; which means a concurrent update has happened.
+			// Break out of the loop and throw, rather than looping forever.
+			ThrowHelpers.ThrowInvalidOperationException_ConcurrentOperationsNotSupported();
+		}
+
+		return -1;
+	}
+
 	private int Initialize(int minimumCapacity)
 	{
 		var capacity = HashHelpers.GetPrime(minimumCapacity);
@@ -842,22 +888,38 @@ internal struct RawDictionary<TKey, TValue>
 			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
 		}
 
-		var otherCopy = new RawSet<TKey>(other); // TODO: don't copy
-
-		if (this.Count >= otherCopy.Count)
+		if (Polyfills.TryGetNonEnumeratedCount(other, out var otherCount))
 		{
-			return false;
-		}
+			var count = this.Count;
 
-		foreach (var entry in this)
-		{
-			if (!otherCopy.Contains(entry.Key))
+			// No set is a proper subset of a set with less or equal number of elements.
+			if (otherCount <= count)
 			{
 				return false;
 			}
+
+			// The empty set is a proper subset of anything but the empty set.
+			if (count == 0)
+			{
+				// Based on check above, other is not empty when Count == 0.
+				return true;
+			}
 		}
 
-		return true;
+		using var marker = new Marker(in this);
+
+		var otherHasAdditionalItems = false;
+
+		// Note that enumerating `other` might trigger mutations on `this`.
+		foreach (var item in other)
+		{
+			if (!marker.Mark(item))
+			{
+				otherHasAdditionalItems = true;
+			}
+		}
+
+		return marker.UnmarkedCount == 0 && otherHasAdditionalItems;
 	}
 
 	// Does not check/guard against concurrent mutation during enumeration!
@@ -868,24 +930,36 @@ internal struct RawDictionary<TKey, TValue>
 			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
 		}
 
-		if (this.Count == 0)
+		var count = this.Count;
+
+		// The empty set isn't a proper superset of any set.
+		if (count == 0)
 		{
 			return false;
 		}
 
-		var otherCopy = new RawSet<TKey>(other); // TODO: don't copy
-
-		int matchCount = 0;
-		foreach (var item in otherCopy)
+		if (Polyfills.TryGetNonEnumeratedCount(other, out var otherCount))
 		{
-			matchCount++;
-			if (!this.ContainsKey(item))
+			// If other is the empty set then this is a superset.
+			if (otherCount == 0)
+			{
+				// Note that this has at least one element, based on above check.
+				return true;
+			}
+		}
+
+		using var marker = new Marker(in this);
+
+		// Note that enumerating `other` might trigger mutations on `this`.
+		foreach (var item in other)
+		{
+			if (!marker.Mark(item))
 			{
 				return false;
 			}
 		}
 
-		return this.Count > matchCount;
+		return marker.UnmarkedCount > 0;
 	}
 
 	// Does not check/guard against concurrent mutation during enumeration!
@@ -896,22 +970,31 @@ internal struct RawDictionary<TKey, TValue>
 			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
 		}
 
-		var otherCopy = new RawSet<TKey>(other); // TODO: don't copy
-
-		if (this.Count > otherCopy.Count)
+		// The empty set is a subset of any set.
+		var count = this.Count;
+		if (count == 0)
 		{
-			return false;
+			return true;
 		}
 
-		foreach (var entry in this)
+		if (Polyfills.TryGetNonEnumeratedCount(other, out var otherCount))
 		{
-			if (!otherCopy.Contains(entry.Key))
+			// If this has more elements then it can't be a subset.
+			if (count > otherCount)
 			{
 				return false;
 			}
 		}
 
-		return true;
+		using var marker = new Marker(in this);
+
+		// Note that enumerating `other` might trigger mutations on `this`.
+		foreach (var item in other)
+		{
+			marker.Mark(item);
+		}
+
+		return marker.UnmarkedCount == 0;
 	}
 
 	// Does not check/guard against concurrent mutation during enumeration!
@@ -965,22 +1048,35 @@ internal struct RawDictionary<TKey, TValue>
 			ThrowHelpers.ThrowArgumentNullException(ThrowHelpers.Argument.other);
 		}
 
-		var otherCopy = new RawSet<TKey>(other); // TODO: don't copy
-
-		if (this.Count != otherCopy.Count)
+		if (Polyfills.TryGetNonEnumeratedCount(other, out var otherCount))
 		{
-			return false;
-		}
+			var count = this.Count;
 
-		foreach (var item in otherCopy)
-		{
-			if (!this.ContainsKey(item))
+			// If this is empty, they are equal iff other is empty.
+			if (count == 0)
+			{
+				return otherCount == 0;
+			}
+
+			// Can't be equal if other set contains fewer elements than this.
+			if (count > otherCount)
 			{
 				return false;
 			}
 		}
 
-		return true;
+		using var marker = new Marker(in this);
+
+		// Note that enumerating `other` might trigger mutations on `this`.
+		foreach (var item in other)
+		{
+			if (!marker.Mark(item))
+			{
+				return false;
+			}
+		}
+
+		return marker.UnmarkedCount == 0;
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1068,6 +1164,58 @@ internal struct RawDictionary<TKey, TValue>
 
 		builder.Append(']');
 		return builder.ToString();
+	}
+
+	internal ref struct Marker
+	{
+		private readonly RawDictionary<TKey, TValue> dictionary;
+		private readonly RawBitArray markings;
+		private int unmarked;
+
+		/// <summary>
+		/// How many elements in the set have not been marked yet.
+		/// </summary>
+		public readonly int UnmarkedCount
+		{
+			get
+			{
+				Polyfills.DebugAssert(this.unmarked >= 0);
+
+				return this.unmarked;
+			}
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public Marker(ref readonly RawDictionary<TKey, TValue> set)
+		{
+			this.dictionary = set;
+			this.markings = new RawBitArray(set.end);
+			this.unmarked = set.Count;
+		}
+
+		// The RawSet may not be mutated in between calls to Mark.
+		public bool Mark(TKey key)
+		{
+			int index = this.dictionary.GetKeyIndex(key);
+			if (index < 0)
+			{
+				return false;
+			}
+
+			if (!this.markings[index])
+			{
+				this.markings[index] = true;
+				this.unmarked--;
+			}
+
+			return true;
+		}
+
+#pragma warning disable CA1822 // Mark members as static
+		public void Dispose()
+		{
+		}
+#pragma warning restore CA1822 // Mark members as static
 	}
 
 	private readonly int GetArbitraryIndex()
