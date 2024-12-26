@@ -32,7 +32,9 @@ internal readonly struct RawBitArray
 	{
 		get
 		{
+#if DEBUG
 			Polyfills.DebugAssert((uint)index < (uint)this.length);
+#endif
 
 			var indexIntoArray = (int)((uint)index / IntSize);
 			var indexIntoInt = (int)((uint)index % IntSize);
@@ -42,8 +44,10 @@ internal readonly struct RawBitArray
 
 		set
 		{
+#if DEBUG
 			Polyfills.DebugAssert(value == true, "At the time of writing we only ever set an index to true");
 			Polyfills.DebugAssert((uint)index < (uint)this.length);
+#endif
 
 			var indexIntoArray = (int)((uint)index / IntSize);
 			var indexIntoInt = (int)((uint)index % IntSize);
