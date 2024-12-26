@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace Badeend.ValueCollections.Tests;
@@ -170,6 +172,16 @@ public class ValueDictionaryBuilderTests
     }
 
     [Fact]
+    public void EmptyBuilderReturnsEmptySingleton()
+    {
+        var b = ValueDictionary.CreateBuilderWithCapacity<string, int>(100);
+
+        Assert.True(object.ReferenceEquals(ValueDictionary<string, int>.Empty, b.ToValueDictionary()));
+        Assert.True(object.ReferenceEquals(ValueDictionary<string, int>.Empty, b.Build()));
+        Assert.True(object.ReferenceEquals(ValueDictionary<string, int>.Empty, b.ToValueDictionary()));
+    }
+
+    [Fact]
     public void SetItemAddRemove()
     {
         var a = ValueDictionary.CreateBuilder<string, int>();
@@ -274,6 +286,88 @@ public class ValueDictionaryBuilderTests
         builder.RemoveRange(d);
         builder.RemoveRange(e);
         builder.RemoveRange([]);
+    }
+
+    [Fact]
+    public void AddRangeSelf()
+    {
+        {
+            var a = ValueDictionary.CreateBuilder([
+                Entry("a", 1),
+                Entry("b", 2),
+                Entry("c", 3),
+            ]);
+
+            var e = Assert.Throws<InvalidOperationException>(() => a.AddRange(a.AsCollection()));
+            Assert.Equal("Can't access builder in middle of mutation.", e.Message);
+
+            Assert.Equal(3, a.Count);
+        }
+        {
+            var a = ValueDictionary.CreateBuilder([
+                Entry("a", 1),
+                Entry("b", 2),
+                Entry("c", 3),
+            ]);
+
+            var e = Assert.Throws<InvalidOperationException>(() => a.AddRange(new ReadOnlyDictionary<string, int>(a.AsCollection())));
+            Assert.Equal("Can't access builder in middle of mutation.", e.Message);
+
+            Assert.Equal(3, a.Count);
+        }
+        {
+            var a = ValueDictionary.CreateBuilder([
+                Entry("a", 1),
+                Entry("b", 2),
+                Entry("c", 3),
+            ]);
+
+            var e = Assert.Throws<InvalidOperationException>(() => a.AddRange(a.AsCollection().Where(_ => true)));
+            Assert.Equal("Can't access builder in middle of mutation.", e.Message);
+
+            Assert.Equal(3, a.Count);
+        }
+    }
+
+    [Fact]
+    public void SetItemsSelf()
+    {
+        {
+            var a = ValueDictionary.CreateBuilder([
+                Entry("a", 1),
+                Entry("b", 2),
+                Entry("c", 3),
+            ]);
+
+            var e = Assert.Throws<InvalidOperationException>(() => a.SetItems(a.AsCollection()));
+            Assert.Equal("Can't access builder in middle of mutation.", e.Message);
+
+            Assert.Equal(3, a.Count);
+        }
+        {
+            var a = ValueDictionary.CreateBuilder([
+                Entry("a", 1),
+                Entry("b", 2),
+                Entry("c", 3),
+            ]);
+
+            var e = Assert.Throws<InvalidOperationException>(() => a.SetItems(new ReadOnlyDictionary<string, int>(a.AsCollection())));
+            Assert.Equal("Can't access builder in middle of mutation.", e.Message);
+
+            Assert.Equal(3, a.Count);
+        }
+        {
+            var a = ValueDictionary.CreateBuilder([
+                Entry("a", 1),
+                Entry("b", 2),
+                Entry("c", 3),
+            ]);
+
+            var e = Assert.Throws<InvalidOperationException>(() => a.SetItems(a.AsCollection().Where(_ => true)));
+            Assert.Equal("Can't access builder in middle of mutation.", e.Message);
+
+            Assert.Equal(3, a.Count);
+        }
     }
 
     [Fact]
@@ -498,6 +592,101 @@ public class ValueDictionaryBuilderTests
             {
                 throw new Exception("Expected enumeration to change the order");
             }
+        }
+    }
+
+    [Theory]
+    [InlineData(3, 1, true)]
+    [InlineData(3, 3, true)]
+    [InlineData(17, 1, false)]
+    [InlineData(17, 11, false)]
+    [InlineData(17, 13, true)]
+    [InlineData(919, 230, false)]
+    [InlineData(919, 460, false)]
+    [InlineData(919, 688, false)]
+    [InlineData(919, 690, true)]
+    [InlineData(919, 919, true)]
+    public void Cow(int capacity, int count, bool shouldReuse)
+    {
+        Debug.Assert(count <= capacity);
+        Debug.Assert(count >= 1);
+
+        var originalDictionary = CreateValueDictionary();
+        ref readonly var originalRef = ref GetRef(originalDictionary);
+
+        Assert.True(originalDictionary.ContainsKey(42));
+
+        {
+            var builder = originalDictionary.ToBuilder();
+
+            Assert.True(!shouldReuse || capacity == builder.Capacity);
+            Assert.True(builder.ContainsKey(42));
+            Assert.Equal(shouldReuse, AreSameRef(in originalRef, in GetRef(builder.ToValueDictionary())));
+
+            var builtDictionary = builder.Build();
+
+            Assert.Equal(shouldReuse, AreSameRef(in originalRef, in GetRef(builtDictionary)));
+            Assert.Equal(shouldReuse, AreSameRef(in originalRef, in GetRef(builder.ToValueDictionary())));
+        }
+        {
+            var builder = ((IEnumerable<KeyValuePair<int, int>>)originalDictionary).ToValueDictionaryBuilder();
+
+            Assert.True(!shouldReuse || capacity == builder.Capacity);
+            Assert.True(builder.ContainsKey(42));
+            Assert.Equal(shouldReuse, AreSameRef(in originalRef, in GetRef(builder.ToValueDictionary())));
+
+            var builtDictionary = builder.Build();
+
+            Assert.Equal(shouldReuse, AreSameRef(in originalRef, in GetRef(builtDictionary)));
+            Assert.Equal(shouldReuse, AreSameRef(in originalRef, in GetRef(builder.ToValueDictionary())));
+        }
+        {
+            var builder = originalDictionary.ToBuilder();
+            Assert.True(!shouldReuse || capacity == builder.Capacity);
+
+            var dictionaryCopy = builder.ToValueDictionary();
+            Assert.Equal(shouldReuse, AreSameRef(in originalRef, in GetRef(dictionaryCopy)));
+
+            builder.Remove(42);
+
+            Assert.True(!shouldReuse || capacity == builder.Capacity);
+            Assert.False(builder.ContainsKey(42));
+            Assert.True(dictionaryCopy.ContainsKey(42));
+
+            Assert.Equal(shouldReuse, AreSameRef(in originalRef, in GetRef(dictionaryCopy)));
+        }
+
+        ValueDictionary<int, int> CreateValueDictionary()
+        {
+            var builder = ValueDictionary.CreateBuilderWithCapacity<int, int>(capacity);
+
+            for (int i = 1; i < count; i++)
+            {
+                builder.Add(-i, i);
+            }
+
+            builder.Add(42, 42);
+
+            Debug.Assert(builder.Count == count);
+
+            return builder.Build();
+        }
+
+        static bool AreSameRef(ref readonly int left, ref readonly int right)
+        {
+            return Unsafe.AreSame(ref Unsafe.AsRef(in left), ref Unsafe.AsRef(in right));
+        }
+
+        static ref readonly int GetRef(ValueDictionary<int, int> dictionary)
+        {
+            var enumerator = dictionary.Keys.GetEnumerator();
+
+            if (!enumerator.MoveNext())
+            {
+                throw new Exception();
+            }
+
+            return ref enumerator.Current;
         }
     }
 

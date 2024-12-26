@@ -75,6 +75,40 @@ public class ValueDictionaryTests
     }
 
     [Fact]
+    public void IsEmpty()
+    {
+        ValueDictionary<string, int> a = ValueDictionary.Create<string, int>([]);
+        ValueDictionary<string, int> b = ValueDictionary.Create<string, int>([
+            Entry("a", 1),
+            Entry("b", 2),
+            Entry("c", 3),
+        ]);
+        Assert.True(a.IsEmpty == true);
+        Assert.True(b.IsEmpty == false);
+    }
+
+    [Fact]
+    public void Indexer()
+    {
+        var dict = ValueDictionary.Create([
+            Entry("a", 1),
+            Entry("b", 2),
+            Entry("c", 3),
+        ]);
+
+        ref readonly var a = ref dict["a"];
+        ref readonly var b = ref dict["b"];
+        ref readonly var c = ref dict["c"];
+
+        Assert.True(a == 1);
+        Assert.True(b == 2);
+        Assert.True(c == 3);
+
+        Assert.Throws<KeyNotFoundException>(() => dict["d"]);
+        Assert.Throws<ArgumentNullException>(() => dict[null!]);
+    }
+
+    [Fact]
     public void KeysValues()
     {
         var a = ValueDictionary<string, int>.Empty;

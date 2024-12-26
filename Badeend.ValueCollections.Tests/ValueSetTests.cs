@@ -59,6 +59,18 @@ public class ValueSetTests
         Assert.True(a.IsEmpty == true);
         Assert.True(a.Count == 0);
         Assert.True(a.ToArray().Length == 0);
+
+        var b = ValueSet<int>.Empty;
+        var c = ValueSet.Create<int>([]);
+        var d = new HashSet<int>().ToValueSet();
+        var e = new HashSet<int>().ToValueSetBuilder().ToValueSet();
+        var f = ValueSet.CreateBuilder<int>().ToValueSet();
+
+        Assert.True(object.ReferenceEquals(a, b));
+        Assert.True(object.ReferenceEquals(a, c));
+        Assert.True(object.ReferenceEquals(a, d));
+        Assert.True(object.ReferenceEquals(a, e));
+        Assert.True(object.ReferenceEquals(a, f));
     }
 
     [Fact]
