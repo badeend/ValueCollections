@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 
 namespace Badeend.ValueCollections.Internals;
@@ -45,6 +46,32 @@ internal static class Polyfills
 #else
 		return Enum.GetName(typeof(TEnum), value);
 #endif
+	}
+
+	// Adapted from: https://github.com/dotnet/runtime/blob/0f6c3d862b703528ffff099af40383ddc52853f8/src/libraries/System.Private.CoreLib/src/System/SpanHelpers.T.cs#L1284-L1301
+	internal static int SequenceCompareTo<T>(ReadOnlySpan<T> leftSpan, ReadOnlySpan<T> rightSpan)
+	{
+		ref T left = ref MemoryMarshal.GetReference(leftSpan);
+		int leftLength = leftSpan.Length;
+		ref T right = ref MemoryMarshal.GetReference(rightSpan);
+		int rightLength = rightSpan.Length;
+
+		int minLength = leftLength;
+		if (minLength > rightLength)
+		{
+			minLength = rightLength;
+		}
+
+		for (int i = 0; i < minLength; i++)
+		{
+			int result = Comparer<T>.Default.Compare(Unsafe.Add(ref left, i), Unsafe.Add(ref right, i));
+			if (result != 0)
+			{
+				return result;
+			}
+		}
+
+		return leftLength.CompareTo(rightLength);
 	}
 
 	// Adapted from: https://github.com/dotnet/runtime/blob/6be24fd37e7d9f04c7fa903b8b6912c3eafe7198/src/libraries/System.Security.Cryptography/src/System/Security/Cryptography/RandomNumberGenerator.cs#L289

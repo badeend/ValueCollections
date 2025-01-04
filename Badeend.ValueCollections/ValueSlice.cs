@@ -1,6 +1,7 @@
 using System.Collections;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -52,7 +53,8 @@ public static class ValueSlice
 [DebuggerTypeProxy(typeof(ValueSlice<>.DebugView))]
 [StructLayout(LayoutKind.Auto)]
 [CollectionBuilder(typeof(ValueSlice), nameof(ValueSlice.Create))]
-public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
+[SuppressMessage("Design", "CA1036:Override methods on comparable types", Justification = "Slices are only comparable if their elements are too, which we can't know at compile time. Don't want to promote the comparable stuff too much.")]
+public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>, IComparable, IComparable<ValueSlice<T>>
 {
 	/// <summary>
 	/// Get an empty slice.
@@ -465,6 +467,25 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public override bool Equals(object? obj) => obj is ValueSlice<T> slice && SequenceEqual(this, slice);
 #pragma warning restore CS0809 // Obsolete member overrides non-obsolete member
+
+	/// <summary>
+	/// Compare two slices based on their contents using lexicographic ordering
+	/// (the same algorithm used by <a href="https://learn.microsoft.com/en-us/dotnet/api/system.memoryextensions.sequencecompareto"><c>MemoryExtensions.SequenceCompareTo</c></a>).
+	/// </summary>
+	/// <returns>
+	/// See <see cref="IComparable{T}.CompareTo(T)"><c>IComparable&lt;T&gt;.CompareTo(T)</c></see> for more information.
+	/// </returns>
+	/// <exception cref="ArgumentException"><typeparamref name="T"/> does not implement IComparable.</exception>
+	[Pure]
+	public int CompareTo(ValueSlice<T> other) => Polyfills.SequenceCompareTo(this.AsSpan(), other.AsSpan());
+
+	/// <inheritdoc/>
+	int IComparable.CompareTo(object? other) => other switch
+	{
+		null => 1,
+		ValueSlice<T> otherSlice => this.CompareTo(otherSlice),
+		_ => throw new ArgumentException("Comparison with incompatible type", nameof(other)),
+	};
 
 	/// <summary>
 	/// Check for equality.

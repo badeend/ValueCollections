@@ -35,6 +35,19 @@ public class ValueListTests
     }
 
     [Fact]
+    public void CompareTo()
+    {
+        Assert.Equal(0, CompareTo<int>([], []));
+        Assert.Equal(0, CompareTo([1, 2, 3], [1, 2, 3]));
+        Assert.Equal(-1, CompareTo([1, 2], [1, 2, 3]));
+        Assert.Equal(1, CompareTo([1, 2, 3], [1, 2]));
+        Assert.Equal(-1, CompareTo([1, 2, 3], [2, 3]));
+        Assert.Equal(1, CompareTo([2], [1, 2, 3]));
+
+        static int CompareTo<T>(ValueList<T> left, ValueList<T> right) => left.CompareTo(right);
+    }
+
+    [Fact]
     public void Empty()
     {
         var a = ValueList<int>.Empty;

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -70,7 +71,8 @@ public static class ValueList
 [DebuggerDisplay("Count = {Count}")]
 [DebuggerTypeProxy(typeof(ValueList<>.DebugView))]
 [CollectionBuilder(typeof(ValueList), nameof(ValueList.Create))]
-public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueList<T>>
+[SuppressMessage("Design", "CA1036:Override methods on comparable types", Justification = "Lists are only comparable if their elements are too, which we can't know at compile time. Don't want to promote the comparable stuff too much.")]
+public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatable<ValueList<T>>, IComparable, IComparable<ValueList<T>>
 {
 	/// <summary>
 	/// Get an empty list.
@@ -341,6 +343,33 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	[EditorBrowsable(EditorBrowsableState.Never)]
 	public sealed override bool Equals(object? obj) => obj is ValueList<T> other && EqualsUtil(this, other);
 #pragma warning restore CS0809 // Obsolete member overrides non-obsolete member
+
+	/// <summary>
+	/// Compare two lists based on their contents using lexicographic ordering
+	/// (the same algorithm used by <a href="https://learn.microsoft.com/en-us/dotnet/api/system.memoryextensions.sequencecompareto"><c>MemoryExtensions.SequenceCompareTo</c></a>).
+	/// </summary>
+	/// <returns>
+	/// See <see cref="IComparable{T}.CompareTo(T)"><c>IComparable&lt;T&gt;.CompareTo(T)</c></see> for more information.
+	/// </returns>
+	/// <exception cref="ArgumentException"><typeparamref name="T"/> does not implement IComparable.</exception>
+	[Pure]
+	public int CompareTo(ValueList<T>? other)
+	{
+		if (other is null)
+		{
+			return 1;
+		}
+
+		return Polyfills.SequenceCompareTo(this.AsSpan(), other.AsSpan());
+	}
+
+	/// <inheritdoc/>
+	int IComparable.CompareTo(object? other) => other switch
+	{
+		null => 1,
+		ValueList<T> otherList => this.CompareTo(otherList),
+		_ => throw new ArgumentException("Comparison with incompatible type", nameof(other)),
+	};
 
 	/// <summary>
 	/// Check for equality.
