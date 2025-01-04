@@ -83,12 +83,12 @@ internal static class Polyfills
 	}
 
 	// Adapted from: https://github.com/dotnet/runtime/blob/0f6c3d862b703528ffff099af40383ddc52853f8/src/libraries/System.Private.CoreLib/src/System/SpanHelpers.T.cs#L1284-L1301
-	internal static int SequenceCompareTo<T>(ReadOnlySpan<T> leftSpan, ReadOnlySpan<T> rightSpan)
+	internal static int SequenceCompareTo<T>(ReadOnlySpan<T> left, ReadOnlySpan<T> right)
 	{
-		ref T left = ref MemoryMarshal.GetReference(leftSpan);
-		int leftLength = leftSpan.Length;
-		ref T right = ref MemoryMarshal.GetReference(rightSpan);
-		int rightLength = rightSpan.Length;
+		ref T leftBase = ref MemoryMarshal.GetReference(left);
+		int leftLength = left.Length;
+		ref T rightBase = ref MemoryMarshal.GetReference(right);
+		int rightLength = right.Length;
 
 		int minLength = leftLength;
 		if (minLength > rightLength)
@@ -98,7 +98,7 @@ internal static class Polyfills
 
 		for (int i = 0; i < minLength; i++)
 		{
-			int result = Comparer<T>.Default.Compare(Unsafe.Add(ref left, i), Unsafe.Add(ref right, i));
+			int result = Comparer<T>.Default.Compare(Unsafe.Add(ref leftBase, i), Unsafe.Add(ref rightBase, i));
 			if (result != 0)
 			{
 				return result;
