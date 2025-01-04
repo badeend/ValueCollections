@@ -134,7 +134,7 @@ public class ValueListTests
             e1.GetHashCode(),
         };
 
-        Assert.True(hashCodes.Count() == hashCodes.Distinct().Count());
+        Assert.True(hashCodes.Length == hashCodes.Distinct().Count());
     }
 
     [Fact]
