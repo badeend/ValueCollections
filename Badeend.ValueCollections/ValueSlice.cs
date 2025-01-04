@@ -630,38 +630,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>, IComparable, I
 #pragma warning restore CA1034 // Nested types should not be visible
 #pragma warning restore CA1815 // Override equals and operator equals on value types
 
-	private static bool SequenceEqual(ValueSlice<T> left, ValueSlice<T> right)
-	{
-		var leftSpan = left.AsSpan();
-		var rightSpan = right.AsSpan();
-
-#if NET6_0_OR_GREATER
-		return System.MemoryExtensions.SequenceEqual(leftSpan, rightSpan);
-#else
-		if (leftSpan == rightSpan)
-		{
-			return true;
-		}
-
-		if (leftSpan.Length != rightSpan.Length)
-		{
-			return false;
-		}
-
-		var length = leftSpan.Length;
-		var comparer = new DefaultEqualityComparer<T>();
-
-		for (int i = 0; i < length; i++)
-		{
-			if (!comparer.Equals(leftSpan[i], rightSpan[i]))
-			{
-				return false;
-			}
-		}
-
-		return true;
-#endif
-	}
+	private static bool SequenceEqual(ValueSlice<T> left, ValueSlice<T> right) => Polyfills.SequenceEqual(left.AsSpan(), right.AsSpan());
 
 	/// <summary>
 	/// Get a string representation of the collection for debugging purposes.

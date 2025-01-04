@@ -48,6 +48,37 @@ internal static class Polyfills
 #endif
 	}
 
+	internal static bool SequenceEqual<T>(ReadOnlySpan<T> leftSpan, ReadOnlySpan<T> rightSpan)
+	{
+		// Defer to .NET 6+ vectorized implementation, when possible:
+#if NET6_0_OR_GREATER
+		return System.MemoryExtensions.SequenceEqual(leftSpan, rightSpan);
+#else
+		if (leftSpan == rightSpan)
+		{
+			return true;
+		}
+
+		if (leftSpan.Length != rightSpan.Length)
+		{
+			return false;
+		}
+
+		var length = leftSpan.Length;
+		var comparer = new DefaultEqualityComparer<T>();
+
+		for (int i = 0; i < length; i++)
+		{
+			if (!comparer.Equals(leftSpan[i], rightSpan[i]))
+			{
+				return false;
+			}
+		}
+
+		return true;
+#endif
+	}
+
 	// Adapted from: https://github.com/dotnet/runtime/blob/0f6c3d862b703528ffff099af40383ddc52853f8/src/libraries/System.Private.CoreLib/src/System/SpanHelpers.T.cs#L1284-L1301
 	internal static int SequenceCompareTo<T>(ReadOnlySpan<T> leftSpan, ReadOnlySpan<T> rightSpan)
 	{

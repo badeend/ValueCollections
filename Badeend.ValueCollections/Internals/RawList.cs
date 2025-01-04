@@ -777,36 +777,7 @@ internal struct RawList<T>
 	/// and content.
 	/// </summary>
 	[Pure]
-	internal readonly bool StructuralEquals(ref readonly RawList<T> other)
-	{
-		// Attempt to defer to .NET 6+ vectorized implementation:
-#if NET6_0_OR_GREATER
-		return System.MemoryExtensions.SequenceEqual(this.AsSpan(), other.AsSpan());
-#else
-		if (object.ReferenceEquals(this.items, other.items))
-		{
-			return true;
-		}
-
-		var size = this.size;
-		if (size != other.size)
-		{
-			return false;
-		}
-
-		var comparer = new DefaultEqualityComparer<T>();
-
-		for (int i = 0; i < size; i++)
-		{
-			if (!comparer.Equals(this.items[i], other.items[i]))
-			{
-				return false;
-			}
-		}
-
-		return true;
-#endif
-	}
+	internal readonly bool StructuralEquals(ref readonly RawList<T> other) => Polyfills.SequenceEqual<T>(this.AsSpan(), other.AsSpan());
 
 	[Pure]
 	internal readonly int GetStructuralHashCode()
