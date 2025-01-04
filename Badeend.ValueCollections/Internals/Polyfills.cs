@@ -48,28 +48,31 @@ internal static class Polyfills
 #endif
 	}
 
-	internal static bool SequenceEqual<T>(ReadOnlySpan<T> leftSpan, ReadOnlySpan<T> rightSpan)
+	internal static bool SequenceEqual<T>(ReadOnlySpan<T> left, ReadOnlySpan<T> right)
 	{
 		// Defer to .NET 6+ vectorized implementation, when possible:
 #if NET6_0_OR_GREATER
-		return System.MemoryExtensions.SequenceEqual(leftSpan, rightSpan);
+		return System.MemoryExtensions.SequenceEqual(left, right);
 #else
-		if (leftSpan == rightSpan)
-		{
-			return true;
-		}
-
-		if (leftSpan.Length != rightSpan.Length)
+		var length = left.Length;
+		if (length != right.Length)
 		{
 			return false;
 		}
 
-		var length = leftSpan.Length;
+		if (left == right)
+		{
+			return true;
+		}
+
 		var comparer = new DefaultEqualityComparer<T>();
+
+		ref T leftBase = ref MemoryMarshal.GetReference(left);
+		ref T rightBase = ref MemoryMarshal.GetReference(right);
 
 		for (int i = 0; i < length; i++)
 		{
-			if (!comparer.Equals(leftSpan[i], rightSpan[i]))
+			if (!comparer.Equals(Unsafe.Add(ref leftBase, i), Unsafe.Add(ref rightBase, i)))
 			{
 				return false;
 			}
