@@ -34,14 +34,20 @@ public class ValueSliceTests
     [Fact]
     public void CompareTo()
     {
-        Assert.Equal(0, CompareTo<int>([], []));
-        Assert.Equal(0, CompareTo([1, 2, 3], [1, 2, 3]));
-        Assert.Equal(-1, CompareTo([1, 2], [1, 2, 3]));
-        Assert.Equal(1, CompareTo([1, 2, 3], [1, 2]));
-        Assert.Equal(-1, CompareTo([1, 2, 3], [2, 3]));
-        Assert.Equal(1, CompareTo([2], [1, 2, 3]));
+        AssertCompareTo<int>(0, [], []);
+        AssertCompareTo(0, [1, 2, 3], [1, 2, 3]);
+        AssertCompareTo(-1, [1, 2], [1, 2, 3]);
+        AssertCompareTo(1, [1, 2, 3], [1, 2]);
+        AssertCompareTo(-1, [1, 2, 3], [2, 3]);
+        AssertCompareTo(1, [2], [1, 2, 3]);
 
-        static int CompareTo<T>(ValueSlice<T> left, ValueSlice<T> right) => left.CompareTo(right);
+        static void AssertCompareTo<T>(int expected, ValueSlice<T> left, ValueSlice<T> right)
+        {
+            Assert.Equal(0, left.CompareTo(left));
+            Assert.Equal(0, right.CompareTo(right));
+            Assert.Equal(expected, left.CompareTo(right));
+            Assert.Equal(-expected, right.CompareTo(left));
+        }
     }
 
     [Fact]
