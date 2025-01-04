@@ -85,6 +85,11 @@ internal static class Polyfills
 	// Adapted from: https://github.com/dotnet/runtime/blob/0f6c3d862b703528ffff099af40383ddc52853f8/src/libraries/System.Private.CoreLib/src/System/SpanHelpers.T.cs#L1284-L1301
 	internal static int SequenceCompareTo<T>(ReadOnlySpan<T> left, ReadOnlySpan<T> right)
 	{
+		if (left == right)
+		{
+			return 0;
+		}
+
 		ref T leftBase = ref MemoryMarshal.GetReference(left);
 		int leftLength = left.Length;
 		ref T rightBase = ref MemoryMarshal.GetReference(right);
