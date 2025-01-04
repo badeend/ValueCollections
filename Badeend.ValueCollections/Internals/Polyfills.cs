@@ -96,9 +96,11 @@ internal static class Polyfills
 			minLength = rightLength;
 		}
 
+		var comparer = Comparer<T>.Default;
+
 		for (int i = 0; i < minLength; i++)
 		{
-			int result = Comparer<T>.Default.Compare(Unsafe.Add(ref leftBase, i), Unsafe.Add(ref rightBase, i));
+			int result = comparer.Compare(Unsafe.Add(ref leftBase, i), Unsafe.Add(ref rightBase, i));
 			if (result != 0)
 			{
 				return result;
