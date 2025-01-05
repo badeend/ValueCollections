@@ -300,7 +300,7 @@ public sealed partial class ValueList<T> : IReadOnlyList<T>, IList<T>, IEquatabl
 	/// <see cref="Comparer{T}.Default">Default</see> comparer and throws if
 	/// <typeparamref name="T"/> is not comparable. If the item is found, its
 	/// index is returned. Otherwise a negative value is returned representing
-	/// the bitwise complement of the index where the item should be inserted.
+	/// the bitwise complement of the index where the item was expected.
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]

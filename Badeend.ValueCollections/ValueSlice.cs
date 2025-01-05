@@ -290,7 +290,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>, IComparable, I
 	///
 	/// The common use case is to upcast the slice's element type into a base
 	/// type. However, this method can also be used to downcast the element type
-	/// iif that reverses a prior upcast operation.
+	/// if that reverses a prior upcast operation.
 	///
 	/// This does not perform a copy. On success, the returned slice points to
 	/// the same memory.
@@ -376,7 +376,7 @@ public readonly struct ValueSlice<T> : IEquatable<ValueSlice<T>>, IComparable, I
 	/// <see cref="Comparer{T}.Default">Default</see> comparer and throws if
 	/// <typeparamref name="T"/> is not comparable. If the item is found, its
 	/// index is returned. Otherwise a negative value is returned representing
-	/// the bitwise complement of the index where the item should be inserted.
+	/// the bitwise complement of the index where the item was expected.
 	/// </summary>
 	[Pure]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
