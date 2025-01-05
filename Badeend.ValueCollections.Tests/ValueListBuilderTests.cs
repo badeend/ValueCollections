@@ -354,7 +354,47 @@ public class ValueListBuilderTests
         Assert.True(builder[0] == 1);
         Assert.True(builder[1] == 2);
         // The contents of newly available indexes is undefined.
+    }
 
+    [Fact]
+    public void AsSpan()
+    {
+        var builder = ValueList.CreateBuilder<int>([1, 2, 3]);
+
+        {
+            var span = ValueCollectionsMarshal.AsSpan(builder);
+
+            builder[0] = 42; // Mutate builder to check if the backing memory is indeed the same. Very bad, don't ever do this.
+
+            Assert.True(span.Length == 3);
+            Assert.True(span[0] == 42);
+            Assert.True(span[1] == 2);
+            Assert.True(span[2] == 3);
+        }
+        {
+            var readOnlySpan = ValueCollectionsMarshal.AsReadOnlySpan(builder);
+
+            builder[0] = 43; // Mutate builder to check if the backing memory is indeed the same. Very bad, don't ever do this.
+
+            Assert.True(readOnlySpan.Length == 3);
+            Assert.True(readOnlySpan[0] == 43);
+            Assert.True(readOnlySpan[1] == 2);
+            Assert.True(readOnlySpan[2] == 3);
+        }
+
+        builder.Build();
+
+        {
+            Assert.Throws<InvalidOperationException>(() => ValueCollectionsMarshal.AsSpan(builder));
+        }
+        {
+            var readOnlySpan = ValueCollectionsMarshal.AsReadOnlySpan(builder);
+
+            Assert.True(readOnlySpan.Length == 3);
+            Assert.True(readOnlySpan[0] == 43);
+            Assert.True(readOnlySpan[1] == 2);
+            Assert.True(readOnlySpan[2] == 3);
+        }
     }
 
     [Fact]

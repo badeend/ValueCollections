@@ -678,6 +678,12 @@ public sealed partial class ValueList<T>
 			return this;
 		}
 
+		/// <inheritdoc cref="ValueCollectionsMarshal.AsReadOnlySpan"/>
+		internal ReadOnlySpan<T> AsReadOnlySpanUnsafe()
+		{
+			return this.ReadOnce().AsSpan();
+		}
+
 		/// <inheritdoc cref="ValueCollectionsMarshal.AsSpan"/>
 		internal Span<T> AsSpanUnsafe()
 		{

@@ -40,6 +40,19 @@ public static class ValueCollectionsMarshal
 	public static void SetCount<T>(ValueList<T>.Builder builder, int count) => builder.SetCountUnsafe(count);
 
 	/// <summary>
+	/// Get a <see cref="ReadOnlySpan{T}"/> view over the current data in the
+	/// <paramref name="builder"/>.
+	///
+	/// > [!WARNING]
+	/// > The builder should not be built or mutated while the span is in
+	/// use. Especially do not feed the span back into the builder itself using e.g.
+	/// <see cref="ValueList{T}.Builder.AddRange(ReadOnlySpan{T})"/> or
+	/// <see cref="ValueList{T}.Builder.InsertRange(int, ReadOnlySpan{T})"/>.
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ReadOnlySpan<T> AsReadOnlySpan<T>(ValueList<T>.Builder builder) => builder.AsReadOnlySpanUnsafe();
+
+	/// <summary>
 	/// Get a <see cref="Span{T}"/> view over the current data in the
 	/// <paramref name="builder"/>.
 	///
@@ -49,6 +62,11 @@ public static class ValueCollectionsMarshal
 	/// <see cref="ValueList{T}.Builder.AddRange(ReadOnlySpan{T})"/> or
 	/// <see cref="ValueList{T}.Builder.InsertRange(int, ReadOnlySpan{T})"/>.
 	/// </summary>
+	/// <exception cref="InvalidOperationException">
+	/// The collection has already been built. If you don't need mutable access
+	/// to the data, use the <see cref="AsReadOnlySpan{T}"/> method instead
+	/// which continues to work even after the collection has been built.
+	/// </exception>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Span<T> AsSpan<T>(ValueList<T>.Builder builder) => builder.AsSpanUnsafe();
 
